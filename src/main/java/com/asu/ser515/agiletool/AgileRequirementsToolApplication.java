@@ -1,4 +1,4 @@
-package com.asu.ser515.agile_requirements_tool;
+package com.asu.ser515.agiletool;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
