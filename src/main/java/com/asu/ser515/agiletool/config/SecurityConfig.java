@@ -6,12 +6,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -33,17 +35,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for testing with Postman
+            .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**").permitAll() // Allow all API endpoints without authentication (for Postman testing)
-                .requestMatchers("/", "/login.html", "/register", "/dashboard.html", "/css/**", "/js/**").permitAll() // Allow access to static resources
-                .anyRequest().authenticated() // Require authentication for other endpoints
+                .requestMatchers("/api/users/register").permitAll()
+                .requestMatchers("/api/users/**").authenticated()
+                .requestMatchers("/api/**").permitAll() 
+                .requestMatchers("/", "/login.html", "/register", "/dashboard.html", "/css/**", "/js/**").permitAll() 
+                .anyRequest().authenticated() 
             )
             .formLogin(form -> form
-                .loginPage("/login.html") // Custom login page
-                .loginProcessingUrl("/perform-login") // URL to submit the login form
-                .defaultSuccessUrl("/dashboard.html", true) // Redirect to dashboard after successful login
-                .failureUrl("/login.html?error=true") // Redirect back to login on failure
+                .loginPage("/login.html") 
+                .loginProcessingUrl("/perform-login") 
+                .defaultSuccessUrl("/dashboard.html", true) 
+                .failureUrl("/login.html?error=true") 
                 .permitAll()
             )
             .logout(logout -> logout

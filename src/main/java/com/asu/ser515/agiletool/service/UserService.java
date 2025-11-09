@@ -2,6 +2,9 @@ package com.asu.ser515.agiletool.service;
 
 import com.asu.ser515.agiletool.models.User;
 import com.asu.ser515.agiletool.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,9 @@ public class UserService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public User registerUser(User user){
 
@@ -39,5 +45,43 @@ public class UserService {
     }
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public User deactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        user.setActive(false);
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        // Remove user from all projects 
+        entityManager.createNativeQuery("DELETE FROM project_members WHERE user_id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE UserStory us SET us.createdBy = NULL WHERE us.createdBy.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE UserStory us SET us.assignedTo = NULL WHERE us.assignedTo.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE Task t SET t.assignedTo = NULL WHERE t.assignedTo.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE ReleasePlan rp SET rp.createdBy = NULL WHERE rp.createdBy.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        //delete user
+        userRepository.delete(user);
     }
 }
