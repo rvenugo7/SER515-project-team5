@@ -9,7 +9,7 @@ Prerequisites
 Quick-start:
 
 ```powershell
-cd "c:\Users\mattg\Documents\SER 515\SER515-project-team5\frontend"
+cd "c:\(user-directory)\SER515-project-team5\frontend"
 npm install
 npm run dev
 ```
