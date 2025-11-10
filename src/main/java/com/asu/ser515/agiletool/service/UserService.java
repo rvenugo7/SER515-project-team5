@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.service;
 
+import com.asu.ser515.agiletool.dto.UserProfileUpdateDTO;
 import com.asu.ser515.agiletool.models.User;
 import com.asu.ser515.agiletool.repository.UserRepository;
 import jakarta.persistence.EntityManager;
@@ -83,5 +84,31 @@ public class UserService {
 
         //delete user
         userRepository.delete(user);
+    }
+
+    public User getCurrentUserProfile(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+    }
+
+    public User updateUserProfile(String username, UserProfileUpdateDTO dto) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+
+        if (dto.getFullName() != null) {
+            user.setFullName(dto.getFullName());
+        }
+
+        // Update email if provided
+        if (dto.getEmail() != null && !dto.getEmail().isEmpty()) {
+            // Check if email is already used by another user
+            Optional<User> existingUser = userRepository.findByEmail(dto.getEmail());
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(user.getId())) {
+                throw new RuntimeException("Email already exists!");
+            }
+            user.setEmail(dto.getEmail());
+        }
+
+        return userRepository.save(user);
     }
 }

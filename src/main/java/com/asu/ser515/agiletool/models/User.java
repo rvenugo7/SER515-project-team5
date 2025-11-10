@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -56,7 +57,8 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-    
+
+    @JsonIgnore
     @ManyToMany(mappedBy = "members")
     private Set<Project> projects = new HashSet<>();
 }
