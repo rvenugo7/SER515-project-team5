@@ -1,0 +1,16 @@
+{
+  "name": "ser515-project-team5",
+  "version": "1.0.0",
+  "description": "Scrum Management Tool",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "typecheck": "cd frontend && npm run typecheck",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:preview": "cd frontend && npm run preview",
+    "frontend:typecheck": "cd frontend && npm run typecheck"
+  }
+}
+
