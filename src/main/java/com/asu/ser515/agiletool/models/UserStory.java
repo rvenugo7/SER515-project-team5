@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -24,7 +25,10 @@ public class UserStory {
     @NotBlank(message = "Title is required")
     @Column(nullable = false, length = 500)
     private String title;
-    
+
+    @Column(unique = true, length = 50)
+    private String storyKey;
+
     @Column(columnDefinition = "TEXT")
     private String description;
     
@@ -59,23 +63,28 @@ public class UserStory {
     
     @Column
     private Boolean sprintReady = false;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "release_plan_id")
     private ReleasePlan releasePlan;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sprint_id")
     private Sprint sprint;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_user_id")
     private User createdBy;
-    
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_user_id")
     private User assignedTo;
@@ -90,10 +99,11 @@ public class UserStory {
     
     @Column
     private LocalDateTime refinedAt;
-    
+
     @Column
     private LocalDateTime estimatedAt;
-    
+
+    @JsonIgnore
     @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Task> tasks = new HashSet<>();
 }
