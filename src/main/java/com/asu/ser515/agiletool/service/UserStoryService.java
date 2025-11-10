@@ -58,4 +58,13 @@ public class UserStoryService {
     public List<UserStory> listAll() {
         return storyRepo.findAllByOrderByIdAsc();
     }
+
+    @Transactional
+    public void deleteUserStory(Long id) {
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+
+        // Delete the user story (associated tasks will be deleted automatically due to orphanRemoval = true)
+        storyRepo.delete(story);
+    }
 }
