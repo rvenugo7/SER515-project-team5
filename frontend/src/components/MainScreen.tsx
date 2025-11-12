@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
+import ProductBacklog from './ProductBacklog'
 
 interface MainScreenProps {
 	onLogout?: () => void
@@ -20,7 +21,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 		status: string
 		labels: string[]
 		assignee: string
+		assigneeName?: string
 		tags?: string[]
+		isStarred?: boolean
+		isSprintReady?: boolean
 	}> = []
 
 	const totalStories = stories.length
@@ -31,7 +35,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	}
 
 	const handleTabClick = (tabName: string) => {
-		if (tabName === 'Product Backlog' || tabName === 'Release Plans') {
+		if (tabName === 'Release Plans') {
 			alert('This section is not implemented yet')
 		} else {
 			setActiveTab(tabName)
@@ -50,6 +54,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 					</div>
 				</div>
 				<div className="header-actions">
+				{activeTab !== 'Product Backlog' && (
 					<button className="create-story-btn">
 						<span className="plus-icon">+</span>
 						Create User Story
@@ -71,7 +76,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 					Scrum Board
 				</button>
 				<button
-					className={`nav-tab disabled ${activeTab === 'Product Backlog' ? 'active' : ''}`}
+					className={`nav-tab ${activeTab === 'Product Backlog' ? 'active' : ''}`}
 					onClick={() => handleTabClick('Product Backlog')}
 				>
 					Product Backlog
@@ -84,55 +89,63 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 				</button>
 			</div>
 
-			{/* Search and Filters */}
-			<div className="search-filters">
-				<div className="search-bar">
-					<span className="search-icon">⌕</span>
-					<input
-						type="text"
-						placeholder="Search stories..."
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
-					/>
-				</div>
-				<select
-					className="priority-filter"
-					value={priorityFilter}
-					onChange={(e) => setPriorityFilter(e.target.value)}
-				>
-					<option>All Priorities</option>
-					<option>Critical</option>
-					<option>High</option>
-					<option>Medium</option>
-					<option>Low</option>
-				</select>
-			</div>
+			{activeTab === 'Scrum Board' && (
+				<>
+					{/* Search and Filters */}
+					<div className="search-filters">
+						<div className="search-bar">
+							<span className="search-icon">⌕</span>
+							<input
+								type="text"
+								placeholder="Search stories..."
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+							/>
+						</div>
+						<select
+							className="priority-filter"
+							value={priorityFilter}
+							onChange={(e) => setPriorityFilter(e.target.value)}
+						>
+							<option>All Priorities</option>
+							<option>Critical</option>
+							<option>High</option>
+							<option>Medium</option>
+							<option>Low</option>
+						</select>
+					</div>
 
-			{/* Summary Statistics */}
-			<div className="summary-stats">
-				<span>Total Stories: {totalStories}</span>
-				<span>Total Points: {totalPoints}</span>
-			</div>
+					{/* Summary Statistics */}
+					<div className="summary-stats">
+						<span>Total Stories: {totalStories}</span>
+						<span>Total Points: {totalPoints}</span>
+					</div>
 
-			{/* Kanban Board */}
-			<div className="kanban-board">
-				<KanbanColumn
-					title="Backlog"
-					stories={getStoriesByStatus('Backlog')}
-				/>
-				<KanbanColumn
-					title="To Do"
-					stories={getStoriesByStatus('To Do')}
-				/>
-				<KanbanColumn
-					title="In Progress"
-					stories={getStoriesByStatus('In Progress')}
-				/>
-				<KanbanColumn
-					title="Done"
-					stories={getStoriesByStatus('Done')}
-				/>
-			</div>
+					{/* Kanban Board */}
+					<div className="kanban-board">
+						<KanbanColumn
+							title="Backlog"
+							stories={getStoriesByStatus('Backlog')}
+						/>
+						<KanbanColumn
+							title="To Do"
+							stories={getStoriesByStatus('To Do')}
+						/>
+						<KanbanColumn
+							title="In Progress"
+							stories={getStoriesByStatus('In Progress')}
+						/>
+						<KanbanColumn
+							title="Done"
+							stories={getStoriesByStatus('Done')}
+						/>
+					</div>
+				</>
+			)}
+
+			{activeTab === 'Product Backlog' && (
+				<ProductBacklog stories={stories} />
+			)}
 		</div>
 	)
 }
