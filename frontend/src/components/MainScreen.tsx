@@ -3,7 +3,11 @@ import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
 
-export default function MainScreen(): JSX.Element {
+interface MainScreenProps {
+	onLogout?: () => void
+}
+
+export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	const [activeTab, setActiveTab] = useState('Scrum Board')
 	const [searchQuery, setSearchQuery] = useState('')
 	const [priorityFilter, setPriorityFilter] = useState('All Priorities')
@@ -49,12 +53,18 @@ export default function MainScreen(): JSX.Element {
 						<p className="scrum-subtitle">Manage releases, user stories, and sprints</p>
 					</div>
 				</div>
+				<div className="header-actions">
 				{activeTab !== 'Product Backlog' && (
 					<button className="create-story-btn">
 						<span className="plus-icon">+</span>
 						Create User Story
 					</button>
-				)}
+					{onLogout && (
+						<button className="logout-btn" onClick={onLogout}>
+							Log Out
+						</button>
+					)}
+				</div>
 			</div>
 
 			{/* Navigation Tabs */}
