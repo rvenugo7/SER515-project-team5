@@ -21,7 +21,22 @@ export default function MainScreen(): JSX.Element {
 		tags?: string[]
 		isStarred?: boolean
 		isSprintReady?: boolean
-	}> = []
+	}> = [
+		{
+			id: 1,
+			title: 'User Login Functionality',
+			description: 'As a user, I want to be able to log in to the system using my email and password so that I can access my personalized dashboard and features.',
+			priority: 'high',
+			points: 8,
+			status: 'Backlog',
+			labels: ['authentication', 'security'],
+			assignee: 'JD',
+			assigneeName: 'John Doe',
+			tags: ['MVP'],
+			isStarred: true,
+			isSprintReady: true
+		}
+	]
 
 	const totalStories = stories.length
 	const totalPoints = stories.reduce((sum, story) => sum + story.points, 0)

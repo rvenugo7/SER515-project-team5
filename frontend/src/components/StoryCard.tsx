@@ -48,7 +48,7 @@ export default function StoryCard({
 						<span className="status-tag sprint-ready-tag">Sprint Ready</span>
 					)}
 				</div>
-				<button className="story-menu">⋮</button>
+				<button className="story-menu" title="More options">☰</button>
 			</div>
 			<p className="story-description">{description}</p>
 			<div className="story-card-footer">

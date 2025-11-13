@@ -106,8 +106,8 @@ export default function ProductBacklogStoryCard({ story }: ProductBacklogStoryCa
 					<span className="action-icon">👁</span>
 					View Details
 				</button>
-				<button className="action-btn edit-btn">
-					<span className="action-icon">✎</span>
+				<button className="action-btn edit-btn" title="Edit user story">
+					<span className="action-icon">✏️</span>
 					Edit
 				</button>
 			</div>
