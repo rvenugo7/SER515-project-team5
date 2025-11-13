@@ -59,11 +59,12 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 						<span className="plus-icon">+</span>
 						Create User Story
 					</button>
-					{onLogout && (
-						<button className="logout-btn" onClick={onLogout}>
-							Log Out
-						</button>
-					)}
+				)}
+				{onLogout && (
+					<button className="logout-btn" onClick={onLogout}>
+						Log Out
+					</button>
+				)}
 				</div>
 			</div>
 
