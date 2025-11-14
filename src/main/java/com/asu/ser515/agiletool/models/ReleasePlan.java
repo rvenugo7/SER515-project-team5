@@ -22,7 +22,10 @@ public class ReleasePlan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
+    @Column(unique = true, length = 50)
+    private String releaseKey;
+
     @NotBlank(message = "Release name is required")
     @Column(nullable = false, length = 200)
     private String name;
