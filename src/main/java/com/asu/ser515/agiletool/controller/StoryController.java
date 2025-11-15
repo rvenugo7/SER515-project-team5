@@ -51,7 +51,7 @@ public class StoryController {
                 req.getBusinessValue(), req.getPriority()
             );
             return ResponseEntity.ok(new CreateStoryRes("User Story updated successfully", s));
-        } catch (IllegalArgumentException | RuntimeException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

@@ -19,9 +19,10 @@ interface Story {
 
 interface ProductBacklogProps {
 	stories: Story[]
+	onRefresh?: () => void
 }
 
-export default function ProductBacklog({ stories = [] }: ProductBacklogProps): JSX.Element {
+export default function ProductBacklog({ stories = [], onRefresh }: ProductBacklogProps): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('')
 	const [releaseFilter, setReleaseFilter] = useState('All Releases')
 	const [storyFilter, setStoryFilter] = useState('All Stories')
@@ -114,7 +115,7 @@ export default function ProductBacklog({ stories = [] }: ProductBacklogProps): J
 							setEditingStory(null)
 						}}
 						onCreated={() => {
-							// TODO: Refresh Story List from Backend
+							onRefresh?.()
 							setIsEditModalOpen(false)
 							setEditingStory(null)
 						}}

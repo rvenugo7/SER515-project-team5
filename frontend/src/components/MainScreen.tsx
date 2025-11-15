@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
@@ -8,6 +8,34 @@ interface MainScreenProps {
 	onLogout?: () => void
 }
 
+interface BackendStory {
+	id: number
+	title: string
+	description: string
+	priority: string
+	storyPoints?: number
+	status: string
+	acceptanceCriteria?: string
+	businessValue?: number
+}
+
+interface FrontendStory {
+	id: number
+	title: string
+	description: string
+	priority: 'low' | 'medium' | 'high' | 'critical'
+	points: number
+	status: string
+	labels: string[]
+	assignee: string
+	assigneeName?: string
+	tags?: string[]
+	isStarred?: boolean
+	isSprintReady?: boolean
+	acceptanceCriteria?: string
+	businessValue?: number
+}
+
 export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	const [activeTab, setActiveTab] = useState('Scrum Board')
 	const [searchQuery, setSearchQuery] = useState('')
@@ -15,36 +43,62 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	const [isCreateOpen, setIsCreateOpen] = useState(false)
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 	const [editingStory, setEditingStory] = useState<any>(null)
+	const [stories, setStories] = useState<FrontendStory[]>([])
+	const [isLoading, setIsLoading] = useState(true)
 
-	const stories: Array<{
-		id: number
-		title: string
-		description: string
-		priority: 'low' | 'medium' | 'high' | 'critical'
-		points: number
-		status: string
-		labels: string[]
-		assignee: string
-		assigneeName?: string
-		tags?: string[]
-		isStarred?: boolean
-		isSprintReady?: boolean
-	}> = [
-		{
-			id: 1,
-			title: 'User Login Functionality',
-			description: 'As a user, I want to be able to log in to the system using my email and password so that I can access my personalized dashboard and features.',
-			priority: 'high',
-			points: 8,
-			status: 'Backlog',
-			labels: ['authentication', 'security'],
-			assignee: 'JD',
-			assigneeName: 'John Doe',
-			tags: ['MVP'],
-			isStarred: true,
-			isSprintReady: true
+	// Map backend status to frontend status
+	const mapBackendStatusToFrontend = (backendStatus: string): string => {
+		const statusUpper = backendStatus?.toUpperCase() || 'NEW'
+		switch (statusUpper) {
+			case 'NEW':
+				return 'Backlog'
+			case 'IN_PROGRESS':
+				return 'In Progress'
+			case 'DONE':
+				return 'Done'
+			case 'IN_REVIEW':
+				return 'In Progress'
+			case 'BLOCKED':
+				return 'Backlog'
+			default:
+				return 'Backlog'
 		}
-	]
+	}
+
+	// Fetch stories from backend
+	const fetchStories = async () => {
+		try {
+			const response = await fetch('/api/stories', {
+				credentials: 'include'
+			})
+			if (response.ok) {
+				const backendStories: BackendStory[] = await response.json()
+				// Map backend stories to frontend format
+				const mappedStories: FrontendStory[] = backendStories.map((story) => ({
+					id: story.id,
+					title: story.title,
+					description: story.description,
+					priority: (story.priority?.toLowerCase() || 'medium') as 'low' | 'medium' | 'high' | 'critical',
+					points: story.storyPoints || 0,
+					status: mapBackendStatusToFrontend(story.status),
+					labels: [],
+					assignee: '',
+					tags: [],
+					acceptanceCriteria: story.acceptanceCriteria,
+					businessValue: story.businessValue
+				}))
+				setStories(mappedStories)
+			}
+		} catch (error) {
+			console.error('Failed to fetch stories:', error)
+		} finally {
+			setIsLoading(false)
+		}
+	}
+
+	useEffect(() => {
+		fetchStories()
+	}, [])
 
 	const totalStories = stories.length
 	const totalPoints = stories.reduce((sum, story) => sum + story.points, 0)
@@ -155,33 +209,37 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 					</div>
 
 					{/* Kanban Board */}
-					<div className="kanban-board">
-						<KanbanColumn
-							title="Backlog"
-							stories={getStoriesByStatus('Backlog')}
-							onEditStory={handleEditStory}
-						/>
-						<KanbanColumn
-							title="To Do"
-							stories={getStoriesByStatus('To Do')}
-							onEditStory={handleEditStory}
-						/>
-						<KanbanColumn
-							title="In Progress"
-							stories={getStoriesByStatus('In Progress')}
-							onEditStory={handleEditStory}
-						/>
-						<KanbanColumn
-							title="Done"
-							stories={getStoriesByStatus('Done')}
-							onEditStory={handleEditStory}
-						/>
-					</div>
+					{isLoading ? (
+						<div style={{ textAlign: 'center', padding: '40px' }}>Loading stories...</div>
+					) : (
+						<div className="kanban-board">
+							<KanbanColumn
+								title="Backlog"
+								stories={getStoriesByStatus('Backlog')}
+								onEditStory={handleEditStory}
+							/>
+							<KanbanColumn
+								title="To Do"
+								stories={getStoriesByStatus('To Do')}
+								onEditStory={handleEditStory}
+							/>
+							<KanbanColumn
+								title="In Progress"
+								stories={getStoriesByStatus('In Progress')}
+								onEditStory={handleEditStory}
+							/>
+							<KanbanColumn
+								title="Done"
+								stories={getStoriesByStatus('Done')}
+								onEditStory={handleEditStory}
+							/>
+						</div>
+					)}
 				</>
 			)}
 
 			{activeTab === 'Product Backlog' && (
-				<ProductBacklog stories={stories} />
+				<ProductBacklog stories={stories} onRefresh={fetchStories} />
 			)}
 			{isCreateOpen && (
   			<div
@@ -199,7 +257,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   				isOpen={isCreateOpen}
     			onClose={() => setIsCreateOpen(false)}
   				onCreated={() => {
-					//TODO Refresh Story List from Backend
+					fetchStories()
+					setIsCreateOpen(false)
   				}}
 			/>
   			</div>
@@ -223,7 +282,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 							setEditingStory(null)
 						}}
 						onCreated={() => {
-							//TODO Refresh Story List from Backend
+							fetchStories()
 							setIsEditModalOpen(false)
 							setEditingStory(null)
 						}}
