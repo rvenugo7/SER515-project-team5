@@ -17,9 +17,10 @@ interface Story {
 
 interface ProductBacklogStoryCardProps {
 	story: Story
+	onEdit?: (story: Story) => void
 }
 
-export default function ProductBacklogStoryCard({ story }: ProductBacklogStoryCardProps): JSX.Element {
+export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklogStoryCardProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState(false)
 	const [isStarred, setIsStarred] = useState(story.isStarred || false)
 	const [isSprintReady, setIsSprintReady] = useState(story.isSprintReady || false)
@@ -106,7 +107,11 @@ export default function ProductBacklogStoryCard({ story }: ProductBacklogStoryCa
 					<span className="action-icon">👁</span>
 					View Details
 				</button>
-				<button className="action-btn edit-btn" title="Edit user story">
+				<button 
+					className="action-btn edit-btn" 
+					title="Edit user story"
+					onClick={() => onEdit?.(story)}
+				>
 					<span className="action-icon">✏️</span>
 					Edit
 				</button>

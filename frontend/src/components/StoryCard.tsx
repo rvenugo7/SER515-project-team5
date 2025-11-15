@@ -1,6 +1,7 @@
 import React from 'react'
 
 interface StoryCardProps {
+	id?: number
 	title: string
 	description: string
 	priority: 'low' | 'medium' | 'high' | 'critical'
@@ -8,16 +9,19 @@ interface StoryCardProps {
 	labels: string[]
 	assignee: string
 	tags?: string[]
+	onEdit?: (story: any) => void
 }
 
 export default function StoryCard({
+	id,
 	title,
 	description,
 	priority,
 	points,
 	labels,
 	assignee,
-	tags = []
+	tags = [],
+	onEdit
 }: StoryCardProps): JSX.Element {
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
@@ -48,7 +52,28 @@ export default function StoryCard({
 						<span className="status-tag sprint-ready-tag">Sprint Ready</span>
 					)}
 				</div>
-				<button className="story-menu" title="More options">☰</button>
+				<button 
+					className="story-menu" 
+					title="More options"
+					onClick={() => {
+						if (onEdit && id) {
+							onEdit({
+								id,
+								title,
+								description,
+								priority,
+								points,
+								labels,
+								assignee,
+								tags,
+								acceptanceCriteria: '',
+								businessValue: undefined
+							})
+						}
+					}}
+				>
+					☰
+				</button>
 			</div>
 			<p className="story-description">{description}</p>
 			<div className="story-card-footer">

@@ -13,6 +13,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('')
 	const [priorityFilter, setPriorityFilter] = useState('All Priorities')
 	const [isCreateOpen, setIsCreateOpen] = useState(false)
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+	const [editingStory, setEditingStory] = useState<any>(null)
 
 	const stories: Array<{
 		id: number
@@ -57,6 +59,18 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 		} else {
 			setActiveTab(tabName)
 		}
+	}
+
+	const handleEditStory = (story: any) => {
+		setEditingStory({
+			id: story.id,
+			title: story.title,
+			description: story.description,
+			acceptanceCriteria: (story as any).acceptanceCriteria || '',
+			businessValue: (story as any).businessValue || undefined,
+			priority: story.priority
+		})
+		setIsEditModalOpen(true)
 	}
 
 	return (
@@ -145,18 +159,22 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 						<KanbanColumn
 							title="Backlog"
 							stories={getStoriesByStatus('Backlog')}
+							onEditStory={handleEditStory}
 						/>
 						<KanbanColumn
 							title="To Do"
 							stories={getStoriesByStatus('To Do')}
+							onEditStory={handleEditStory}
 						/>
 						<KanbanColumn
 							title="In Progress"
 							stories={getStoriesByStatus('In Progress')}
+							onEditStory={handleEditStory}
 						/>
 						<KanbanColumn
 							title="Done"
 							stories={getStoriesByStatus('Done')}
+							onEditStory={handleEditStory}
 						/>
 					</div>
 				</>
@@ -184,9 +202,35 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 					//TODO Refresh Story List from Backend
   				}}
 			/>
-
-  </div>
-)}
+  			</div>
+			)}
+			{isEditModalOpen && (
+				<div
+					style={{
+						position: "fixed",
+						inset: 0,
+						background: "rgba(0,0,0,0.6)",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						zIndex: 9999
+					}}
+				>
+					<CreateUserStoryModal
+						isOpen={isEditModalOpen}
+						onClose={() => {
+							setIsEditModalOpen(false)
+							setEditingStory(null)
+						}}
+						onCreated={() => {
+							//TODO Refresh Story List from Backend
+							setIsEditModalOpen(false)
+							setEditingStory(null)
+						}}
+						story={editingStory}
+					/>
+				</div>
+			)}
 		</div>
 	)
 }

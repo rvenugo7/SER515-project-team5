@@ -408,7 +408,6 @@ main {
 	cursor: pointer;
 	padding: 0;
 	line-height: 1;
-	transform: rotate(90deg);
 }
 
 .story-menu:hover {

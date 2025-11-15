@@ -1,9 +1,19 @@
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useEffect } from "react";
+
+interface Story {
+  id?: number;
+  title?: string;
+  description?: string;
+  acceptanceCriteria?: string;
+  businessValue?: number;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | "low" | "medium" | "high" | "critical";
+}
 
 interface CreateUserStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreated?: () => void;
+  story?: Story | null;
 }
 
 type PriorityOption = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -12,6 +22,7 @@ export default function CreateUserStoryModal({
   isOpen,
   onClose,
   onCreated,
+  story = null,
 }: CreateUserStoryModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -21,6 +32,29 @@ export default function CreateUserStoryModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isEditMode = story !== null && story.id !== undefined;
+
+  // Populate form when story is provided (edit mode)
+  useEffect(() => {
+    if (story && isOpen) {
+      setTitle(story.title || "");
+      setDescription(story.description || "");
+      setAcceptanceCriteria(story.acceptanceCriteria || "");
+      setBusinessValue(story.businessValue ?? "");
+      if (story.priority) {
+        const priorityUpper = story.priority.toUpperCase() as PriorityOption;
+        setPriority(priorityUpper);
+      }
+    } else if (!story && isOpen) {
+      // Reset form for create mode
+      setTitle("");
+      setDescription("");
+      setAcceptanceCriteria("");
+      setBusinessValue("");
+      setPriority("MEDIUM");
+    }
+  }, [story, isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: FormEvent) => {
@@ -29,8 +63,11 @@ export default function CreateUserStoryModal({
     setError(null);
 
     try {
-      const response = await fetch("/api/stories", {
-        method: "POST",
+      const url = isEditMode ? `/api/stories/${story.id}` : "/api/stories";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
@@ -44,7 +81,7 @@ export default function CreateUserStoryModal({
 
       if (!response.ok) {
         const txt = await response.text();
-        throw new Error(txt || "Failed to create story");
+        throw new Error(txt || `Failed to ${isEditMode ? "update" : "create"} story`);
       }
 
       onCreated?.();
@@ -90,7 +127,7 @@ export default function CreateUserStoryModal({
           }}
         >
           <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>
-            Create User Story
+            {isEditMode ? "Edit User Story" : "Create User Story"}
           </h2>
           <button
             type="button"
@@ -295,7 +332,9 @@ export default function CreateUserStoryModal({
                 cursor: "pointer",
               }}
             >
-              {isSubmitting ? "Creating..." : "Create Story"}
+              {isSubmitting 
+                ? (isEditMode ? "Updating..." : "Creating...") 
+                : (isEditMode ? "Update Story" : "Create Story")}
             </button>
           </div>
         </form>

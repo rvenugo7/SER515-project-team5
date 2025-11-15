@@ -16,9 +16,10 @@ interface Story {
 interface KanbanColumnProps {
 	title: string
 	stories: Story[]
+	onEditStory?: (story: Story) => void
 }
 
-export default function KanbanColumn({ title, stories }: KanbanColumnProps): JSX.Element {
+export default function KanbanColumn({ title, stories, onEditStory }: KanbanColumnProps): JSX.Element {
 	const totalPoints = stories.reduce((sum, story) => sum + story.points, 0)
 	const isDoneColumn = title === 'Done'
 
@@ -38,6 +39,7 @@ export default function KanbanColumn({ title, stories }: KanbanColumnProps): JSX
 					stories.map((story) => (
 						<StoryCard
 							key={story.id}
+							id={story.id}
 							title={story.title}
 							description={story.description}
 							priority={story.priority}
@@ -45,6 +47,7 @@ export default function KanbanColumn({ title, stories }: KanbanColumnProps): JSX
 							labels={story.labels}
 							assignee={story.assignee}
 							tags={story.tags || []}
+							onEdit={onEditStory}
 						/>
 					))
 				)}
