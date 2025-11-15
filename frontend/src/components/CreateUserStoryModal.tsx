@@ -1,189 +1,299 @@
 import React, { useState, FormEvent } from "react";
 
-type Priority = "LOW" | "MEDIUM" | "HIGH";
-type Status = "BACKLOG" | "TODO" | "IN_PROGRESS" | "DONE";
-
 interface CreateUserStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated?: () => void; // parent can refresh board after success
+  onCreated?: () => void;
 }
 
-const CreateUserStoryModal: React.FC<CreateUserStoryModalProps> = ({
+type PriorityOption = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export default function CreateUserStoryModal({
   isOpen,
   onClose,
   onCreated,
-}) => {
+}: CreateUserStoryModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [storyPoints, setStoryPoints] = useState<number | "">("");
-  const [priority, setPriority] = useState<Priority>("MEDIUM");
-  const [status, setStatus] = useState<Status>("BACKLOG");
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState("");
+  const [businessValue, setBusinessValue] = useState<number | "">("");
+  const [priority, setPriority] = useState<PriorityOption>("MEDIUM");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setStoryPoints("");
-    setPriority("MEDIUM");
-    setStatus("BACKLOG");
-    setError(null);
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setError(null);
 
-    if (!title.trim()) {
-      setError("Title is required");
-      return;
-    }
-
-    setIsSubmitting(true);
     try {
-      // TODO: adjust URL + payload shape to match your backend
-      const response = await fetch("http://localhost:8080/api/user-stories", {
+      const response = await fetch("/api/stories", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // keep cookies/session for logged-in user
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title,
           description,
-          storyPoints: storyPoints === "" ? 0 : Number(storyPoints),
+          acceptanceCriteria,
+          businessValue: businessValue === "" ? null : Number(businessValue),
           priority,
-          status,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create user story (${response.status})`);
+        const txt = await response.text();
+        throw new Error(txt || "Failed to create story");
       }
 
-      resetForm();
-      onClose();
       onCreated?.();
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to create user story");
+      onClose();
+    } catch (e: any) {
+      setError(e.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Create User Story</h2>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        style={{
+          background: "white",
+          borderRadius: 12,
+          boxShadow: "0 18px 40px rgba(15,23,42,0.35)",
+          width: "100%",
+          maxWidth: 520,
+          padding: "20px 22px 18px",
+          fontFamily:
+            'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 12,
+          }}
+        >
+          <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>
+            Create User Story
+          </h2>
           <button
-            onClick={() => {
-              resetForm();
-              onClose();
+            type="button"
+            onClick={onClose}
+            style={{
+              border: "none",
+              background: "transparent",
+              fontSize: 18,
+              cursor: "pointer",
+              color: "#64748b",
             }}
-            className="rounded-md px-2 py-1 text-sm text-gray-500 hover:bg-gray-100"
           >
             ✕
           </button>
         </div>
 
         {error && (
-          <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+          <div
+            style={{
+              marginBottom: 10,
+              padding: "6px 10px",
+              borderRadius: 6,
+              fontSize: 13,
+              background: "#fee2e2",
+              color: "#b91c1c",
+            }}
+          >
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Title *</label>
+        <form onSubmit={handleSubmit}>
+          {/* Title */}
+          <div style={{ marginBottom: 10 }}>
+            <label
+              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
+            >
+              Title *
+            </label>
             <input
               type="text"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              required
+              placeholder="As a user, I want to..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="As a user, I want to..."
+              style={{
+                width: "100%",
+                marginTop: 4,
+                padding: "7px 10px",
+                borderRadius: 8,
+                border: "1px solid #cbd5e1",
+                fontSize: 14,
+              }}
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Description
+          {/* Description */}
+          <div style={{ marginBottom: 10 }}>
+            <label
+              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
+            >
+              Description *
             </label>
             <textarea
-              className="h-28 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              required
+              placeholder="Describe the story, context, etc."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="More details, acceptance criteria, etc."
+              style={{
+                width: "100%",
+                marginTop: 4,
+                padding: "7px 10px",
+                borderRadius: 8,
+                border: "1px solid #cbd5e1",
+                fontSize: 14,
+                resize: "vertical",
+                minHeight: 70,
+              }}
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          {/* Acceptance Criteria */}
+          <div style={{ marginBottom: 10 }}>
+            <label
+              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
+            >
+              Acceptance Criteria
+            </label>
+            <textarea
+              placeholder="Given..., when..., then..."
+              value={acceptanceCriteria}
+              onChange={(e) => setAcceptanceCriteria(e.target.value)}
+              style={{
+                width: "100%",
+                marginTop: 4,
+                padding: "7px 10px",
+                borderRadius: 8,
+                border: "1px solid #cbd5e1",
+                fontSize: 14,
+                resize: "vertical",
+                minHeight: 60,
+              }}
+            />
+          </div>
+
+          {/* Business value + priority */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+              marginBottom: 14,
+            }}
+          >
             <div>
-              <label className="mb-1 block text-sm font-medium">
-                Story Points
+              <label
+                style={{ display: "block", fontSize: 13, fontWeight: 500 }}
+              >
+                Business Value
               </label>
               <input
                 type="number"
-                min={0}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-                value={storyPoints}
+                placeholder="0"
+                value={businessValue}
                 onChange={(e) =>
-                  setStoryPoints(
+                  setBusinessValue(
                     e.target.value === "" ? "" : Number(e.target.value)
                   )
                 }
+                style={{
+                  width: "100%",
+                  marginTop: 4,
+                  padding: "7px 10px",
+                  borderRadius: 8,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
               />
             </div>
-
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label
+                style={{ display: "block", fontSize: 13, fontWeight: 500 }}
+              >
                 Priority
               </label>
               <select
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as Priority)}
+                onChange={(e) =>
+                  setPriority(e.target.value as PriorityOption)
+                }
+                style={{
+                  width: "100%",
+                  marginTop: 4,
+                  padding: "7px 10px",
+                  borderRadius: 8,
+                  border: "1px solid #cbd5e1",
+                  fontSize: 14,
+                }}
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium">Status</label>
-              <select
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as Status)}
-              >
-                <option value="BACKLOG">Backlog</option>
-                <option value="TODO">To Do</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="DONE">Done</option>
+                <option value="CRITICAL">Critical</option>
               </select>
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end gap-2">
+          {/* Buttons */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 8,
+              marginTop: 6,
+            }}
+          >
             <button
               type="button"
-              onClick={() => {
-                resetForm();
-                onClose();
+              onClick={onClose}
+              style={{
+                padding: "7px 14px",
+                borderRadius: 8,
+                border: "1px solid #cbd5e1",
+                background: "#f8fafc",
+                fontSize: 14,
+                cursor: "pointer",
               }}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              style={{
+                padding: "7px 16px",
+                borderRadius: 8,
+                border: "none",
+                background: isSubmitting ? "#60a5fa" : "#2563eb",
+                color: "white",
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
             >
               {isSubmitting ? "Creating..." : "Create Story"}
             </button>
@@ -192,6 +302,4 @@ const CreateUserStoryModal: React.FC<CreateUserStoryModalProps> = ({
       </div>
     </div>
   );
-};
-
-export default CreateUserStoryModal;
+}

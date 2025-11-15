@@ -162,19 +162,14 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       				zIndex: 9999
     			}}
   			>
-    <div
-      style={{
-        background: "white",
-        padding: "20px",
-        borderRadius: "8px",
-        minWidth: "300px",
-        textAlign: "center"
-      }}
-    >
-      <h2>TEST MODAL</h2>
-      <p>The button click works!</p>
-      <button onClick={() => setIsCreateOpen(false)}>Close</button>
-    </div>
+    		<CreateUserStoryModal
+  				isOpen={isCreateOpen}
+    			onClose={() => setIsCreateOpen(false)}
+  				onCreated={() => {
+					//TODO Refresh Story List from Backend
+  				}}
+			/>
+
   </div>
 )}
 		</div>
