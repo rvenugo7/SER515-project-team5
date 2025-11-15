@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
+import CreateUserStoryModal from './CreateUserStoryModal'
 
 interface MainScreenProps {
 	onLogout?: () => void
@@ -11,6 +12,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	const [activeTab, setActiveTab] = useState('Scrum Board')
 	const [searchQuery, setSearchQuery] = useState('')
 	const [priorityFilter, setPriorityFilter] = useState('All Priorities')
+	const [isCreateOpen, setIsCreateOpen] = useState(false)
 
 	const stories: Array<{
 		id: number
@@ -55,7 +57,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 				</div>
 				<div className="header-actions">
 				{activeTab !== 'Product Backlog' && (
-					<button className="create-story-btn">
+					<button className="create-story-btn"
+						onClick={() => setIsCreateOpen(true)}>
 						<span className="plus-icon">+</span>
 						Create User Story
 					</button>
@@ -147,6 +150,33 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 			{activeTab === 'Product Backlog' && (
 				<ProductBacklog stories={stories} />
 			)}
+			{isCreateOpen && (
+  			<div
+    			style={{
+      				position: "fixed",
+      				inset: 0,
+      				background: "rgba(0,0,0,0.6)",
+     				display: "flex",
+      				alignItems: "center",
+      				justifyContent: "center",
+      				zIndex: 9999
+    			}}
+  			>
+    <div
+      style={{
+        background: "white",
+        padding: "20px",
+        borderRadius: "8px",
+        minWidth: "300px",
+        textAlign: "center"
+      }}
+    >
+      <h2>TEST MODAL</h2>
+      <p>The button click works!</p>
+      <button onClick={() => setIsCreateOpen(false)}>Close</button>
+    </div>
+  </div>
+)}
 		</div>
 	)
 }
