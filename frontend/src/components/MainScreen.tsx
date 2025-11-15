@@ -2,11 +2,17 @@ import React, { useState } from 'react'
 import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
+import CreateUserStoryModal from './CreateUserStoryModal'
 
-export default function MainScreen(): JSX.Element {
+interface MainScreenProps {
+	onLogout?: () => void
+}
+
+export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	const [activeTab, setActiveTab] = useState('Scrum Board')
 	const [searchQuery, setSearchQuery] = useState('')
 	const [priorityFilter, setPriorityFilter] = useState('All Priorities')
+	const [isCreateOpen, setIsCreateOpen] = useState(false)
 
 	const stories: Array<{
 		id: number
@@ -64,12 +70,20 @@ export default function MainScreen(): JSX.Element {
 						<p className="scrum-subtitle">Manage releases, user stories, and sprints</p>
 					</div>
 				</div>
+				<div className="header-actions">
 				{activeTab !== 'Product Backlog' && (
-					<button className="create-story-btn">
+					<button className="create-story-btn"
+						onClick={() => setIsCreateOpen(true)}>
 						<span className="plus-icon">+</span>
 						Create User Story
 					</button>
 				)}
+				{onLogout && (
+					<button className="logout-btn" onClick={onLogout}>
+						Log Out
+					</button>
+				)}
+				</div>
 			</div>
 
 			{/* Navigation Tabs */}
@@ -151,6 +165,28 @@ export default function MainScreen(): JSX.Element {
 			{activeTab === 'Product Backlog' && (
 				<ProductBacklog stories={stories} />
 			)}
+			{isCreateOpen && (
+  			<div
+    			style={{
+      				position: "fixed",
+      				inset: 0,
+      				background: "rgba(0,0,0,0.6)",
+     				display: "flex",
+      				alignItems: "center",
+      				justifyContent: "center",
+      				zIndex: 9999
+    			}}
+  			>
+    		<CreateUserStoryModal
+  				isOpen={isCreateOpen}
+    			onClose={() => setIsCreateOpen(false)}
+  				onCreated={() => {
+					//TODO Refresh Story List from Backend
+  				}}
+			/>
+
+  </div>
+)}
 		</div>
 	)
 }

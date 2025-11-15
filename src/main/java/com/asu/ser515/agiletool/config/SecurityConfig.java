@@ -35,24 +35,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) 
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/users/register").permitAll()
                 .requestMatchers("/api/users/**").authenticated()
-                .requestMatchers("/api/**").permitAll() 
-                .requestMatchers("/", "/login.html", "/register", "/dashboard.html", "/css/**", "/js/**").permitAll() 
-                .anyRequest().authenticated() 
+                .requestMatchers("/api/**").permitAll()
+                .requestMatchers("/", "/index.html", "/assets/**", "/static/**").permitAll()
+                .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                .loginPage("/login.html") 
-                .loginProcessingUrl("/perform-login") 
-                .defaultSuccessUrl("/dashboard.html", true) 
-                .failureUrl("/login.html?error=true") 
+                .loginProcessingUrl("/perform-login")
+                .successHandler((request, response, authentication) -> {
+                    response.setStatus(200);
+                    response.getWriter().flush();
+                })
+                .failureHandler((request, response, exception) -> {
+                    response.setStatus(401);
+                    response.getWriter().write("Invalid username or password");
+                    response.getWriter().flush();
+                })
                 .permitAll()
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/login.html?logout=true")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    response.setStatus(200);
+                    response.getWriter().flush();
+                })
                 .permitAll()
             );
 
