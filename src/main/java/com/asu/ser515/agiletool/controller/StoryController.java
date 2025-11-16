@@ -1,5 +1,7 @@
 package com.asu.ser515.agiletool.controller;
 
+import com.asu.ser515.agiletool.dto.EstimateRequest;
+
 import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.service.UserStoryService;
 import jakarta.validation.Valid;
@@ -51,6 +53,23 @@ public class StoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/estimate")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateStoryEstimation(
+            @PathVariable long id,
+            @RequestBody EstimateRequest estimateRequest) {
+        try {
+            UserStory updated =
+                    userStoryService.updateEstimation(id, estimateRequest.getStoryPoints());
+
+            return ResponseEntity.ok(updated);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
 
     public static class CreateStoryReq {
         @NotBlank(message = "Title is required")
