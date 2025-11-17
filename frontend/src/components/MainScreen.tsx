@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
+import ReleasePlans from './ReleasePlans'
 
 interface MainScreenProps {
 	onLogout?: () => void
@@ -35,11 +36,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 	}
 
 	const handleTabClick = (tabName: string) => {
-		if (tabName === 'Release Plans') {
-			alert('This section is not implemented yet')
-		} else {
-			setActiveTab(tabName)
-		}
+		setActiveTab(tabName)
 	}
 
 	return (
@@ -83,7 +80,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 					Product Backlog
 				</button>
 				<button
-					className={`nav-tab disabled ${activeTab === 'Release Plans' ? 'active' : ''}`}
+					className={`nav-tab ${activeTab === 'Release Plans' ? 'active' : ''}`}
 					onClick={() => handleTabClick('Release Plans')}
 				>
 					Release Plans
@@ -146,6 +143,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
 			{activeTab === 'Product Backlog' && (
 				<ProductBacklog stories={stories} />
+			)}
+
+			{activeTab === 'Release Plans' && (
+				<ReleasePlans />
 			)}
 		</div>
 	)

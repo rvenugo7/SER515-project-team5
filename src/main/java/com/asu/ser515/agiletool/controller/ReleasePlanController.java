@@ -24,10 +24,6 @@ public class ReleasePlanController {
         this.releasePlanService = releasePlanService;
     }
 
-    /**
-     * Create a new release plan
-     * Accessible by: PRODUCT_OWNER, SYSTEM_ADMIN
-     */
     @PostMapping
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> createReleasePlan(@Valid @RequestBody CreateReleasePlanDTO dto) {
@@ -43,10 +39,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * Get a release plan by ID
-     * Accessible by: All authenticated users
-     */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getReleasePlanById(@PathVariable Long id) {
@@ -61,10 +53,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * Get a release plan by release key
-     * Accessible by: All authenticated users
-     */
     @GetMapping("/key/{releaseKey}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getReleasePlanByKey(@PathVariable String releaseKey) {
@@ -79,10 +67,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * Update a release plan
-     * Accessible by: PRODUCT_OWNER, SYSTEM_ADMIN
-     */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateReleasePlan(@PathVariable Long id,
@@ -98,10 +82,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * Delete a release plan
-     * Accessible by: PRODUCT_OWNER, SYSTEM_ADMIN
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> deleteReleasePlan(@PathVariable Long id) {
@@ -116,10 +96,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * List all release plans
-     * Accessible by: All authenticated users
-     */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> listAllReleasePlans() {
@@ -132,10 +108,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * List release plans by project ID
-     * Accessible by: All authenticated users
-     */
     @GetMapping("/project/{projectId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> listReleasePlansByProject(@PathVariable Long projectId) {
@@ -150,10 +122,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * List release plans by status
-     * Accessible by: All authenticated users
-     */
     @GetMapping("/status/{status}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> listReleasePlansByStatus(@PathVariable ReleaseStatus status) {
@@ -166,10 +134,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * Assign a user story to a release plan
-     * Accessible by: PRODUCT_OWNER, SYSTEM_ADMIN
-     */
     @PostMapping("/{id}/user-stories/{storyId}")
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> assignUserStory(@PathVariable Long id, @PathVariable Long storyId) {
@@ -184,10 +148,6 @@ public class ReleasePlanController {
         }
     }
 
-    /**
-     * Unassign a user story from a release plan
-     * Accessible by: PRODUCT_OWNER, SYSTEM_ADMIN
-     */
     @DeleteMapping("/{id}/user-stories/{storyId}")
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> unassignUserStory(@PathVariable Long id, @PathVariable Long storyId) {

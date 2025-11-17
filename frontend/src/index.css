@@ -489,7 +489,8 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f7fafc;
+  background-color: #2a2a32;
+  background: radial-gradient(ellipse at center, #525263 0%, #2a2a32 100%);
   padding: 20px;
 }
 
