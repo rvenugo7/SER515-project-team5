@@ -41,6 +41,21 @@ public class StoryController {
         }
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody CreateStoryReq req) {
+        try {
+            UserStory s = userStoryService.updateUserStory(
+                id,
+                req.getTitle(), req.getDescription(), req.getAcceptanceCriteria(),
+                req.getBusinessValue(), req.getPriority()
+            );
+            return ResponseEntity.ok(new CreateStoryRes("User Story updated successfully", s));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deleteUserStory(@PathVariable Long id) {
