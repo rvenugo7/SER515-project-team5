@@ -57,6 +57,59 @@ export default function CreateUserStoryModal({
 
   if (!isOpen) return null;
 
+  const getErrorMessage = async (response: Response, defaultMessage: string): Promise<string> => {
+    try {
+      // Read response body as text first (can be parsed as JSON later if needed)
+      const errorText = await response.text();
+      
+      if (!errorText || !errorText.trim()) {
+        return defaultMessage;
+      }
+      
+      // Try to parse as JSON if it looks like JSON
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const json = JSON.parse(errorText);
+          if (json.message) return json.message;
+          if (json.error) return json.error;
+          if (Array.isArray(json.errors)) {
+            return json.errors.map((e: any) => e.message || e).join(", ");
+          }
+        } catch (jsonError) {
+          // If JSON parsing fails, continue with text processing
+        }
+      }
+      
+      // Check for common error patterns and provide user-friendly messages
+      if (errorText.includes("Title is required")) {
+        return "Please provide a title for the user story.";
+      }
+      if (errorText.includes("Description is required")) {
+        return "Please provide a description for the user story.";
+      }
+      if (errorText.includes("User Story not found")) {
+        return isEditMode 
+          ? "The user story you're trying to update no longer exists. Please refresh the page."
+          : "The requested resource was not found.";
+      }
+      if (errorText.includes("not found with id")) {
+        return isEditMode
+          ? "The user story you're trying to update no longer exists. Please refresh the page."
+          : "The requested resource was not found.";
+      }
+      if (errorText.includes("GLOBAL project missing")) {
+        return "System configuration error.";
+      }
+      
+      // Return the original text if no pattern matches
+      return errorText;
+    } catch (parseError) {
+      // If parsing fails, return default message
+      return defaultMessage;
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -80,14 +133,42 @@ export default function CreateUserStoryModal({
       });
 
       if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(txt || `Failed to ${isEditMode ? "update" : "create"} story`);
+        let errorMessage = `Failed to ${isEditMode ? "update" : "create"} the user story.`;
+        
+        // Handle specific HTTP status codes
+        if (response.status === 400) {
+          errorMessage = await getErrorMessage(
+            response, 
+            `Invalid data provided. Please check all required fields.`
+          );
+        } else if (response.status === 401) {
+          errorMessage = "You are not authenticated. Please log in again.";
+        } else if (response.status === 403) {
+          errorMessage = "You don't have permission to perform this action.";
+        } else if (response.status === 404) {
+          errorMessage = isEditMode
+            ? "The user story you're trying to update no longer exists. Please refresh the page."
+            : "The requested resource was not found.";
+        } else if (response.status === 500) {
+          errorMessage = "A server error occurred. Please try again later.";
+        } else {
+          errorMessage = await getErrorMessage(response, errorMessage);
+        }
+        
+        throw new Error(errorMessage);
       }
 
       onCreated?.();
       onClose();
     } catch (e: any) {
-      setError(e.message);
+      // Handle network errors
+      if (e.name === "TypeError" && e.message.includes("fetch")) {
+        setError("Network error: Unable to connect to the server. Please check your internet connection and try again.");
+      } else if (e.message) {
+        setError(e.message);
+      } else {
+        setError(`An unexpected error occurred while ${isEditMode ? "updating" : "creating"} the user story. Please try again.`);
+      }
     } finally {
       setIsSubmitting(false);
     }
