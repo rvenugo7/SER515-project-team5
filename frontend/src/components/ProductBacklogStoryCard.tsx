@@ -113,7 +113,7 @@ export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklo
 					onClick={() => onEdit?.(story)}
 				>
 					<span className="action-icon">✏️</span>
-					Edit
+					Update
 				</button>
 			</div>
 		</div>
