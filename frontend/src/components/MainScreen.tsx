@@ -126,7 +126,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
 
   // Map backend UserStory -> frontend Story for your UI
-  const mapBackendStoryToFrontend = (s: any): Story => {
+  const mapBackendStoryToFrontend = (s: any): FrontendStory => {
     // Backend priority: StoryPriority enum like "LOW" | "MEDIUM" | ...
     const priorityLower = (s.priority || 'MEDIUM')
       .toString()
@@ -163,7 +163,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       }
 
       const data = await res.json() // List<UserStory> from backend
-      const mapped: Story[] = data.map((s: any) => mapBackendStoryToFrontend(s))
+      const mapped: FrontendStory[] = data.map((s: any) => mapBackendStoryToFrontend(s))
       setStories(mapped)
     } catch (e) {
       console.error('Error loading stories', e)
