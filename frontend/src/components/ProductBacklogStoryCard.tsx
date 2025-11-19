@@ -18,12 +18,17 @@ interface Story {
 interface ProductBacklogStoryCardProps {
 	story: Story
 	onEdit?: (story: Story) => void
+	onUpdate?: (updatedStory: Story) => void
 }
 
-export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklogStoryCardProps): JSX.Element {
+export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: ProductBacklogStoryCardProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState(false)
 	const [isStarred, setIsStarred] = useState(story.isStarred || false)
 	const [isSprintReady, setIsSprintReady] = useState(story.isSprintReady || false)
+	const [storyPoints, setStoryPoints] = useState(story.points || 0)
+	const [isSaving, setIsSaving] = useState(false)
+	const [showEstimateModal, setShowEstimateModal] = useState(false);
+
 
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
@@ -49,7 +54,39 @@ export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklo
 		return 'status-todo'
 	}
 
+	const updateEstimation = async () => {
+		setIsSaving(true)
+		try{
+			const response = await fetch(`/api/stories/${story.id}/estimate`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+		
+				},credentials: "include",
+				body: JSON.stringify({ storyPoints }),
+			})
+
+			if (!response.ok){
+				throw new Error("Failed to update estimation")
+			}
+
+			const updatedStory = await response.json()
+
+			setStoryPoints(updatedStory.storyPoints ?? storyPoints)
+			if (onUpdate) {
+    			onUpdate(updatedStory);   
+			}
+
+			alert("Estimation updated!")
+		} catch (err){
+			console.error(err)
+			alert("Could not update estimation")
+		} finally {
+			setIsSaving(false)
+		}
+	}
 	return (
+		<>
 		<div className="backlog-story-card">
 			<div className="story-controls-left">
 				<input
@@ -99,6 +136,9 @@ export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklo
 							</span>
 						))}
 					</div>
+
+					
+
 				</div>
 			</div>
 
@@ -115,8 +155,69 @@ export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklo
 					<span className="action-icon">✏️</span>
 					Update
 				</button>
+
+				<button 
+    				className="action-btn estimate-btn"
+    				onClick={() => setShowEstimateModal(true)}
+				>
+    				<span className="action-icon">📊</span>
+    				Edit Points
+				</button>
 			</div>
 		</div>
+
+		{showEstimateModal && (
+			<div className="modal-overlay">
+				<div className="modal-container">
+
+					<div className="modal-header">
+						<h2>Edit Story Points</h2>
+						<button
+							className="modal-close-btn"
+							onClick={() => setShowEstimateModal(false)}
+						>
+							×
+						</button>
+					</div>
+
+					<div className="modal-body">
+
+						<input
+							type="number"
+							min="0"
+							className="estimation-input"
+							value={storyPoints}
+							onChange={(e) => setStoryPoints(Number(e.target.value))}
+						/>
+
+						<div className="form-actions">
+							<button
+								className="btn-submit"
+								onClick={() => {
+									updateEstimation();
+									setShowEstimateModal(false);
+								}}
+							>
+								Save
+							</button>
+
+							<button
+								className="btn-cancel"
+								onClick={() => setShowEstimateModal(false)}
+							>
+								Cancel
+							</button>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+		)}
+
+	</>
+
 	)
+	
 }
 

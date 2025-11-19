@@ -15,6 +15,7 @@ interface Story {
   tags?: string[];
   isStarred?: boolean;
   isSprintReady?: boolean;
+  storyPoints?: number;  
 }
 
 interface ProductBacklogProps {
@@ -28,7 +29,11 @@ export default function ProductBacklog({ stories = [], onRefresh }: ProductBackl
 	const [storyFilter, setStoryFilter] = useState('All Stories')
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 	const [editingStory, setEditingStory] = useState<Story | null>(null)
+	const [localStories, setLocalStories] = useState(stories);
 
+	React.useEffect(() => {
+    setLocalStories(stories);
+	}, [stories]);
   const sprintReadyCount = stories.filter(
     (story) => story.isSprintReady
   ).length;
@@ -79,7 +84,7 @@ export default function ProductBacklog({ stories = [], onRefresh }: ProductBackl
 				<div className="backlog-empty-state">No user stories added</div>
 			) : (
 				<div className="backlog-stories">
-					{stories.map((story) => (
+					{localStories.map((story) => (
 						<ProductBacklogStoryCard
 							key={story.id}
 							story={story}
@@ -95,6 +100,16 @@ export default function ProductBacklog({ stories = [], onRefresh }: ProductBackl
 								})
 								setIsEditModalOpen(true)
 							}}
+
+							onUpdate={(updatedStory) => {
+        						setLocalStories(prev =>
+            						prev.map(s =>
+                						s.id === updatedStory.id
+                    						? { ...s, points: updatedStory.storyPoints ?? updatedStory.points }
+                    						: s
+            						)
+        						);
+    						}}
 						/>
 					))}
 				</div>
