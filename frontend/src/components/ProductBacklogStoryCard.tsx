@@ -24,6 +24,8 @@ export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklo
 	const [isChecked, setIsChecked] = useState(false)
 	const [isStarred, setIsStarred] = useState(story.isStarred || false)
 	const [isSprintReady, setIsSprintReady] = useState(story.isSprintReady || false)
+	const [storyPoints, setStoryPoints] = useState(story.points || 0)
+	const [isSaving, setIsSaving] = useState(false)
 
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
@@ -49,6 +51,33 @@ export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklo
 		return 'status-todo'
 	}
 
+	const updateEstimation = async () => {
+		setIsSaving(true)
+		try{
+			const response = await fetch(`/api/stories/${story.id}/estimate`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ storyPoints }),
+			})
+
+			if (!response.ok){
+				throw new Error("Failed to update estimation")
+			}
+
+			const updatedStory = await response.json()
+
+			setStoryPoints(updatedStory.storyPoints ?? storyPoints)
+
+			alert("Estimation updated!")
+		} catch (err){
+			console.error(err)
+			alert("Could not update estimation")
+		} finally {
+			setIsSaving(false)
+		}
+	}
 	return (
 		<div className="backlog-story-card">
 			<div className="story-controls-left">
@@ -101,6 +130,27 @@ export default function ProductBacklogStoryCard({ story, onEdit }: ProductBacklo
 					</div>
 				</div>
 			</div>
+
+			
+			<div className="estimation-box">
+				<input 
+					type="number"
+					min="0"
+					className="estimation-input"
+					value={storyPoints}
+					onChange={(e) => setStoryPoints(Number(e.target.value))}
+				/>
+
+				<button 
+					className="estimation-btn"
+					onClick={updateEstimation}
+					disabled={isSaving}
+				>
+					{isSaving ? "Saving..." : "Set Estimation"}
+				</button>
+			</div>
+			
+
 
 			<div className="story-actions">
 				<button className="action-btn view-btn">
