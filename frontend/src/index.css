@@ -401,13 +401,13 @@ main {
 }
 
 .story-menu {
-	background: none;
-	border: none;
-	color: #a0aec0;
-	font-size: 18px;
-	cursor: pointer;
-	padding: 0;
-	line-height: 1;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
 }
 
 .story-menu:hover {
@@ -1239,5 +1239,284 @@ main {
     background: white;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.release-plans-container {
+  margin-top: 20px;
+  padding: 0 20px;
+}
+
+.release-plans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.release-plans-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 4px 0;
+}
+
+.release-plans-description {
+  font-size: 14px;
+  color: #718096;
+  margin: 0;
+}
+
+.create-release-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.create-release-btn:hover {
+  background: #1d4ed8;
+}
+
+.release-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filter-dropdown {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #4a5568;
+  background: white;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.release-plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.release-empty-state {
+  text-align: center;
+  color: #a0aec0;
+  font-size: 14px;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Release Plan Card */
+.release-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: box-shadow 0.2s;
+}
+
+.release-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.release-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.release-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.release-key-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #edf2f7;
+  color: #4a5568;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.release-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.release-status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.release-status-planned {
+  background: #bee3f8;
+  color: #2c5282;
+}
+
+.release-status-in-progress {
+  background: #e9d8fd;
+  color: #553c9a;
+}
+
+.release-status-completed {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.release-status-cancelled {
+  background: #fed7d7;
+  color: #9b2c2c;
+}
+
+.release-description {
+  font-size: 14px;
+  color: #718096;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.release-goals {
+  font-size: 13px;
+  color: #4a5568;
+  background: #f7fafc;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.release-goals strong {
+  color: #2d3748;
+}
+
+.release-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.release-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: #a0aec0;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.release-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.release-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.meta-text {
+  font-size: 13px;
+  color: #718096;
+}
+
+.meta-text strong {
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.release-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-btn {
+  color: #e53e3e;
+  border-color: #fc8181;
+}
+
+.delete-btn:hover {
+  background: #fff5f5;
+  border-color: #e53e3e;
+}
+
+@media (max-width: 768px) {
+  .release-plans-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .create-release-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .release-controls {
+    flex-direction: column;
+  }
+
+  .filter-dropdown {
+    width: 100%;
+  }
+
+  .release-details {
+    grid-template-columns: 1fr;
+  }
+
+  .release-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .release-actions {
+    width: 100%;
+  }
+
+  .action-btn {
+    flex: 1;
   }
 }
