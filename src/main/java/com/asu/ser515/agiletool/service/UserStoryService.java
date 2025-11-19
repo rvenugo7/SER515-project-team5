@@ -78,6 +78,8 @@ public class UserStoryService {
         story.setDescription(description);
         story.setAcceptanceCriteria(acceptanceCriteria);
         story.setBusinessValue(businessValue);
+        // Note: Priority is only updated if explicitly provided (not null).
+        // This allows partial updates where priority remains unchanged if not specified.
         if (priority != null) {
             story.setPriority(priority);
         }
