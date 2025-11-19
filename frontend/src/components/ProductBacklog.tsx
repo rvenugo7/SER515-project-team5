@@ -15,6 +15,8 @@ interface Story {
   tags?: string[];
   isStarred?: boolean;
   isSprintReady?: boolean;
+  acceptanceCriteria?: string;
+  businessValue?: number;
 }
 
 interface ProductBacklogProps {
@@ -84,15 +86,7 @@ export default function ProductBacklog({ stories = [], onRefresh }: ProductBackl
 							key={story.id}
 							story={story}
 							onEdit={(story) => {
-								// Map the story to the format expected by the modal
-								setEditingStory({
-									id: story.id,
-									title: story.title,
-									description: story.description,
-									acceptanceCriteria: (story as any).acceptanceCriteria || '',
-									businessValue: (story as any).businessValue || undefined,
-									priority: story.priority
-								})
+								setEditingStory(story)
 								setIsEditModalOpen(true)
 							}}
 						/>
