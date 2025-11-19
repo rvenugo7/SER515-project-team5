@@ -60,6 +60,32 @@ public class UserStoryService {
     }
 
     @Transactional
+    public UserStory updateUserStory(Long id,
+                                    String title,
+                                    String description,
+                                    String acceptanceCriteria,
+                                    Integer businessValue,
+                                    StoryPriority priority) {
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+
+        if (title == null || title.isBlank())
+            throw new IllegalArgumentException("Title is required");
+        if (description == null || description.isBlank())
+            throw new IllegalArgumentException("Description is required");
+
+        story.setTitle(title);
+        story.setDescription(description);
+        story.setAcceptanceCriteria(acceptanceCriteria);
+        story.setBusinessValue(businessValue);
+        if (priority != null) {
+            story.setPriority(priority);
+        }
+
+        return storyRepo.save(story);
+    }
+
+    @Transactional
     public void deleteUserStory(Long id) {
         UserStory story = storyRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
