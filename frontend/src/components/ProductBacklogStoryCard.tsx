@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface Story {
 	id: number
@@ -28,6 +28,14 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 	const [storyPoints, setStoryPoints] = useState(story.points || 0)
 	const [isSaving, setIsSaving] = useState(false)
 	const [showEstimateModal, setShowEstimateModal] = useState(false);
+	const [isTogglingStar, setIsTogglingStar] = useState(false)
+	const [isTogglingSprint, setIsTogglingSprint] = useState(false)
+
+	useEffect(() => {
+		setIsStarred(story.isStarred || false)
+		setIsSprintReady(story.isSprintReady || false)
+		setStoryPoints(story.points || 0)
+	}, [story.isStarred, story.isSprintReady, story.points])
 
 
 	const getPriorityColor = (priority: string) => {
@@ -93,20 +101,85 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 					type="checkbox"
 					checked={isChecked}
 					onChange={(e) => setIsChecked(e.target.checked)}
-					className="story-checkbox"
-					title="Select"
+					className="story-checkbox tooltipped"
+					data-tooltip="Select story"
+					aria-label="Select story"
 				/>
 				<button
-					className={`star-btn ${isStarred ? 'starred' : ''}`}
-					onClick={() => setIsStarred(!isStarred)}
-					title={isStarred ? 'Unstar story' : 'Star story'}
+					className={`star-btn ${isStarred ? 'starred' : ''} tooltipped`}
+					onClick={async () => {
+						if (isTogglingStar) return
+						const next = !isStarred
+						setIsStarred(next)
+						setIsTogglingStar(true)
+						try {
+							const response = await fetch(`/api/stories/${story.id}/star`, {
+								method: "PUT",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								credentials: "include",
+								body: JSON.stringify({ starred: next }),
+							})
+							if (!response.ok) throw new Error("Failed to update star")
+							const updatedStory = await response.json()
+							const starredVal = Boolean((updatedStory as any).isStarred)
+							setIsStarred(starredVal)
+							onUpdate?.({
+								...story,
+								...updatedStory,
+								points: updatedStory.storyPoints ?? story.points,
+								isStarred: starredVal,
+							} as Story)
+						} catch (err) {
+							console.error(err)
+							alert("Could not update star")
+							setIsStarred(!next)
+						} finally {
+							setIsTogglingStar(false)
+						}
+					}}
+					data-tooltip={isStarred ? 'Unstar story' : 'Star story'}
+					aria-label={isStarred ? 'Unstar story' : 'Star story'}
 				>
 					★
 				</button>
 				<button
-					className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''}`}
-					onClick={() => setIsSprintReady(!isSprintReady)}
-					title={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
+					className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''} tooltipped`}
+					onClick={async () => {
+						if (isTogglingSprint) return
+						const next = !isSprintReady
+						setIsSprintReady(next)
+						setIsTogglingSprint(true)
+						try {
+							const response = await fetch(`/api/stories/${story.id}/sprint-ready`, {
+								method: "PUT",
+								headers: { "Content-Type": "application/json" },
+								credentials: "include",
+								body: JSON.stringify({ sprintReady: next })
+							})
+							if (!response.ok) {
+								throw new Error("Failed to update sprint-ready")
+							}
+							const updatedStory = await response.json()
+							const sprintReadyVal = Boolean((updatedStory as any).sprintReady)
+							setIsSprintReady(sprintReadyVal)
+							onUpdate?.({
+								...story,
+								...updatedStory,
+								points: updatedStory.storyPoints ?? story.points,
+								isSprintReady: sprintReadyVal
+							} as Story)
+						} catch (err) {
+							console.error(err)
+							alert("Could not update sprint-ready")
+							setIsSprintReady(!next)
+						} finally {
+							setIsTogglingSprint(false)
+						}
+					}}
+					data-tooltip={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
+					aria-label={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
 				>
 					{isSprintReady ? '✓' : '○'}
 				</button>
