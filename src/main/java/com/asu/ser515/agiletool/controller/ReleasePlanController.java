@@ -67,7 +67,7 @@ public class ReleasePlanController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateReleasePlan(@PathVariable Long id,
                                                @Valid @RequestBody UpdateReleasePlanDTO dto) {

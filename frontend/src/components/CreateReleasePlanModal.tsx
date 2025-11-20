@@ -36,6 +36,8 @@ export default function CreateReleasePlanModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [originalPlan, setOriginalPlan] = useState<ReleasePlan | null>(null);
+
   const isEditMode = plan !== null && plan.id !== undefined;
 
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function CreateReleasePlanModal({
       setStartDate(plan.startDate || "");
       setTargetDate(plan.targetDate || "");
       setStatus(plan.status || "PLANNED");
+      // Store original values for change detection
+      setOriginalPlan(plan);
     } else if (!plan && isOpen) {
       setName("");
       setDescription("");
@@ -53,6 +57,7 @@ export default function CreateReleasePlanModal({
       setStartDate("");
       setTargetDate("");
       setStatus("PLANNED");
+      setOriginalPlan(null);
     }
   }, [plan, isOpen]);
 
@@ -73,20 +78,39 @@ export default function CreateReleasePlanModal({
       const url = isEditMode
         ? `/api/release-plans/${plan.id}`
         : "/api/release-plans";
-      const method = isEditMode ? "PUT" : "POST";
+      const method = isEditMode ? "PATCH" : "POST";
 
-      const payload: any = {
-        name,
-        description,
-        goals,
-        startDate,
-        targetDate,
-        status,
-      };
+      let payload: any = {};
 
-      // Only include projectId for create (defaults to 1 for GLOBAL project)
-      if (!isEditMode) {
-        payload.projectId = 1;
+      if (isEditMode && originalPlan) {
+        if (name !== (originalPlan.name || "")) {
+          payload.name = name;
+        }
+        if (description !== (originalPlan.description || "")) {
+          payload.description = description;
+        }
+        if (goals !== (originalPlan.goals || "")) {
+          payload.goals = goals;
+        }
+        if (startDate !== (originalPlan.startDate || "")) {
+          payload.startDate = startDate;
+        }
+        if (targetDate !== (originalPlan.targetDate || "")) {
+          payload.targetDate = targetDate;
+        }
+        if (status !== (originalPlan.status || "PLANNED")) {
+          payload.status = status;
+        }
+      } else {
+        payload = {
+          name,
+          description,
+          goals,
+          startDate,
+          targetDate,
+          status,
+          projectId: 1, // GLOBAL project
+        };
       }
 
       const response = await fetch(url, {
