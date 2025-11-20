@@ -93,4 +93,14 @@ public class UserStoryService {
         // Delete the user story (associated tasks will be deleted automatically due to orphanRemoval = true)
         storyRepo.delete(story);
     }
+
+    @Transactional
+    public UserStory updateEstimation(Long storyId, int storyPoints) {
+    UserStory story = storyRepo.findById(storyId)
+            .orElseThrow(() -> new RuntimeException("User Story not found with id: " + storyId));
+
+    story.setStoryPoints(storyPoints);
+
+    return storyRepo.save(story);   
+    }
 }
