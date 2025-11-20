@@ -100,23 +100,6 @@ export default function ReleasePlans(): React.JSX.Element {
 
   return (
     <div className="release-plans-container">
-      {/* Header */}
-      <div className="release-plans-header">
-        <div>
-          <h2 className="release-plans-title">Release Plans</h2>
-          <p className="release-plans-description">
-            Manage product releases and milestones
-          </p>
-        </div>
-        <button
-          className="create-release-btn"
-          onClick={() => setIsCreateOpen(true)}
-        >
-          <span className="plus-icon">+</span>
-          Create Release Plan
-        </button>
-      </div>
-
       {/* Search and Filters */}
       <div className="release-controls">
         <div className="search-bar">
@@ -139,6 +122,13 @@ export default function ReleasePlans(): React.JSX.Element {
           <option>Completed</option>
           <option>Cancelled</option>
         </select>
+        <button
+          className="create-release-btn"
+          onClick={() => setIsCreateOpen(true)}
+        >
+          <span className="plus-icon">+</span>
+          Create Release Plan
+        </button>
       </div>
 
       {/* Content */}

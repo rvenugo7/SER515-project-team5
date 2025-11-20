@@ -108,7 +108,6 @@ export default function ReleasePlanCard({
             onClick={() => onEdit?.(plan)}
             title="Edit release plan"
           >
-            <span className="action-icon">✏️</span>
             Edit
           </button>
           <button
@@ -116,7 +115,6 @@ export default function ReleasePlanCard({
             onClick={() => onDelete?.(plan.id)}
             title="Delete release plan"
           >
-            <span className="action-icon">🗑️</span>
             Delete
           </button>
         </div>
