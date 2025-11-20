@@ -95,7 +95,7 @@ public class StoryController {
         try {
             UserStory updated = userStoryService.updateStatus(id, req.getStatus());
             return ResponseEntity.ok(updated);
-        } catch (RuntimeException | IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
