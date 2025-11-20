@@ -10,92 +10,76 @@ interface MainScreenProps {
 }
 
 interface BackendStory {
-	id: number
-	title: string
-	description: string
-	priority: string
-	storyPoints?: number
-	status: string
-	acceptanceCriteria?: string
-	businessValue?: number
+  id: number
+  title: string
+  description: string
+  priority: string
+  storyPoints?: number
+  status: string
+  acceptanceCriteria?: string
+  businessValue?: number
 }
 
 interface FrontendStory {
-	id: number
-	title: string
-	description: string
-	priority: 'low' | 'medium' | 'high' | 'critical'
-	points: number
-	status: string
-	labels: string[]
-	assignee: string
-	assigneeName?: string
-	tags?: string[]
-	isStarred?: boolean
-	isSprintReady?: boolean
-	acceptanceCriteria?: string
-	businessValue?: number
+  id: number
+  title: string
+  description: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  points: number
+  status: string
+  labels: string[]
+  assignee: string
+  assigneeName?: string
+  tags?: string[]
+  isStarred?: boolean
+  isSprintReady?: boolean
+  acceptanceCriteria?: string
+  businessValue?: number
 }
 
 export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
-	const [activeTab, setActiveTab] = useState('Scrum Board')
-	const [searchQuery, setSearchQuery] = useState('')
-	const [priorityFilter, setPriorityFilter] = useState('All Priorities')
-	const [isCreateOpen, setIsCreateOpen] = useState(false)
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-	const [editingStory, setEditingStory] = useState<any>(null)
-	const [stories, setStories] = useState<FrontendStory[]>([])
-	const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('Scrum Board')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('All Priorities')
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingStory, setEditingStory] = useState<any>(null)
+  const [stories, setStories] = useState<FrontendStory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-	// Map backend status to frontend status
-	const mapBackendStatusToFrontend = (backendStatus: string): string => {
-		const statusUpper = backendStatus?.toUpperCase() || 'NEW'
-		switch (statusUpper) {
-			case 'NEW':
-				return 'Backlog'
-			case 'IN_PROGRESS':
-				return 'In Progress'
-			case 'DONE':
-				return 'Done'
-			case 'IN_REVIEW':
-				return 'In Progress'
-			case 'BLOCKED':
-				return 'Backlog'
-			default:
-				return 'Backlog'
-		}
-	}
+  // Map backend status to frontend status
+  const mapBackendStatusToFrontend = (backendStatus: string): string => {
+    const statusUpper = backendStatus?.toUpperCase() || 'NEW'
+    switch (statusUpper) {
+      case 'NEW':
+        return 'Backlog'
+      case 'IN_PROGRESS':
+        return 'In Progress'
+      case 'DONE':
+        return 'Done'
+      case 'IN_REVIEW':
+        return 'In Progress'
+      case 'BLOCKED':
+        return 'Backlog'
+      default:
+        return 'Backlog'
+    }
+  }
 
-	// Fetch stories from backend
-	const fetchStories = async () => {
-		try {
-			const response = await fetch('/api/stories', {
-				credentials: 'include'
-			})
-			if (response.ok) {
-				const backendStories: BackendStory[] = await response.json()
-				// Map backend stories to frontend format
-				const mappedStories: FrontendStory[] = backendStories.map((story) => ({
-					id: story.id,
-					title: story.title,
-					description: story.description,
-					priority: (story.priority?.toLowerCase() || 'medium') as 'low' | 'medium' | 'high' | 'critical',
-					points: story.storyPoints || 0,
-					status: mapBackendStatusToFrontend(story.status),
-					labels: [],
-					assignee: '',
-					tags: [],
-					acceptanceCriteria: story.acceptanceCriteria,
-					businessValue: story.businessValue
-				}))
-				setStories(mappedStories)
-			}
-		} catch (error) {
-			console.error('Failed to fetch stories:', error)
-		} finally {
-			setIsLoading(false)
-		}
-	}
+  const mapFrontendStatusToBackend = (frontendStatus: string): string => {
+    const statusUpper = frontendStatus.toUpperCase()
+    switch (statusUpper) {
+      case 'BACKLOG':
+      case 'TO DO':
+        return 'NEW'
+      case 'IN PROGRESS':
+        return 'IN_PROGRESS'
+      case 'DONE':
+        return 'DONE'
+      default:
+        return 'NEW'
+    }
+  }
 
 	useEffect(() => {
 		fetchStories()
@@ -105,7 +89,20 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const totalPoints = stories.reduce((sum, story) => sum + story.points, 0)
 
   const getStoriesByStatus = (status: string) => {
-    return stories.filter(story => story.status === status)
+    const normalizedPriority = priorityFilter.toLowerCase()
+    const filtered = stories.filter((story) => {
+      const matchesStatus = story.status === status
+      const matchesPriority =
+        normalizedPriority === 'all priorities' || story.priority === normalizedPriority
+      const matchesSearch =
+        !searchQuery ||
+        story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        story.description.toLowerCase().includes(searchQuery.toLowerCase())
+
+      return matchesStatus && matchesPriority && matchesSearch
+    })
+
+    return filtered
   }
 
 	const handleTabClick = (tabName: string) => {
@@ -124,6 +121,39 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 		setIsEditModalOpen(true)
 	}
 
+  const handleStoryDragStart = (_storyId: number) => {
+    // Reserved for future visual feedback
+  }
+
+  const handleStoryDrop = async (storyId: number, newStatus: string) => {
+    const previousStatus = stories.find((s) => s.id === storyId)?.status
+    const backendStatus = mapFrontendStatusToBackend(newStatus)
+
+    setStories((prev) =>
+      prev.map((s) => (s.id === storyId ? { ...s, status: newStatus } : s))
+    )
+
+    try {
+      const res = await fetch(`/api/stories/${storyId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: backendStatus })
+      })
+      if (!res.ok) {
+        throw new Error(`Failed to update story status: ${res.status}`)
+      }
+    } catch (error) {
+      console.error('Failed to update story status', error)
+      if (previousStatus) {
+        setStories((prev) =>
+          prev.map((s) => (s.id === storyId ? { ...s, status: previousStatus } : s))
+        )
+      }
+      alert('Could not update story status. Please try again.')
+    }
+  }
+
 
   // Map backend UserStory -> frontend Story for your UI
   const mapBackendStoryToFrontend = (s: any): FrontendStory => {
@@ -137,12 +167,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       title: s.title,
       description: s.description,
       priority: priorityLower,
-      // no points field on backend, so use businessValue or 0
-      points: s.businessValue ?? 0,
-      // if backend has status, use it; else default to Backlog
-      status: s.status || 'Backlog',
+      // prefer storyPoints from backend; fallback to businessValue or 0
+      points: s.storyPoints ?? s.businessValue ?? 0,
+      status: mapBackendStatusToFrontend(s.status),
       labels: [], // you can wire these later
-      // simple placeholder initial – you can change this when you add assignees
       assignee: s.assigneeInitials || 'U',
       assigneeName: s.assigneeName,
       tags: [],
@@ -151,28 +179,23 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
     }
   }
 
-  const loadStories = async () => {
+  // Fetch stories from backend
+  const fetchStories = async () => {
     try {
-      const res = await fetch('/api/stories', {
-        credentials: 'include',
+      const response = await fetch('/api/stories', {
+        credentials: 'include'
       })
-
-      if (!res.ok) {
-        console.error('Failed to load stories', res.status)
-        return
+      if (response.ok) {
+        const backendStories: BackendStory[] = await response.json()
+        const mappedStories: FrontendStory[] = backendStories.map(mapBackendStoryToFrontend)
+        setStories(mappedStories)
       }
-
-      const data = await res.json() // List<UserStory> from backend
-      const mapped: FrontendStory[] = data.map((s: any) => mapBackendStoryToFrontend(s))
-      setStories(mapped)
-    } catch (e) {
-      console.error('Error loading stories', e)
+    } catch (error) {
+      console.error('Failed to fetch stories:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
-
-  useEffect(() => {
-    loadStories()
-  }, [])
 
   return (
     <div className="scrum-container">
@@ -266,21 +289,29 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 								title="Backlog"
 								stories={getStoriesByStatus('Backlog')}
 								onEditStory={handleEditStory}
+                onStoryDrop={handleStoryDrop}
+                onStoryDragStart={handleStoryDragStart}
 							/>
 							<KanbanColumn
 								title="To Do"
 								stories={getStoriesByStatus('To Do')}
 								onEditStory={handleEditStory}
+                onStoryDrop={handleStoryDrop}
+                onStoryDragStart={handleStoryDragStart}
 							/>
 							<KanbanColumn
 								title="In Progress"
 								stories={getStoriesByStatus('In Progress')}
 								onEditStory={handleEditStory}
+                onStoryDrop={handleStoryDrop}
+                onStoryDragStart={handleStoryDragStart}
 							/>
 							<KanbanColumn
 								title="Done"
 								stories={getStoriesByStatus('Done')}
 								onEditStory={handleEditStory}
+                onStoryDrop={handleStoryDrop}
+                onStoryDragStart={handleStoryDragStart}
 							/>
 						</div>
 					)}

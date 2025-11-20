@@ -93,24 +93,32 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 					type="checkbox"
 					checked={isChecked}
 					onChange={(e) => setIsChecked(e.target.checked)}
-					className="story-checkbox"
+					className="story-checkbox tooltipped"
+					data-tooltip="Select story"
+					aria-label="Select story"
 				/>
 				<button
-					className={`star-btn ${isStarred ? 'starred' : ''}`}
+					className={`star-btn ${isStarred ? 'starred' : ''} tooltipped`}
 					onClick={() => setIsStarred(!isStarred)}
+					data-tooltip={isStarred ? 'Unstar story' : 'Star story'}
+					aria-label={isStarred ? 'Unstar story' : 'Star story'}
 				>
 					★
 				</button>
 				<button
-					className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''}`}
+					className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''} tooltipped`}
 					onClick={() => setIsSprintReady(!isSprintReady)}
+					data-tooltip={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
+					aria-label={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
 				>
 					{isSprintReady ? '✓' : '○'}
 				</button>
 			</div>
 
 			<div className="story-content">
-				<h3 className="story-title">{story.title}</h3>
+				<h3 className="story-title">
+					<span className="story-id">#{story.id}</span> {story.title}
+				</h3>
 				<div className="story-tags">
 					<span className={`priority-tag ${getPriorityColor(story.priority)}`}>
 						{story.priority === 'critical' && <span className="critical-icon">!</span>}
@@ -158,6 +166,7 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 
 				<button 
     				className="action-btn estimate-btn"
+    				title="Edit story points"
     				onClick={() => setShowEstimateModal(true)}
 				>
     				<span className="action-icon">📊</span>
@@ -220,4 +229,3 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 	)
 	
 }
-

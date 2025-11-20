@@ -103,4 +103,18 @@ public class UserStoryService {
 
     return storyRepo.save(story);   
     }
+
+    @Transactional
+    public UserStory updateStatus(Long id, StoryStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("Status is required");
+        }
+
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+
+        story.setStatus(status);
+
+        return storyRepo.save(story);
+    }
 }
