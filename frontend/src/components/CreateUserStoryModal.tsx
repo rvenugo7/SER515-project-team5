@@ -57,10 +57,29 @@ export default function CreateUserStoryModal({
 
   if (!isOpen) return null;
 
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setAcceptanceCriteria("");
+    setBusinessValue("");
+    setPriority("MEDIUM");
+    setError(null);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
+
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
+    if (!description.trim()) {
+      setError("Description is required");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const url = isEditMode ? `/api/stories/${story.id}` : "/api/stories";
@@ -75,7 +94,7 @@ export default function CreateUserStoryModal({
           description,
           acceptanceCriteria,
           businessValue: businessValue === "" ? null : Number(businessValue),
-          priority,
+          priority, // must match StoryPriority enum in backend
         }),
       });
 
@@ -84,7 +103,9 @@ export default function CreateUserStoryModal({
         throw new Error(txt || `Failed to ${isEditMode ? "update" : "create"} story`);
       }
 
+      // tell parent to reload stories
       onCreated?.();
+      resetForm();
       onClose();
     } catch (e: any) {
       setError(e.message);
@@ -131,7 +152,10 @@ export default function CreateUserStoryModal({
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
             style={{
               border: "none",
               background: "transparent",
@@ -306,7 +330,10 @@ export default function CreateUserStoryModal({
           >
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                resetForm();
+                onClose();
+              }}
               style={{
                 padding: "7px 14px",
                 borderRadius: 8,

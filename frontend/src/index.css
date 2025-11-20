@@ -307,6 +307,9 @@ main {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: box-shadow 0.2s;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
 }
 
 .story-card:hover {
@@ -318,6 +321,21 @@ main {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 8px;
+}
+
+.story-id-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 6px;
+  margin-right: 6px;
+  border-radius: 6px;
+  background: #edf2f7;
+  color: #2d3748;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .story-tags-left {
@@ -425,6 +443,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
 }
 
 .story-labels {
@@ -1121,6 +1140,41 @@ main {
   color: #68d391;
 }
 
+  .sprint-ready-btn.ready {
+    background: #68d391;
+    border-color: #68d391;
+    color: white;
+  }
+
+  /* Quick, smooth tooltips for small controls */
+  .tooltipped {
+    position: relative;
+  }
+
+  .tooltipped::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, 6px);
+    background: #1a202c;
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease, transform 0.1s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+    z-index: 5;
+  }
+
+  .tooltipped:hover::after,
+  .tooltipped:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 10px);
+  }
 .sprint-ready-btn.ready {
   background: #68d391;
   border-color: #68d391;
@@ -1238,6 +1292,16 @@ main {
   font-size: 16px;
 }
 
+  .backlog-empty-state {
+    text-align: center;
+    color: #a0aec0;
+    font-size: 14px;
+    padding: 60px 20px;
+    font-style: italic;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
 .backlog-empty-state {
   text-align: center;
   color: #a0aec0;
