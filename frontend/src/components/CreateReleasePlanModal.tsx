@@ -1,111 +1,133 @@
 import React, { useState, FormEvent, useEffect } from "react";
 
-interface Story {
+interface ReleasePlan {
   id?: number;
-  title?: string;
+  releaseKey?: string;
+  name?: string;
   description?: string;
-  acceptanceCriteria?: string;
-  businessValue?: number;
-  priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | "low" | "medium" | "high" | "critical";
+  goals?: string;
+  startDate?: string;
+  targetDate?: string;
+  status?: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  projectId?: number;
 }
 
-interface CreateUserStoryModalProps {
+interface CreateReleasePlanModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreated?: () => void;
-  story?: Story | null;
+  plan?: ReleasePlan | null;
 }
 
-type PriorityOption = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+type StatusOption = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 
-export default function CreateUserStoryModal({
+export default function CreateReleasePlanModal({
   isOpen,
   onClose,
   onCreated,
-  story = null,
-}: CreateUserStoryModalProps) {
-  const [title, setTitle] = useState("");
+  plan = null,
+}: CreateReleasePlanModalProps) {
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [acceptanceCriteria, setAcceptanceCriteria] = useState("");
-  const [businessValue, setBusinessValue] = useState<number | "">("");
-  const [priority, setPriority] = useState<PriorityOption>("MEDIUM");
+  const [goals, setGoals] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [targetDate, setTargetDate] = useState("");
+  const [status, setStatus] = useState<StatusOption>("PLANNED");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isEditMode = story !== null && story.id !== undefined;
+  const [originalPlan, setOriginalPlan] = useState<ReleasePlan | null>(null);
 
-  // Populate form when story is provided (edit mode)
+  const isEditMode = plan !== null && plan.id !== undefined;
+
   useEffect(() => {
-    if (story && isOpen) {
-      setTitle(story.title || "");
-      setDescription(story.description || "");
-      setAcceptanceCriteria(story.acceptanceCriteria || "");
-      setBusinessValue(story.businessValue ?? "");
-      if (story.priority) {
-        const priorityUpper = story.priority.toUpperCase() as PriorityOption;
-        setPriority(priorityUpper);
-      }
-    } else if (!story && isOpen) {
-      // Reset form for create mode
-      setTitle("");
+    if (plan && isOpen) {
+      setName(plan.name || "");
+      setDescription(plan.description || "");
+      setGoals(plan.goals || "");
+      setStartDate(plan.startDate || "");
+      setTargetDate(plan.targetDate || "");
+      setStatus(plan.status || "PLANNED");
+      // Store original values for change detection
+      setOriginalPlan(plan);
+    } else if (!plan && isOpen) {
+      setName("");
       setDescription("");
-      setAcceptanceCriteria("");
-      setBusinessValue("");
-      setPriority("MEDIUM");
+      setGoals("");
+      setStartDate("");
+      setTargetDate("");
+      setStatus("PLANNED");
+      setOriginalPlan(null);
     }
-  }, [story, isOpen]);
+  }, [plan, isOpen]);
 
   if (!isOpen) return null;
 
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setAcceptanceCriteria("");
-    setBusinessValue("");
-    setPriority("MEDIUM");
-    setError(null);
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setError(null);
 
-    if (!title.trim()) {
-      setError("Title is required");
+    if (targetDate && startDate && new Date(targetDate) < new Date(startDate)) {
+      setError("Target date must be after start date");
+      setIsSubmitting(false);
       return;
     }
-    if (!description.trim()) {
-      setError("Description is required");
-      return;
-    }
-
-    setIsSubmitting(true);
 
     try {
-      const url = isEditMode ? `/api/stories/${story.id}` : "/api/stories";
-      const method = isEditMode ? "PUT" : "POST";
+      const url = isEditMode
+        ? `/api/release-plans/${plan.id}`
+        : "/api/release-plans";
+      const method = isEditMode ? "PATCH" : "POST";
+
+      let payload: any = {};
+
+      if (isEditMode && originalPlan) {
+        if (name !== (originalPlan.name || "")) {
+          payload.name = name;
+        }
+        if (description !== (originalPlan.description || "")) {
+          payload.description = description;
+        }
+        if (goals !== (originalPlan.goals || "")) {
+          payload.goals = goals;
+        }
+        if (startDate !== (originalPlan.startDate || "")) {
+          payload.startDate = startDate;
+        }
+        if (targetDate !== (originalPlan.targetDate || "")) {
+          payload.targetDate = targetDate;
+        }
+        if (status !== (originalPlan.status || "PLANNED")) {
+          payload.status = status;
+        }
+      } else {
+        payload = {
+          name,
+          description,
+          goals,
+          startDate,
+          targetDate,
+          status,
+          projectId: 1, // GLOBAL project
+        };
+      }
 
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          title,
-          description,
-          acceptanceCriteria,
-          businessValue: businessValue === "" ? null : Number(businessValue),
-          priority, // must match StoryPriority enum in backend
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const txt = await response.text();
-        throw new Error(txt || `Failed to ${isEditMode ? "update" : "create"} story`);
+        throw new Error(
+          txt || `Failed to ${isEditMode ? "update" : "create"} release plan`
+        );
       }
 
-      // tell parent to reload stories
       onCreated?.();
-      resetForm();
       onClose();
     } catch (e: any) {
       setError(e.message);
@@ -148,14 +170,11 @@ export default function CreateUserStoryModal({
           }}
         >
           <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>
-            {isEditMode ? "Edit User Story" : "Create User Story"}
+            {isEditMode ? "Edit Release Plan" : "Create Release Plan"}
           </h2>
           <button
             type="button"
-            onClick={() => {
-              resetForm();
-              onClose();
-            }}
+            onClick={onClose}
             style={{
               border: "none",
               background: "transparent",
@@ -184,19 +203,17 @@ export default function CreateUserStoryModal({
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Title */}
+          {/* Name */}
           <div style={{ marginBottom: 10 }}>
-            <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-            >
-              Title *
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
+              Release Name *
             </label>
             <input
               type="text"
               required
-              placeholder="As a user, I want to..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Version 1.0, Q1 Release"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               style={{
                 width: "100%",
                 marginTop: 4,
@@ -210,40 +227,13 @@ export default function CreateUserStoryModal({
 
           {/* Description */}
           <div style={{ marginBottom: 10 }}>
-            <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-            >
-              Description *
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
+              Description
             </label>
             <textarea
-              required
-              placeholder="Describe the story, context, etc."
+              placeholder="Release Description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-                resize: "vertical",
-                minHeight: 70,
-              }}
-            />
-          </div>
-
-          {/* Acceptance Criteria */}
-          <div style={{ marginBottom: 10 }}>
-            <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-            >
-              Acceptance Criteria
-            </label>
-            <textarea
-              placeholder="Given..., when..., then..."
-              value={acceptanceCriteria}
-              onChange={(e) => setAcceptanceCriteria(e.target.value)}
               style={{
                 width: "100%",
                 marginTop: 4,
@@ -257,30 +247,48 @@ export default function CreateUserStoryModal({
             />
           </div>
 
-          {/* Business value + priority */}
+          {/* Goals */}
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
+              Goals
+            </label>
+            <textarea
+              placeholder="Goals"
+              value={goals}
+              onChange={(e) => setGoals(e.target.value)}
+              style={{
+                width: "100%",
+                marginTop: 4,
+                padding: "7px 10px",
+                borderRadius: 8,
+                border: "1px solid #cbd5e1",
+                fontSize: 14,
+                resize: "vertical",
+                minHeight: 60,
+              }}
+            />
+          </div>
+
+          {/* Start Date and Target Date */}
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: 12,
-              marginBottom: 14,
+              marginBottom: 10,
             }}
           >
             <div>
               <label
                 style={{ display: "block", fontSize: 13, fontWeight: 500 }}
               >
-                Business Value
+                Start Date *
               </label>
               <input
-                type="number"
-                placeholder="0"
-                value={businessValue}
-                onChange={(e) =>
-                  setBusinessValue(
-                    e.target.value === "" ? "" : Number(e.target.value)
-                  )
-                }
+                type="date"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 style={{
                   width: "100%",
                   marginTop: 4,
@@ -295,13 +303,13 @@ export default function CreateUserStoryModal({
               <label
                 style={{ display: "block", fontSize: 13, fontWeight: 500 }}
               >
-                Priority
+                Target Date *
               </label>
-              <select
-                value={priority}
-                onChange={(e) =>
-                  setPriority(e.target.value as PriorityOption)
-                }
+              <input
+                type="date"
+                required
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
                 style={{
                   width: "100%",
                   marginTop: 4,
@@ -310,13 +318,32 @@ export default function CreateUserStoryModal({
                   border: "1px solid #cbd5e1",
                   fontSize: 14,
                 }}
-              >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="CRITICAL">Critical</option>
-              </select>
+              />
             </div>
+          </div>
+
+          {/* Status */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as StatusOption)}
+              style={{
+                width: "100%",
+                marginTop: 4,
+                padding: "7px 10px",
+                borderRadius: 8,
+                border: "1px solid #cbd5e1",
+                fontSize: 14,
+              }}
+            >
+              <option value="PLANNED">Planned</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
           </div>
 
           {/* Buttons */}
@@ -330,10 +357,7 @@ export default function CreateUserStoryModal({
           >
             <button
               type="button"
-              onClick={() => {
-                resetForm();
-                onClose();
-              }}
+              onClick={onClose}
               style={{
                 padding: "7px 14px",
                 borderRadius: 8,
@@ -359,9 +383,13 @@ export default function CreateUserStoryModal({
                 cursor: "pointer",
               }}
             >
-              {isSubmitting 
-                ? (isEditMode ? "Updating..." : "Creating...") 
-                : (isEditMode ? "Update Story" : "Create Story")}
+              {isSubmitting
+                ? isEditMode
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditMode
+                ? "Update Release"
+                : "Create Release"}
             </button>
           </div>
         </form>

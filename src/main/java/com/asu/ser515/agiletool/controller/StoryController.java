@@ -1,11 +1,12 @@
 package com.asu.ser515.agiletool.controller;
 
+import com.asu.ser515.agiletool.dto.EstimateRequest;
+
 import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.service.UserStoryService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -69,19 +70,46 @@ public class StoryController {
         }
     }
 
+    @PutMapping("/{id}/estimate")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateStoryEstimation(
+            @PathVariable long id,
+            @RequestBody EstimateRequest estimateRequest) {
+        try {
+            UserStory updated =
+                    userStoryService.updateEstimation(id, estimateRequest.getStoryPoints());
+
+            return ResponseEntity.ok(updated);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStatusReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateStatus(id, req.getStatus());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+
     public static class CreateStoryReq {
         @NotBlank(message = "Title is required")
-        @Size(max = 500, message = "Title must not exceed 500 characters")
         private String title;
 
         @NotBlank(message = "Description is required")
         private String description;
 
         private String acceptanceCriteria;
-        
-        @Min(value = 0, message = "Business value must be 0 or greater")
         private Integer businessValue;
-        
         private StoryPriority priority;
 
         public String getTitle() { return title; }
@@ -98,6 +126,19 @@ public class StoryController {
 
         public StoryPriority getPriority() { return priority; }
         public void setPriority(StoryPriority v) { priority = v; }
+    }
+
+    public static class UpdateStatusReq {
+        @NotNull(message = "Status is required")
+        private StoryStatus status;
+
+        public StoryStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(StoryStatus status) {
+            this.status = status;
+        }
     }
     public static class CreateStoryRes {
         private String message; private UserStory story;

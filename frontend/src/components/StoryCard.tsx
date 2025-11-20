@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface StoryCardProps {
-	id?: number
+	id: number
 	title: string
 	description: string
 	priority: 'low' | 'medium' | 'high' | 'critical'
@@ -10,6 +10,7 @@ interface StoryCardProps {
 	assignee: string
 	tags?: string[]
 	onEdit?: (story: any) => void
+	onDragStart?: (storyId: number) => void
 }
 
 export default function StoryCard({
@@ -21,7 +22,8 @@ export default function StoryCard({
 	labels,
 	assignee,
 	tags = [],
-	onEdit
+	onEdit,
+	onDragStart
 }: StoryCardProps): JSX.Element {
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
@@ -39,9 +41,18 @@ export default function StoryCard({
 	}
 
 	return (
-		<div className="story-card">
+		<div
+			className="story-card"
+			draggable
+			onDragStart={(e) => {
+				e.dataTransfer.effectAllowed = 'move'
+				e.dataTransfer.setData('text/plain', id.toString())
+				onDragStart?.(id)
+			}}
+		>
 			<div className="story-card-header">
 				<div className="story-tags-left">
+					<span className="story-id-tag">#{id}</span>
 					<span className={`priority-tag ${getPriorityColor(priority)}`}>
 						{priority === 'critical' && <span className="critical-icon">!</span>}
 						{priority}
@@ -89,4 +100,3 @@ export default function StoryCard({
 		</div>
 	)
 }
-
