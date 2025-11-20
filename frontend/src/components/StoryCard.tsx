@@ -11,6 +11,7 @@ interface StoryCardProps {
 	tags?: string[]
 	onEdit?: (story: any) => void
 	onDragStart?: (storyId: number) => void
+	isSprintReady?: boolean
 }
 
 export default function StoryCard({
@@ -23,7 +24,8 @@ export default function StoryCard({
 	assignee,
 	tags = [],
 	onEdit,
-	onDragStart
+	onDragStart,
+	isSprintReady = true
 }: StoryCardProps): JSX.Element {
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
@@ -40,15 +42,22 @@ export default function StoryCard({
 		}
 	}
 
+	const isDraggable = Boolean(isSprintReady)
+
 	return (
 		<div
 			className="story-card"
-			draggable
+			draggable={isDraggable}
 			onDragStart={(e) => {
+				if (!isDraggable) {
+					e.preventDefault()
+					return
+				}
 				e.dataTransfer.effectAllowed = 'move'
 				e.dataTransfer.setData('text/plain', id.toString())
 				onDragStart?.(id)
 			}}
+			title={isDraggable ? undefined : 'Mark Sprint Ready to move this story'}
 		>
 			<div className="story-card-header">
 				<div className="story-tags-left">

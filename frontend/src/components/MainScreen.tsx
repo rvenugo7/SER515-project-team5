@@ -126,7 +126,15 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   }
 
   const handleStoryDrop = async (storyId: number, newStatus: string) => {
-    const previousStatus = stories.find((s) => s.id === storyId)?.status
+    const story = stories.find((s) => s.id === storyId)
+    const previousStatus = story?.status
+    if (!story) return
+
+    if (!story.isSprintReady && story.status !== newStatus) {
+      alert('Mark this story as Sprint Ready to move it between columns.')
+      return
+    }
+
     const backendStatus = mapFrontendStatusToBackend(newStatus)
 
     setStories((prev) =>
