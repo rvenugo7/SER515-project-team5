@@ -64,6 +64,9 @@ public class UserStory {
     @Column
     private Boolean sprintReady = false;
 
+    @Column
+    private Boolean isStarred = false;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)

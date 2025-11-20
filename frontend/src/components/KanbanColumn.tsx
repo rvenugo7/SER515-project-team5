@@ -11,6 +11,7 @@ interface Story {
 	labels: string[]
 	assignee: string
 	tags?: string[]
+	isSprintReady?: boolean
 }
 
 interface KanbanColumnProps {
@@ -18,7 +19,7 @@ interface KanbanColumnProps {
 	stories: Story[]
 	onEditStory?: (story: Story) => void
 	onStoryDrop?: (storyId: number, newStatus: string) => void
-	onStoryDragStart?: (storyId: number) => void
+	onStoryDragStart?: (storyId: number, isAllowed: boolean) => void
 }
 
 export default function KanbanColumn({
@@ -70,6 +71,7 @@ export default function KanbanColumn({
 							tags={story.tags || []}
 							onEdit={onEditStory}
 							onDragStart={onStoryDragStart}
+							isSprintReady={story.isSprintReady}
 						/>
 					))
 				)}

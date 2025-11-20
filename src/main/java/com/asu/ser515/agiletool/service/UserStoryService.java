@@ -119,4 +119,20 @@ public class UserStoryService {
 
         return storyRepo.save(story);
     }
+
+    @Transactional
+    public UserStory updateSprintReady(Long id, boolean sprintReady) {
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+        story.setSprintReady(sprintReady);
+        return storyRepo.save(story);
+    }
+
+    @Transactional
+    public UserStory updateStarred(Long id, boolean starred) {
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+        story.setIsStarred(starred);
+        return storyRepo.save(story);
+    }
 }
