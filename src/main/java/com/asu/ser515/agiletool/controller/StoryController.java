@@ -99,6 +99,34 @@ public class StoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/sprint-ready")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateSprintReady(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateSprintReadyReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateSprintReady(id, req.isSprintReady());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/star")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateStar(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStarReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateStarred(id, req.isStarred());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
     
 
     public static class CreateStoryReq {
@@ -138,6 +166,40 @@ public class StoryController {
 
         public void setStatus(StoryStatus status) {
             this.status = status;
+        }
+    }
+
+    public static class UpdateSprintReadyReq {
+        @NotNull(message = "Sprint readiness is required")
+        private Boolean sprintReady;
+
+        public Boolean getSprintReady() {
+            return sprintReady;
+        }
+
+        public void setSprintReady(Boolean sprintReady) {
+            this.sprintReady = sprintReady;
+        }
+
+        public boolean isSprintReady() {
+            return sprintReady != null && sprintReady;
+        }
+    }
+
+    public static class UpdateStarReq {
+        @NotNull(message = "Star value is required")
+        private Boolean starred;
+
+        public Boolean getStarred() {
+            return starred;
+        }
+
+        public void setStarred(Boolean starred) {
+            this.starred = starred;
+        }
+
+        public boolean isStarred() {
+            return starred != null && starred;
         }
     }
     public static class CreateStoryRes {

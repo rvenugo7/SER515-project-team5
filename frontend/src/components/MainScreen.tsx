@@ -18,6 +18,8 @@ interface BackendStory {
   status: string
   acceptanceCriteria?: string
   businessValue?: number
+  sprintReady?: boolean
+  isStarred?: boolean
 }
 
 interface FrontendStory {
@@ -200,8 +202,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       assignee: s.assigneeInitials || 'U',
       assigneeName: s.assigneeName,
       tags: [],
-      isStarred: false,
-      isSprintReady: false,
+      isStarred: Boolean((s as any).isStarred),
+      isSprintReady: Boolean((s as any).sprintReady),
     }
   }
 
