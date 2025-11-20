@@ -93,23 +93,20 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 					type="checkbox"
 					checked={isChecked}
 					onChange={(e) => setIsChecked(e.target.checked)}
-					className="story-checkbox tooltipped"
-					data-tooltip="Select story"
-					aria-label="Select story"
+					className="story-checkbox"
+					title="Select"
 				/>
 				<button
-					className={`star-btn ${isStarred ? 'starred' : ''} tooltipped`}
+					className={`star-btn ${isStarred ? 'starred' : ''}`}
 					onClick={() => setIsStarred(!isStarred)}
-					data-tooltip={isStarred ? 'Unstar story' : 'Star story'}
-					aria-label={isStarred ? 'Unstar story' : 'Star story'}
+					title={isStarred ? 'Unstar story' : 'Star story'}
 				>
 					★
 				</button>
 				<button
-					className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''} tooltipped`}
+					className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''}`}
 					onClick={() => setIsSprintReady(!isSprintReady)}
-					data-tooltip={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
-					aria-label={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
+					title={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
 				>
 					{isSprintReady ? '✓' : '○'}
 				</button>
