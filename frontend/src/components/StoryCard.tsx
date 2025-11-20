@@ -52,6 +52,7 @@ export default function StoryCard({
 		>
 			<div className="story-card-header">
 				<div className="story-tags-left">
+					<span className="story-id-tag">#{id}</span>
 					<span className={`priority-tag ${getPriorityColor(priority)}`}>
 						{priority === 'critical' && <span className="critical-icon">!</span>}
 						{priority}
