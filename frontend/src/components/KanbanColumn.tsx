@@ -19,7 +19,7 @@ interface KanbanColumnProps {
 	stories: Story[]
 	onEditStory?: (story: Story) => void
 	onStoryDrop?: (storyId: number, newStatus: string) => void
-	onStoryDragStart?: (storyId: number) => void
+	onStoryDragStart?: (storyId: number, isAllowed: boolean) => void
 }
 
 export default function KanbanColumn({

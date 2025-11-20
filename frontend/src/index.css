@@ -312,6 +312,22 @@ main {
   flex-direction: column;
 }
 
+.story-card.draggable-card {
+  cursor: grab;
+  border: 1px solid #c6f6d5;
+  box-shadow: 0 2px 6px rgba(72, 187, 120, 0.15);
+}
+
+.story-card.draggable-card:active {
+  cursor: grabbing;
+}
+
+.story-card.locked-card {
+  cursor: not-allowed;
+  opacity: 0.82;
+  border: 1px dashed #e2e8f0;
+}
+
 .story-card:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -1175,6 +1191,20 @@ main {
     opacity: 1;
     transform: translate(-50%, 10px);
   }
+.toast-message {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a202c;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
 .sprint-ready-btn.ready {
   background: #68d391;
   border-color: #68d391;

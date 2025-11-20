@@ -10,7 +10,7 @@ interface StoryCardProps {
 	assignee: string
 	tags?: string[]
 	onEdit?: (story: any) => void
-	onDragStart?: (storyId: number) => void
+	onDragStart?: (storyId: number, isAllowed: boolean) => void
 	isSprintReady?: boolean
 }
 
@@ -43,19 +43,21 @@ export default function StoryCard({
 	}
 
 	const isDraggable = Boolean(isSprintReady)
+	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'}`
 
 	return (
 		<div
-			className="story-card"
-			draggable={isDraggable}
+			className={cardClass}
+			draggable
 			onDragStart={(e) => {
 				if (!isDraggable) {
 					e.preventDefault()
+					onDragStart?.(id, false)
 					return
 				}
 				e.dataTransfer.effectAllowed = 'move'
 				e.dataTransfer.setData('text/plain', id.toString())
-				onDragStart?.(id)
+				onDragStart?.(id, true)
 			}}
 			title={isDraggable ? undefined : 'Mark Sprint Ready to move this story'}
 		>

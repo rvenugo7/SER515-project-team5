@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
@@ -46,6 +46,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [editingStory, setEditingStory] = useState<any>(null)
   const [stories, setStories] = useState<FrontendStory[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const toastTimer = useRef<number | null>(null)
 
   // Map backend status to frontend status
   const mapBackendStatusToFrontend = (backendStatus: string): string => {
@@ -83,6 +85,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
 	useEffect(() => {
 		fetchStories()
+		return () => {
+			if (toastTimer.current) {
+				window.clearTimeout(toastTimer.current)
+			}
+		}
 	}, [])
 
   const totalStories = stories.length
@@ -121,8 +128,15 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 		setIsEditModalOpen(true)
 	}
 
-  const handleStoryDragStart = (_storyId: number) => {
-    // Reserved for future visual feedback
+  const handleStoryDragStart = (storyId: number, isAllowed: boolean) => {
+    if (isAllowed) return
+    const story = stories.find((s) => s.id === storyId)
+    if (!story) return
+    const name = story.title || 'Untitled'
+    const message = `#${story.id} ${name} has not been marked as Sprint Ready.`
+    setToastMessage(message)
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToastMessage(null), 2500)
   }
 
   const handleStoryDrop = async (storyId: number, newStatus: string) => {
@@ -131,7 +145,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
     if (!story) return
 
     if (!story.isSprintReady && story.status !== newStatus) {
-      alert('Mark this story as Sprint Ready to move it between columns.')
+      const name = story.title || 'Untitled'
+      const message = `#${story.id} ${name} has not been marked as Sprint Ready.`
+      setToastMessage(message)
+      if (toastTimer.current) window.clearTimeout(toastTimer.current)
+      toastTimer.current = window.setTimeout(() => setToastMessage(null), 2500)
       return
     }
 
@@ -258,6 +276,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
       {activeTab === 'Scrum Board' && (
         <>
+          {toastMessage && (
+            <div className="toast-message">
+              {toastMessage}
+            </div>
+          )}
           {/* Search and Filters */}
           <div className="search-filters">
             <div className="search-bar">
