@@ -43,12 +43,16 @@ export default function StoryCard({
 	}
 
 	const isDraggable = Boolean(isSprintReady)
-	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'}`
+	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'} ${
+		isDraggable ? '' : 'tooltipped'
+	}`.trim()
+	const lockedTooltip = 'Mark Sprint Ready to move this story'
 
 	return (
 		<div
 			className={cardClass}
 			draggable
+			data-tooltip={isDraggable ? undefined : lockedTooltip}
 			onDragStart={(e) => {
 				if (!isDraggable) {
 					e.preventDefault()
@@ -59,7 +63,6 @@ export default function StoryCard({
 				e.dataTransfer.setData('text/plain', id.toString())
 				onDragStart?.(id, true)
 			}}
-			title={isDraggable ? undefined : 'Mark Sprint Ready to move this story'}
 		>
 			<div className="story-card-header">
 				<div className="story-tags-left">

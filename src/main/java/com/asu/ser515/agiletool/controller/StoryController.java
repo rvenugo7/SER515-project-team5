@@ -109,7 +109,7 @@ public class StoryController {
         try {
             UserStory updated = userStoryService.updateSprintReady(id, req.isSprintReady());
             return ResponseEntity.ok(updated);
-        } catch (RuntimeException | IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -123,7 +123,7 @@ public class StoryController {
         try {
             UserStory updated = userStoryService.updateStarred(id, req.isStarred());
             return ResponseEntity.ok(updated);
-        } catch (RuntimeException | IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
