@@ -103,4 +103,34 @@ public class UserStoryService {
 
     return storyRepo.save(story);   
     }
+
+    @Transactional
+    public UserStory updateStatus(Long id, StoryStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("Status is required");
+        }
+
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+
+        story.setStatus(status);
+
+        return storyRepo.save(story);
+    }
+
+    @Transactional
+    public UserStory updateSprintReady(Long id, boolean sprintReady) {
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+        story.setSprintReady(sprintReady);
+        return storyRepo.save(story);
+    }
+
+    @Transactional
+    public UserStory updateStarred(Long id, boolean starred) {
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+        story.setIsStarred(starred);
+        return storyRepo.save(story);
+    }
 }

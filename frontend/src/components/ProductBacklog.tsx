@@ -103,12 +103,24 @@ export default function ProductBacklog({
                     s.id === updatedStory.id
                       ? {
                           ...s,
+                          ...updatedStory,
                           points:
-                            updatedStory.storyPoints ?? updatedStory.points,
+                            (updatedStory as any).storyPoints ??
+                            updatedStory.points ??
+                            s.points,
+                          isSprintReady:
+                            (updatedStory as any).sprintReady ??
+                            updatedStory.isSprintReady ??
+                            s.isSprintReady,
+                          isStarred:
+                            (updatedStory as any).isStarred ??
+                            updatedStory.isStarred ??
+                            s.isStarred,
                         }
                       : s
                   )
                 );
+                onRefresh?.();
               }}
             />
           ))}

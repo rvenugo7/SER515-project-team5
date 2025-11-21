@@ -6,6 +6,7 @@ import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.service.UserStoryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -84,6 +85,48 @@ public class StoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStatusReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateStatus(id, req.getStatus());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/sprint-ready")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateSprintReady(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateSprintReadyReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateSprintReady(id, req.isSprintReady());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/star")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateStar(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStarReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateStarred(id, req.isStarred());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
     
 
     public static class CreateStoryReq {
@@ -111,6 +154,53 @@ public class StoryController {
 
         public StoryPriority getPriority() { return priority; }
         public void setPriority(StoryPriority v) { priority = v; }
+    }
+
+    public static class UpdateStatusReq {
+        @NotNull(message = "Status is required")
+        private StoryStatus status;
+
+        public StoryStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(StoryStatus status) {
+            this.status = status;
+        }
+    }
+
+    public static class UpdateSprintReadyReq {
+        @NotNull(message = "Sprint readiness is required")
+        private Boolean sprintReady;
+
+        public Boolean getSprintReady() {
+            return sprintReady;
+        }
+
+        public void setSprintReady(Boolean sprintReady) {
+            this.sprintReady = sprintReady;
+        }
+
+        public boolean isSprintReady() {
+            return sprintReady != null && sprintReady;
+        }
+    }
+
+    public static class UpdateStarReq {
+        @NotNull(message = "Star value is required")
+        private Boolean starred;
+
+        public Boolean getStarred() {
+            return starred;
+        }
+
+        public void setStarred(Boolean starred) {
+            this.starred = starred;
+        }
+
+        public boolean isStarred() {
+            return starred != null && starred;
+        }
     }
     public static class CreateStoryRes {
         private String message; private UserStory story;

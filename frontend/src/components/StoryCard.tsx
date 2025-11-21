@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface StoryCardProps {
-	id?: number
+	id: number
 	title: string
 	description: string
 	priority: 'low' | 'medium' | 'high' | 'critical'
@@ -10,6 +10,8 @@ interface StoryCardProps {
 	assignee: string
 	tags?: string[]
 	onEdit?: (story: any) => void
+	onDragStart?: (storyId: number, isAllowed: boolean) => void
+	isSprintReady?: boolean
 }
 
 export default function StoryCard({
@@ -21,7 +23,9 @@ export default function StoryCard({
 	labels,
 	assignee,
 	tags = [],
-	onEdit
+	onEdit,
+	onDragStart,
+	isSprintReady = true
 }: StoryCardProps): JSX.Element {
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
@@ -38,10 +42,31 @@ export default function StoryCard({
 		}
 	}
 
+	const isDraggable = Boolean(isSprintReady)
+	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'} ${
+		isDraggable ? '' : 'tooltipped'
+	}`.trim()
+	const lockedTooltip = 'Mark Sprint Ready to move this story'
+
 	return (
-		<div className="story-card">
+		<div
+			className={cardClass}
+			draggable
+			data-tooltip={isDraggable ? undefined : lockedTooltip}
+			onDragStart={(e) => {
+				if (!isDraggable) {
+					e.preventDefault()
+					onDragStart?.(id, false)
+					return
+				}
+				e.dataTransfer.effectAllowed = 'move'
+				e.dataTransfer.setData('text/plain', id.toString())
+				onDragStart?.(id, true)
+			}}
+		>
 			<div className="story-card-header">
 				<div className="story-tags-left">
+					<span className="story-id-tag">#{id}</span>
 					<span className={`priority-tag ${getPriorityColor(priority)}`}>
 						{priority === 'critical' && <span className="critical-icon">!</span>}
 						{priority}
@@ -89,4 +114,3 @@ export default function StoryCard({
 		</div>
 	)
 }
-
