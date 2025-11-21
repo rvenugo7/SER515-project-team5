@@ -834,6 +834,13 @@ main {
   padding: 24px;
 }
 
+.error-text {
+  margin-top: 8px;
+  color: #e53e3e;
+  font-size: 13px;
+}
+
+
 /* Form Styles */
 .add-story-form {
   display: flex;
