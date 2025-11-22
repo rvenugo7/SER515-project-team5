@@ -63,28 +63,64 @@ export default function StoryCard({
 						<span className="status-tag sprint-ready-tag">Sprint Ready</span>
 					)}
 				</div>
-				<button 
-					className="story-menu" 
-					title="More options"
-					onClick={() => {
-						if (onEdit && id) {
-							onEdit({
-								id,
-								title,
-								description,
-								priority,
-								points,
-								labels,
-								assignee,
-								tags,
-								acceptanceCriteria: '',
-								businessValue: undefined
-							})
-						}
-					}}
-				>
-					☰
-				</button>
+				<div className="story-actions-inline">
+					<button
+						className="story-menu"
+						title="More options"
+						onClick={() => {
+							if (onEdit && id) {
+								onEdit({
+									id,
+									title,
+									description,
+									priority,
+									points,
+									labels,
+									assignee,
+									tags,
+									acceptanceCriteria: '',
+									businessValue: undefined
+								})
+							}
+						}}
+					>
+						☰
+					</button>
+					<button
+						className="link-release-btn"
+						title="Link to release plan"
+						onClick={async () => {
+							const input = prompt('Enter Release Plan ID to link this story')
+							if (!input) return
+							const releasePlanId = Number(input)
+							if (Number.isNaN(releasePlanId)) {
+								alert('Release Plan ID must be a number')
+								return
+							}
+							try {
+								const response = await fetch(`/api/stories/${id}/release-plan`, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json'
+									},
+									credentials: 'include',
+									body: JSON.stringify({ releasePlanId })
+								})
+
+								if (!response.ok) {
+									const msg = await response.text()
+									throw new Error(msg || 'Failed to link story to release plan')
+								}
+								alert('Story linked to release plan successfully')
+							} catch (err: any) {
+								console.error(err)
+								alert(err?.message || 'Could not link story to release plan')
+							}
+						}}
+					>
+						Link Release
+					</button>
+				</div>
 			</div>
 			<p className="story-description">{description}</p>
 			<div className="story-card-footer">
