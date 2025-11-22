@@ -28,7 +28,8 @@ export default function CreateUserStoryModal({
   const [description, setDescription] = useState("");
   const [acceptanceCriteria, setAcceptanceCriteria] = useState("");
   const [businessValue, setBusinessValue] = useState<number | "">("");
-  const [priority, setPriority] = useState<PriorityOption>("MEDIUM");
+  const [priority, setPriority] = useState<PriorityOption | null>(null);
+  const [originalPriority, setOriginalPriority] = useState<PriorityOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +45,11 @@ export default function CreateUserStoryModal({
       if (story.priority) {
         const priorityUpper = story.priority.toUpperCase() as PriorityOption;
         setPriority(priorityUpper);
+        setOriginalPriority(priorityUpper);
+      } else {
+        // Story has no priority (null/undefined) - preserve this state
+        setPriority(null);
+        setOriginalPriority(null);
       }
     } else if (!story && isOpen) {
       // Reset form for create mode
@@ -52,6 +58,7 @@ export default function CreateUserStoryModal({
       setAcceptanceCriteria("");
       setBusinessValue("");
       setPriority("MEDIUM");
+      setOriginalPriority(null);
     }
   }, [story, isOpen]);
 
@@ -63,6 +70,7 @@ export default function CreateUserStoryModal({
     setAcceptanceCriteria("");
     setBusinessValue("");
     setPriority("MEDIUM");
+    setOriginalPriority(null);
     setError(null);
   };
 
@@ -85,17 +93,23 @@ export default function CreateUserStoryModal({
       const url = isEditMode ? `/api/stories/${story.id}` : "/api/stories";
       const method = isEditMode ? "PUT" : "POST";
 
+      // Build request body
+      // For priority: 
+      // - In edit mode: send the current priority value (null if originally null and unchanged)
+      // - In create mode: always send MEDIUM as default
+      const requestBody: any = {
+        title,
+        description,
+        acceptanceCriteria,
+        businessValue: businessValue === "" ? null : Number(businessValue),
+        priority: isEditMode ? priority : (priority || "MEDIUM"),
+      };
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          title,
-          description,
-          acceptanceCriteria,
-          businessValue: businessValue === "" ? null : Number(businessValue),
-          priority, // must match StoryPriority enum in backend
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -298,7 +312,7 @@ export default function CreateUserStoryModal({
                 Priority
               </label>
               <select
-                value={priority}
+                value={priority || "MEDIUM"}
                 onChange={(e) =>
                   setPriority(e.target.value as PriorityOption)
                 }
