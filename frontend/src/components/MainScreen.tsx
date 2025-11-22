@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import StoryCard from './StoryCard'
 import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
@@ -18,6 +18,8 @@ interface BackendStory {
   status: string
   acceptanceCriteria?: string
   businessValue?: number
+  sprintReady?: boolean
+  isStarred?: boolean
 }
 
 interface FrontendStory {
@@ -46,6 +48,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [editingStory, setEditingStory] = useState<any>(null)
   const [stories, setStories] = useState<FrontendStory[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const toastTimer = useRef<number | null>(null)
 
   // Map backend status to frontend status
   const mapBackendStatusToFrontend = (backendStatus: string): string => {
@@ -83,6 +87,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
 	useEffect(() => {
 		fetchStories()
+		return () => {
+			if (toastTimer.current) {
+				window.clearTimeout(toastTimer.current)
+			}
+		}
 	}, [])
 
   const totalStories = stories.length
@@ -121,12 +130,31 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 		setIsEditModalOpen(true)
 	}
 
-  const handleStoryDragStart = (_storyId: number) => {
-    // Reserved for future visual feedback
+  const handleStoryDragStart = (storyId: number, isAllowed: boolean) => {
+    if (isAllowed) return
+    const story = stories.find((s) => s.id === storyId)
+    if (!story) return
+    const name = story.title || 'Untitled'
+    const message = `#${story.id} ${name} has not been marked as Sprint Ready.`
+    setToastMessage(message)
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToastMessage(null), 2500)
   }
 
   const handleStoryDrop = async (storyId: number, newStatus: string) => {
-    const previousStatus = stories.find((s) => s.id === storyId)?.status
+    const story = stories.find((s) => s.id === storyId)
+    const previousStatus = story?.status
+    if (!story) return
+
+    if (!story.isSprintReady && story.status !== newStatus) {
+      const name = story.title || 'Untitled'
+      const message = `#${story.id} ${name} has not been marked as Sprint Ready.`
+      setToastMessage(message)
+      if (toastTimer.current) window.clearTimeout(toastTimer.current)
+      toastTimer.current = window.setTimeout(() => setToastMessage(null), 2500)
+      return
+    }
+
     const backendStatus = mapFrontendStatusToBackend(newStatus)
 
     setStories((prev) =>
@@ -174,8 +202,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       assignee: s.assigneeInitials || 'U',
       assigneeName: s.assigneeName,
       tags: [],
-      isStarred: false,
-      isSprintReady: false,
+      isStarred: Boolean((s as any).isStarred),
+      isSprintReady: Boolean((s as any).sprintReady),
     }
   }
 
@@ -250,6 +278,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
       {activeTab === 'Scrum Board' && (
         <>
+          {toastMessage && (
+            <div className="toast-message">
+              {toastMessage}
+            </div>
+          )}
           {/* Search and Filters */}
           <div className="search-filters">
             <div className="search-bar">
