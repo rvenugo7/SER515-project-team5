@@ -1,12 +1,15 @@
 package com.asu.ser515.agiletool.controller;
 
 import com.asu.ser515.agiletool.dto.EstimateRequest;
+import com.asu.ser515.agiletool.dto.ReleasePlanResponseDTO;
 
 import com.asu.ser515.agiletool.models.*;
+import com.asu.ser515.agiletool.service.ReleasePlanService;
 import com.asu.ser515.agiletool.service.UserStoryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +20,11 @@ import java.util.List;
 @RequestMapping("/api/stories")
 public class StoryController {
     private final UserStoryService userStoryService;
-    public StoryController(UserStoryService userStoryService) { this.userStoryService = userStoryService; }
+    private final ReleasePlanService releasePlanService;
+    public StoryController(UserStoryService userStoryService, ReleasePlanService releasePlanService) {
+        this.userStoryService = userStoryService;
+        this.releasePlanService = releasePlanService;
+    }
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
@@ -99,6 +106,27 @@ public class StoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/{id}/release-plan")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
+    public ResponseEntity<?> linkToReleasePlan(
+            @PathVariable Long id,
+            @Valid @RequestBody LinkReleasePlanReq req
+    ) {
+        try {
+            ReleasePlanResponseDTO response = releasePlanService.assignUserStory(req.getReleasePlanId(), id);
+            return ResponseEntity.ok(new LinkReleasePlanRes(
+                    "User story linked to release plan successfully",
+                    id,
+                    response
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error linking user story to release plan: " + e.getMessage());
+        }
+    }
     
 
     public static class CreateStoryReq {
@@ -138,6 +166,55 @@ public class StoryController {
 
         public void setStatus(StoryStatus status) {
             this.status = status;
+        }
+    }
+    public static class LinkReleasePlanReq {
+        @NotNull(message = "Release plan id is required")
+        private Long releasePlanId;
+
+        public Long getReleasePlanId() {
+            return releasePlanId;
+        }
+
+        public void setReleasePlanId(Long releasePlanId) {
+            this.releasePlanId = releasePlanId;
+        }
+    }
+    public static class LinkReleasePlanRes {
+        private String message;
+        private Long storyId;
+        private ReleasePlanResponseDTO releasePlan;
+
+        public LinkReleasePlanRes() {}
+
+        public LinkReleasePlanRes(String message, Long storyId, ReleasePlanResponseDTO releasePlan) {
+            this.message = message;
+            this.storyId = storyId;
+            this.releasePlan = releasePlan;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public Long getStoryId() {
+            return storyId;
+        }
+
+        public void setStoryId(Long storyId) {
+            this.storyId = storyId;
+        }
+
+        public ReleasePlanResponseDTO getReleasePlan() {
+            return releasePlan;
+        }
+
+        public void setReleasePlan(ReleasePlanResponseDTO releasePlan) {
+            this.releasePlan = releasePlan;
         }
     }
     public static class CreateStoryRes {
