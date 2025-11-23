@@ -104,11 +104,11 @@ export default function StoryCard({
 						className="link-release-btn"
 						title="Link to release plan"
 						onClick={async () => {
-							const input = prompt('Enter Release Plan ID to link this story')
+							const input = prompt('Enter Release Plan ID or key (e.g., 12 or REL-012) to link this story')
 							if (!input) return
-							const releasePlanId = Number(input)
-							if (Number.isNaN(releasePlanId)) {
-								alert('Release Plan ID must be a number')
+							const releasePlanId = input.trim()
+							if (!releasePlanId) {
+								alert('Release Plan identifier is required')
 								return
 							}
 							try {
