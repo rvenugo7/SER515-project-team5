@@ -165,6 +165,36 @@ public class ReleasePlanService {
     }
 
     @Transactional
+    public ReleasePlanResponseDTO assignUserStoryByIdentifier(String releasePlanIdentifier, Long userStoryId) {
+        if (releasePlanIdentifier == null || releasePlanIdentifier.isBlank()) {
+            throw new IllegalArgumentException("Release plan identifier is required");
+        }
+
+        String identifier = releasePlanIdentifier.trim();
+        try {
+            Long id = Long.parseLong(identifier);
+            return assignUserStory(id, userStoryId);
+        } catch (NumberFormatException ignored) {
+            // Fall through and try release key lookup.
+        }
+
+        ReleasePlan releasePlan = releasePlanRepo.findByReleaseKey(identifier)
+                .orElseThrow(() -> new IllegalArgumentException("Release plan not found with key: " + identifier));
+
+        UserStory userStory = userStoryRepo.findById(userStoryId)
+                .orElseThrow(() -> new IllegalArgumentException("User story not found with id: " + userStoryId));
+
+        if (!userStory.getProject().getId().equals(releasePlan.getProject().getId())) {
+            throw new IllegalArgumentException("User story must belong to the same project as the release plan");
+        }
+
+        userStory.setReleasePlan(releasePlan);
+        userStoryRepo.save(userStory);
+
+        return toResponseDTO(releasePlan);
+    }
+
+    @Transactional
     public ReleasePlanResponseDTO assignUserStory(Long releasePlanId, Long userStoryId) {
         ReleasePlan releasePlan = releasePlanRepo.findById(releasePlanId)
                 .orElseThrow(() -> new IllegalArgumentException("Release plan not found with id: " + releasePlanId));
