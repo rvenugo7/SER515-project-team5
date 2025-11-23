@@ -114,7 +114,8 @@ public class StoryController {
             @Valid @RequestBody LinkReleasePlanReq req
     ) {
         try {
-            ReleasePlanResponseDTO response = releasePlanService.assignUserStory(req.getReleasePlanId(), id);
+            ReleasePlanResponseDTO response = releasePlanService.assignUserStoryByIdentifier(
+                    req.getReleasePlanId(), id);
             return ResponseEntity.ok(new LinkReleasePlanRes(
                     "User story linked to release plan successfully",
                     id,
@@ -232,14 +233,14 @@ public class StoryController {
         }
     }
     public static class LinkReleasePlanReq {
-        @NotNull(message = "Release plan id is required")
-        private Long releasePlanId;
+        @NotBlank(message = "Release plan id or key is required")
+        private String releasePlanId;
 
-        public Long getReleasePlanId() {
+        public String getReleasePlanId() {
             return releasePlanId;
         }
 
-        public void setReleasePlanId(Long releasePlanId) {
+        public void setReleasePlanId(String releasePlanId) {
             this.releasePlanId = releasePlanId;
         }
     }
