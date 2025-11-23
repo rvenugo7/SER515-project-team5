@@ -20,6 +20,9 @@ interface BackendStory {
   businessValue?: number
   sprintReady?: boolean
   isStarred?: boolean
+  releasePlanId?: number
+  releasePlanKey?: string
+  releasePlanName?: string
 }
 
 interface FrontendStory {
@@ -37,6 +40,9 @@ interface FrontendStory {
   isSprintReady?: boolean
   acceptanceCriteria?: string
   businessValue?: number
+  releasePlanId?: number
+  releasePlanKey?: string
+  releasePlanName?: string
 }
 
 export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
@@ -204,6 +210,9 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       tags: [],
       isStarred: Boolean((s as any).isStarred),
       isSprintReady: Boolean((s as any).sprintReady),
+      releasePlanId: s.releasePlanId,
+      releasePlanKey: s.releasePlanKey,
+      releasePlanName: s.releasePlanName,
     }
   }
 

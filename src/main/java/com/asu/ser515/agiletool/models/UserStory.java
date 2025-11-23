@@ -109,4 +109,17 @@ public class UserStory {
     @JsonIgnore
     @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Task> tasks = new HashSet<>();
+
+    // Convenience accessors exposed in JSON to show linked release info without the full entity graph
+    public Long getReleasePlanId() {
+        return releasePlan != null ? releasePlan.getId() : null;
+    }
+
+    public String getReleasePlanKey() {
+        return releasePlan != null ? releasePlan.getReleaseKey() : null;
+    }
+
+    public String getReleasePlanName() {
+        return releasePlan != null ? releasePlan.getName() : null;
+    }
 }

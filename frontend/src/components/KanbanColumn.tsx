@@ -12,6 +12,8 @@ interface Story {
 	assignee: string
 	tags?: string[]
 	isSprintReady?: boolean
+	releasePlanKey?: string
+	releasePlanName?: string
 }
 
 interface KanbanColumnProps {
@@ -72,6 +74,8 @@ export default function KanbanColumn({
 							onEdit={onEditStory}
 							onDragStart={onStoryDragStart}
 							isSprintReady={story.isSprintReady}
+							releasePlanKey={story.releasePlanKey}
+							releasePlanName={story.releasePlanName}
 						/>
 					))
 				)}
