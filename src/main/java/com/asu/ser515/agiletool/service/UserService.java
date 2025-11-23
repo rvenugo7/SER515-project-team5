@@ -2,6 +2,7 @@ package com.asu.ser515.agiletool.service;
 
 import com.asu.ser515.agiletool.dto.UserProfileUpdateDTO;
 import com.asu.ser515.agiletool.models.User;
+import com.asu.ser515.agiletool.models.UserRole;
 import com.asu.ser515.agiletool.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -9,7 +10,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class UserService {
@@ -109,6 +112,22 @@ public class UserService {
             user.setEmail(dto.getEmail());
         }
 
+        return userRepository.save(user);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User updateUserRoles(Long userId, Set<UserRole> roles) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        if (roles == null || roles.isEmpty()) {
+            throw new RuntimeException("At least one role must be provided");
+        }
+
+        user.setRoles(roles);
         return userRepository.save(user);
     }
 }

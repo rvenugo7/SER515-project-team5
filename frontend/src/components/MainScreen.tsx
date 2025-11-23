@@ -4,6 +4,7 @@ import KanbanColumn from './KanbanColumn'
 import ProductBacklog from './ProductBacklog'
 import ReleasePlans from './ReleasePlans'
 import CreateUserStoryModal from './CreateUserStoryModal'
+import AccountManagement from './AccountManagement'
 
 interface MainScreenProps {
   onLogout?: () => void
@@ -274,6 +275,12 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 				>
 					Release Plans
 				</button>
+				<button
+					className={`nav-tab ${activeTab === 'Account' ? 'active' : ''}`}
+					onClick={() => handleTabClick('Account')}
+				>
+					Account
+				</button>
 			</div>
 
       {activeTab === 'Scrum Board' && (
@@ -406,6 +413,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
 			{activeTab === 'Release Plans' && (
 				<ReleasePlans />
+			)}
+
+			{activeTab === 'Account' && (
+				<AccountManagement />
 			)}
 		</div>
 	)
