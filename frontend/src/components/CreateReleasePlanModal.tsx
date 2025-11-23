@@ -33,6 +33,7 @@ export default function CreateReleasePlanModal({
   const [startDate, setStartDate] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [status, setStatus] = useState<StatusOption>("PLANNED");
+  const [projectId, setProjectId] = useState<number | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +49,7 @@ export default function CreateReleasePlanModal({
       setStartDate(plan.startDate || "");
       setTargetDate(plan.targetDate || "");
       setStatus(plan.status || "PLANNED");
+      setProjectId(plan.projectId);
       // Store original values for change detection
       setOriginalPlan(plan);
     } else if (!plan && isOpen) {
@@ -57,6 +59,7 @@ export default function CreateReleasePlanModal({
       setStartDate("");
       setTargetDate("");
       setStatus("PLANNED");
+      setProjectId(undefined);
       setOriginalPlan(null);
     }
   }, [plan, isOpen]);
@@ -109,7 +112,7 @@ export default function CreateReleasePlanModal({
           startDate,
           targetDate,
           status,
-          projectId: 1, // GLOBAL project
+          projectId,
         };
       }
 
@@ -224,6 +227,30 @@ export default function CreateReleasePlanModal({
               }}
             />
           </div>
+
+          {/* Project Id */}
+          {!isEditMode && (
+            <div style={{ marginBottom: 10 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
+                Project ID *
+              </label>
+              <input
+                type="number"
+                required
+                placeholder="Enter project id"
+                value={projectId ?? ""}
+                onChange={(e) => setProjectId(Number(e.target.value) || undefined)}
+                style={{
+                  width: "100%",
+                  marginTop: 4,
+                  padding: "7px 10px",
+                  borderRadius: 8,
+                  border: "1px solid #e2e8f0",
+                  fontSize: 14,
+                }}
+              />
+            </div>
+          )}
 
           {/* Description */}
           <div style={{ marginBottom: 10 }}>
