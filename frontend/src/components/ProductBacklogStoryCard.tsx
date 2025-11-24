@@ -240,7 +240,7 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 					onClick={() => onEdit?.(story)}
 				>
 					<span className="action-icon">✏️</span>
-					Edit
+					Update
 				</button>
 
 				<button 
