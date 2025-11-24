@@ -23,6 +23,7 @@ export default function AccountManagement(): JSX.Element {
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
 
   const availableRoles = [
     { value: "PRODUCT_OWNER", label: "Product Owner" },
@@ -159,6 +160,37 @@ export default function AccountManagement(): JSX.Element {
       setError("Failed to update roles. Please try again.");
     } finally {
       setIsUpdatingRoles(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: number, username: string) => {
+    if (!window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setIsDeletingUser(true);
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setSuccess("User deleted successfully!");
+        setTimeout(() => setSuccess(null), 3000);
+        await fetchAllUsers();
+      } else {
+        const errorText = await response.text();
+        setError(errorText || "Failed to delete user");
+      }
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      setError("Failed to delete user. Please try again.");
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
@@ -561,20 +593,37 @@ export default function AccountManagement(): JSX.Element {
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => handleEditRoles(user)}
-                          style={{
-                            padding: "6px 12px",
-                            background: "#f1f5f9",
-                            color: "#475569",
-                            border: "1px solid #cbd5e1",
-                            borderRadius: "6px",
-                            fontSize: "13px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Edit Roles
-                        </button>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            onClick={() => handleEditRoles(user)}
+                            style={{
+                              padding: "6px 12px",
+                              background: "#f1f5f9",
+                              color: "#475569",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Edit Roles
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.username)}
+                            disabled={isDeletingUser}
+                            style={{
+                              padding: "6px 12px",
+                              background: isDeletingUser ? "#fca5a5" : "#fee2e2",
+                              color: "#991b1b",
+                              border: "1px solid #fca5a5",
+                              borderRadius: "6px",
+                              fontSize: "13px",
+                              cursor: isDeletingUser ? "not-allowed" : "pointer",
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
