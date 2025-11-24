@@ -16,12 +16,10 @@ export default function AccountManagement(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Profile update states
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
-  // Role management states
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
@@ -370,7 +368,9 @@ export default function AccountManagement(): JSX.Element {
             padding: "24px",
           }}
         >
-          <h2 style={{ margin: "0 0 20px 0", fontSize: "20px", fontWeight: 600 }}>
+          <h2
+            style={{ margin: "0 0 20px 0", fontSize: "20px", fontWeight: 600 }}
+          >
             User Management
           </h2>
 
@@ -464,7 +464,13 @@ export default function AccountManagement(): JSX.Element {
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                       {editingUserId === user.id ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px",
+                          }}
+                        >
                           {availableRoles.map((role) => (
                             <label
                               key={role.value}
@@ -487,7 +493,13 @@ export default function AccountManagement(): JSX.Element {
                           ))}
                         </div>
                       ) : (
-                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "6px",
+                            flexWrap: "wrap",
+                          }}
+                        >
                           {user.roles.map((role) => (
                             <span
                               key={role}
@@ -501,7 +513,8 @@ export default function AccountManagement(): JSX.Element {
                                 fontWeight: 500,
                               }}
                             >
-                              {availableRoles.find((r) => r.value === role)?.label || role}
+                              {availableRoles.find((r) => r.value === role)
+                                ?.label || role}
                             </span>
                           ))}
                         </div>
@@ -515,12 +528,16 @@ export default function AccountManagement(): JSX.Element {
                             disabled={isUpdatingRoles}
                             style={{
                               padding: "6px 12px",
-                              background: isUpdatingRoles ? "#94a3b8" : "#2563eb",
+                              background: isUpdatingRoles
+                                ? "#94a3b8"
+                                : "#2563eb",
                               color: "white",
                               border: "none",
                               borderRadius: "6px",
                               fontSize: "13px",
-                              cursor: isUpdatingRoles ? "not-allowed" : "pointer",
+                              cursor: isUpdatingRoles
+                                ? "not-allowed"
+                                : "pointer",
                             }}
                           >
                             {isUpdatingRoles ? "Saving..." : "Save"}
@@ -535,7 +552,9 @@ export default function AccountManagement(): JSX.Element {
                               border: "none",
                               borderRadius: "6px",
                               fontSize: "13px",
-                              cursor: isUpdatingRoles ? "not-allowed" : "pointer",
+                              cursor: isUpdatingRoles
+                                ? "not-allowed"
+                                : "pointer",
                             }}
                           >
                             Cancel
