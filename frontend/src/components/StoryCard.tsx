@@ -14,6 +14,7 @@ interface StoryCardProps {
 	isSprintReady?: boolean
 	releasePlanKey?: string
 	releasePlanName?: string
+	onLinked?: () => void
 }
 
 export default function StoryCard({
@@ -29,7 +30,8 @@ export default function StoryCard({
 	onDragStart,
 	isSprintReady = true,
 	releasePlanKey,
-	releasePlanName
+	releasePlanName,
+	onLinked
 }: StoryCardProps): JSX.Element {
 	const [linkedPlanKey, setLinkedPlanKey] = React.useState<string | undefined>(
 		releasePlanKey
@@ -163,6 +165,7 @@ export default function StoryCard({
 								const newName = resJson?.releasePlan?.name
 								setLinkedPlanKey(newKey)
 								setLinkedPlanName(newName)
+								onLinked?.()
 								alert('Story linked to release plan successfully')
 							} catch (err: any) {
 								console.error(err)

@@ -331,29 +331,33 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 								title="Backlog"
 								stories={getStoriesByStatus('Backlog')}
 								onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
 							/>
 							<KanbanColumn
 								title="To Do"
 								stories={getStoriesByStatus('To Do')}
 								onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
 							/>
 							<KanbanColumn
 								title="In Progress"
 								stories={getStoriesByStatus('In Progress')}
 								onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
 							/>
 							<KanbanColumn
 								title="Done"
 								stories={getStoriesByStatus('Done')}
 								onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
 							/>
 						</div>
 					)}

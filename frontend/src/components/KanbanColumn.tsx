@@ -22,6 +22,7 @@ interface KanbanColumnProps {
 	onEditStory?: (story: Story) => void
 	onStoryDrop?: (storyId: number, newStatus: string) => void
 	onStoryDragStart?: (storyId: number, isAllowed: boolean) => void
+	onStoryLinked?: () => void
 }
 
 export default function KanbanColumn({
@@ -29,7 +30,8 @@ export default function KanbanColumn({
 	stories,
 	onEditStory,
 	onStoryDrop,
-	onStoryDragStart
+	onStoryDragStart,
+	onStoryLinked
 }: KanbanColumnProps): JSX.Element {
 	const totalPoints = stories.reduce((sum, story) => sum + story.points, 0)
 	const isDoneColumn = title === 'Done'
@@ -76,6 +78,7 @@ export default function KanbanColumn({
 							isSprintReady={story.isSprintReady}
 							releasePlanKey={story.releasePlanKey}
 							releasePlanName={story.releasePlanName}
+							onLinked={onStoryLinked}
 						/>
 					))
 				)}
