@@ -1,6 +1,7 @@
 package com.asu.ser515.agiletool.controller;
 
 import com.asu.ser515.agiletool.dto.UserProfileUpdateDTO;
+import com.asu.ser515.agiletool.dto.UserRoleUpdateDTO;
 import com.asu.ser515.agiletool.models.User;
 import com.asu.ser515.agiletool.service.UserService;
 import jakarta.validation.Valid;
@@ -9,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -65,6 +68,28 @@ public class UserController {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             User updatedUser = userService.updateUserProfile(username, dto);
+            return ResponseEntity.ok(updatedUser);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            List<User> users = userService.getAllUsers();
+            return ResponseEntity.ok(users);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/{id}/roles")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<?> updateUserRoles(@PathVariable Long id, @Valid @RequestBody UserRoleUpdateDTO dto) {
+        try {
+            User updatedUser = userService.updateUserRoles(id, dto.getRoles());
             return ResponseEntity.ok(updatedUser);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
