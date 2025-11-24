@@ -21,6 +21,9 @@ interface BackendStory {
   businessValue?: number;
   sprintReady?: boolean;
   isStarred?: boolean;
+  releasePlanId?: number
+  releasePlanKey?: string
+  releasePlanName?: string
 }
 
 interface FrontendStory {
@@ -38,6 +41,9 @@ interface FrontendStory {
   isSprintReady?: boolean;
   acceptanceCriteria?: string;
   businessValue?: number;
+  releasePlanId?: number
+  releasePlanKey?: string
+  releasePlanName?: string
 }
 
 export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
@@ -206,6 +212,9 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       tags: [],
       isStarred: Boolean((s as any).isStarred),
       isSprintReady: Boolean((s as any).sprintReady),
+      releasePlanId: s.releasePlanId,
+      releasePlanKey: s.releasePlanKey,
+      releasePlanName: s.releasePlanName,
     };
   };
 
@@ -333,29 +342,33 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
                 title="Backlog"
                 stories={getStoriesByStatus("Backlog")}
                 onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
               />
               <KanbanColumn
                 title="To Do"
                 stories={getStoriesByStatus("To Do")}
                 onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
               />
               <KanbanColumn
                 title="In Progress"
                 stories={getStoriesByStatus("In Progress")}
                 onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
               />
               <KanbanColumn
                 title="Done"
                 stories={getStoriesByStatus("Done")}
                 onEditStory={handleEditStory}
-                onStoryDrop={handleStoryDrop}
-                onStoryDragStart={handleStoryDragStart}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
               />
             </div>
           )}

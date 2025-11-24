@@ -165,6 +165,29 @@ public class ReleasePlanService {
     }
 
     @Transactional
+    public ReleasePlanResponseDTO assignUserStoryByIdentifier(String releasePlanIdentifier, Long userStoryId) {
+        if (releasePlanIdentifier == null || releasePlanIdentifier.isBlank()) {
+            throw new IllegalArgumentException("Release plan identifier is required");
+        }
+
+        String identifier = releasePlanIdentifier.trim();
+        ReleasePlan releasePlan;
+        try {
+            Long id = Long.parseLong(identifier);
+            releasePlan = releasePlanRepo.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Release plan not found with id: " + id));
+        } catch (NumberFormatException ignored) {
+            releasePlan = releasePlanRepo.findByReleaseKey(identifier)
+                    .orElseThrow(() -> new IllegalArgumentException("Release plan not found with key: " + identifier));
+        }
+
+        UserStory userStory = userStoryRepo.findById(userStoryId)
+                .orElseThrow(() -> new IllegalArgumentException("User story not found with id: " + userStoryId));
+
+        return assignUserStoryToPlan(releasePlan, userStory);
+    }
+
+    @Transactional
     public ReleasePlanResponseDTO assignUserStory(Long releasePlanId, Long userStoryId) {
         ReleasePlan releasePlan = releasePlanRepo.findById(releasePlanId)
                 .orElseThrow(() -> new IllegalArgumentException("Release plan not found with id: " + releasePlanId));
@@ -172,14 +195,7 @@ public class ReleasePlanService {
         UserStory userStory = userStoryRepo.findById(userStoryId)
                 .orElseThrow(() -> new IllegalArgumentException("User story not found with id: " + userStoryId));
 
-        if (!userStory.getProject().getId().equals(releasePlan.getProject().getId())) {
-            throw new IllegalArgumentException("User story must belong to the same project as the release plan");
-        }
-
-        userStory.setReleasePlan(releasePlan);
-        userStoryRepo.save(userStory);
-
-        return toResponseDTO(releasePlan);
+        return assignUserStoryToPlan(releasePlan, userStory);
     }
 
     @Transactional
@@ -195,6 +211,34 @@ public class ReleasePlanService {
         }
 
         userStory.setReleasePlan(null);
+        userStoryRepo.save(userStory);
+
+        return toResponseDTO(releasePlan);
+    }
+
+    private ReleasePlanResponseDTO assignUserStoryToPlan(ReleasePlan releasePlan, UserStory userStory) {
+        if (releasePlan == null) {
+            throw new IllegalArgumentException("Release plan is required");
+        }
+        if (userStory == null) {
+            throw new IllegalArgumentException("User story is required");
+        }
+
+        Project releasePlanProject = releasePlan.getProject();
+        Project userStoryProject = userStory.getProject();
+
+        if (releasePlanProject == null) {
+            throw new IllegalStateException("Release plan is missing an associated project");
+        }
+        if (userStoryProject == null) {
+            throw new IllegalStateException("User story is missing an associated project");
+        }
+
+        if (!userStoryProject.getId().equals(releasePlanProject.getId())) {
+            throw new IllegalArgumentException("User story must belong to the same project as the release plan");
+        }
+
+        userStory.setReleasePlan(releasePlan);
         userStoryRepo.save(userStory);
 
         return toResponseDTO(releasePlan);

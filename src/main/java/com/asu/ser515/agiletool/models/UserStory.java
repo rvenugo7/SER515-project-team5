@@ -5,9 +5,11 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.proxy.HibernateProxy;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,11 +17,13 @@ import java.util.Set;
 @Entity
 @Table(name = "user_stories")
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserStory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
     
     @NotBlank(message = "Title is required")
@@ -73,7 +77,7 @@ public class UserStory {
     private Project project;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "release_plan_id")
     private ReleasePlan releasePlan;
 
@@ -109,4 +113,31 @@ public class UserStory {
     @JsonIgnore
     @OneToMany(mappedBy = "userStory", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Task> tasks = new HashSet<>();
+
+    // Convenience accessors exposed in JSON to show linked release info without the full entity graph
+    public Long getReleasePlanId() {
+        ReleasePlan rp = unproxyReleasePlan();
+        return rp != null ? rp.getId() : null;
+    }
+
+    public String getReleasePlanKey() {
+        ReleasePlan rp = unproxyReleasePlan();
+        return rp != null ? rp.getReleaseKey() : null;
+    }
+
+    public String getReleasePlanName() {
+        ReleasePlan rp = unproxyReleasePlan();
+        return rp != null ? rp.getName() : null;
+    }
+
+    private ReleasePlan unproxyReleasePlan() {
+        if (releasePlan == null) {
+            return null;
+        }
+        if (releasePlan instanceof HibernateProxy proxy) {
+            Object impl = proxy.getHibernateLazyInitializer().getImplementation();
+            return impl instanceof ReleasePlan ? (ReleasePlan) impl : null;
+        }
+        return releasePlan;
+    }
 }

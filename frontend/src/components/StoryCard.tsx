@@ -12,6 +12,9 @@ interface StoryCardProps {
 	onEdit?: (story: any) => void
 	onDragStart?: (storyId: number, isAllowed: boolean) => void
 	isSprintReady?: boolean
+	releasePlanKey?: string
+	releasePlanName?: string
+	onLinked?: () => void
 }
 
 export default function StoryCard({
@@ -25,8 +28,23 @@ export default function StoryCard({
 	tags = [],
 	onEdit,
 	onDragStart,
-	isSprintReady = true
+	isSprintReady = true,
+	releasePlanKey,
+	releasePlanName,
+	onLinked
 }: StoryCardProps): JSX.Element {
+	const [linkedPlanKey, setLinkedPlanKey] = React.useState<string | undefined>(
+		releasePlanKey
+	)
+	const [linkedPlanName, setLinkedPlanName] = React.useState<string | undefined>(
+		releasePlanName
+	)
+
+	React.useEffect(() => {
+		setLinkedPlanKey(releasePlanKey)
+		setLinkedPlanName(releasePlanName)
+	}, [releasePlanKey, releasePlanName])
+
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
 			case 'low':
@@ -77,28 +95,30 @@ export default function StoryCard({
 						<span className="status-tag sprint-ready-tag">Sprint Ready</span>
 					)}
 				</div>
-				<button 
-					className="story-menu" 
-					title="More options"
-					onClick={() => {
-						if (onEdit && id) {
-							onEdit({
-								id,
-								title,
-								description,
-								priority,
-								points,
-								labels,
-								assignee,
-								tags,
-								acceptanceCriteria: '',
-								businessValue: undefined
-							})
-						}
-					}}
-				>
-					☰
-				</button>
+				<div className="story-actions-inline">
+					<button
+						className="story-menu"
+						title="More options"
+						onClick={() => {
+							if (onEdit && id) {
+								onEdit({
+									id,
+									title,
+									description,
+									priority,
+									points,
+									labels,
+									assignee,
+									tags,
+									acceptanceCriteria: '',
+									businessValue: undefined
+								})
+							}
+						}}
+					>
+						☰
+					</button>
+				</div>
 			</div>
 			<p className="story-description">{description}</p>
 			<div className="story-card-footer">
@@ -110,6 +130,58 @@ export default function StoryCard({
 					))}
 				</div>
 				<div className="assignee-avatar">{assignee}</div>
+			</div>
+			<div className="story-card-footer secondary-footer">
+				<div className="release-link-section">
+					<button
+						className={`link-release-btn enhanced ${linkedPlanKey ? 'linked' : ''}`}
+						title="Link to release plan"
+						onClick={async () => {
+							const input = prompt(
+								'Enter Release Plan ID or key (e.g., 12 or REL-012) to link this story'
+							)
+							if (!input) return
+							const releasePlanId = input.trim()
+							if (!releasePlanId) {
+								alert('Release Plan identifier is required')
+								return
+							}
+							try {
+								const response = await fetch(`/api/stories/${id}/release-plan`, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json'
+									},
+									credentials: 'include',
+									body: JSON.stringify({ releasePlanId })
+								})
+
+								if (!response.ok) {
+									const msg = await response.text()
+									throw new Error(msg || 'Failed to link story to release plan')
+								}
+								const resJson = await response.json()
+								const newKey = resJson?.releasePlan?.releaseKey
+								const newName = resJson?.releasePlan?.name
+								setLinkedPlanKey(newKey)
+								setLinkedPlanName(newName)
+								onLinked?.()
+								alert('Story linked to release plan successfully')
+							} catch (err: any) {
+								console.error(err)
+								alert(err?.message || 'Could not link story to release plan')
+							}
+						}}
+					>
+						{linkedPlanKey ? 'Linked to Release' : 'Link Release'}
+					</button>
+					{linkedPlanKey && (
+						<div className="release-tag">
+							<span className="release-key">{linkedPlanKey}</span>
+							{linkedPlanName && <span className="release-name">{linkedPlanName}</span>}
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	)
