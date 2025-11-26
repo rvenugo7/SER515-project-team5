@@ -27,7 +27,9 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 	const [isSprintReady, setIsSprintReady] = useState(story.isSprintReady || false)
 	const [storyPoints, setStoryPoints] = useState(story.points || 0)
 	const [isSaving, setIsSaving] = useState(false)
-	const [showEstimateModal, setShowEstimateModal] = useState(false);
+	const [showEstimateModal, setShowEstimateModal] = useState(false)
+	const [showEstimateSuccess, setShowEstimateSuccess] = useState(false)
+	const [estimateError, setEstimateError] = useState<string | null>(null)
 	const [isTogglingStar, setIsTogglingStar] = useState(false)
 	const [isTogglingSprint, setIsTogglingSprint] = useState(false)
 
@@ -63,15 +65,19 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 	}
 
 	const updateEstimation = async () => {
+		if(storyPoints <= 0){
+			setEstimateError('Story points must be greater than zero')
+			return
+		}
 		setIsSaving(true)
+		setEstimateError(null)
 		try{
 			const response = await fetch(`/api/stories/${story.id}/estimate`, {
 				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-		
-				},credentials: "include",
-				body: JSON.stringify({ storyPoints }),
+				headers: {"Content-Type": "application/json"},
+					credentials: "include",
+					body: JSON.stringify({ storyPoints }),
+				
 			})
 
 			if (!response.ok){
@@ -79,16 +85,19 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 			}
 
 			const updatedStory = await response.json()
+			const nextPoints = updatedStory.storyPoints ?? storyPoints
 
 			setStoryPoints(updatedStory.storyPoints ?? storyPoints)
-			if (onUpdate) {
-    			onUpdate(updatedStory);   
-			}
+			onUpdate?.({
+      			...story,
+      			...updatedStory,
+      			points: nextPoints,
+    })
 
-			alert("Estimation updated!")
+			setShowEstimateSuccess(true) 
 		} catch (err){
 			console.error(err)
-			alert("Could not update estimation")
+			setEstimateError("Could not update estimation")
 		} finally {
 			setIsSaving(false)
 		}
@@ -269,20 +278,28 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 							onChange={(e) => setStoryPoints(Number(e.target.value))}
 						/>
 
+						{estimateError && <p className="error-text">{estimateError}</p>}
+
 						<div className="form-actions">
 							<button
 								className="btn-submit"
-								onClick={() => {
-									updateEstimation();
-									setShowEstimateModal(false);
+								disabled={isSaving}
+								onClick={async() => {
+									await updateEstimation()
+									if(!estimateError){
+										setShowEstimateModal(false)
+									}
+									
 								}}
 							>
-								Save
+								{isSaving ? 'Saving…' : 'Save'}
 							</button>
 
 							<button
 								className="btn-cancel"
 								onClick={() => setShowEstimateModal(false)}
+								disabled={isSaving}
+								
 							>
 								Cancel
 							</button>
@@ -293,6 +310,24 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 				</div>
 			</div>
 		)}
+
+		{showEstimateSuccess && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h2>Story Points Updated</h2>
+            </div>
+            <div className="modal-body">
+              <p>The story points were saved successfully.</p>
+              <div className="form-actions">
+                <button className="btn-submit" onClick={() => setShowEstimateSuccess(false)}>
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
 	</>
 
