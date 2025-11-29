@@ -40,6 +40,14 @@ public class UserService {
             throw new RuntimeException("Selection must be done!");
         }
 
+        if (user.getRoles().size() != 1) {
+            throw new RuntimeException("Exactly one role must be selected.");
+        }
+
+        if (user.getRoles().contains(UserRole.SYSTEM_ADMIN)) {
+            throw new RuntimeException("System Admin accounts cannot be self-registered.");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         return userRepository.save(user);
