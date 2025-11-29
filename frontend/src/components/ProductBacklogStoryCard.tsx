@@ -13,6 +13,8 @@ interface Story {
 	tags?: string[]
 	isStarred?: boolean
 	isSprintReady?: boolean
+	acceptanceCriteria?: string
+	businessValue?: number
 }
 
 interface ProductBacklogStoryCardProps {
@@ -32,6 +34,7 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 	const [estimateError, setEstimateError] = useState<string | null>(null)
 	const [isTogglingStar, setIsTogglingStar] = useState(false)
 	const [isTogglingSprint, setIsTogglingSprint] = useState(false)
+	const [showDetails, setShowDetails] = useState(false)
 
 	useEffect(() => {
 		setIsStarred(story.isStarred || false)
@@ -230,7 +233,11 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 			</div>
 
 			<div className="story-actions">
-				<button className="action-btn view-btn">
+				<button
+					className="action-btn view-btn"
+					title="View story details"
+					onClick={() => setShowDetails(true)}
+				>
 					<span className="action-icon">👁</span>
 					View Details
 				</button>
@@ -253,6 +260,39 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 				</button>
 			</div>
 		</div>
+
+		{showDetails && (
+			<div className="modal-overlay">
+				<div className="modal-container" style={{ maxWidth: 480 }}>
+					<div className="modal-header">
+						<h2>Story Details</h2>
+						<button className="modal-close-btn" onClick={() => setShowDetails(false)}>
+							×
+						</button>
+					</div>
+					<div className="modal-body">
+						<p className="modal-field"><strong>Title:</strong> {story.title}</p>
+						<p className="modal-field"><strong>Description:</strong> {story.description}</p>
+						<p className="modal-field">
+							<strong>Acceptance Criteria:</strong>{' '}
+							{story.acceptanceCriteria ? story.acceptanceCriteria : '—'}
+						</p>
+						<p className="modal-field">
+							<strong>Business Value:</strong>{' '}
+							{story.businessValue !== undefined ? story.businessValue : '—'}
+						</p>
+						<p className="modal-field"><strong>Status:</strong> {story.status}</p>
+						<p className="modal-field"><strong>Priority:</strong> {story.priority}</p>
+						<p className="modal-field"><strong>Story Points:</strong> {story.points}</p>
+					</div>
+					<div className="form-actions">
+						<button className="btn-cancel" onClick={() => setShowDetails(false)}>
+							Close
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
 
 		{showEstimateModal && (
 			<div className="modal-overlay">
