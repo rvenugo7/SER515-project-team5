@@ -12,6 +12,8 @@ interface Story {
 	assignee: string
 	tags?: string[]
 	isSprintReady?: boolean
+	acceptanceCriteria?: string
+	businessValue?: number
 	releasePlanKey?: string
 	releasePlanName?: string
 }
@@ -73,6 +75,8 @@ export default function KanbanColumn({
 							labels={story.labels}
 							assignee={story.assignee}
 							tags={story.tags || []}
+							acceptanceCriteria={story.acceptanceCriteria}
+							businessValue={story.businessValue}
 							onEdit={onEditStory}
 							onDragStart={onStoryDragStart}
 							isSprintReady={story.isSprintReady}
