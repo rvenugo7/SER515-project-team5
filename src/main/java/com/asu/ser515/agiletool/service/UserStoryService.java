@@ -135,4 +135,12 @@ public class UserStoryService {
         story.setIsStarred(starred);
         return storyRepo.save(story);
     }
+
+    @Transactional
+    public UserStory updateMvp(Long id, boolean mvp) {
+        UserStory story = storyRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
+        story.setIsMvp(mvp);
+        return storyRepo.save(story);
+    }
 }
