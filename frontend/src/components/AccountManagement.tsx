@@ -19,6 +19,10 @@ export default function AccountManagement(): JSX.Element {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
@@ -108,6 +112,52 @@ export default function AccountManagement(): JSX.Element {
       setError("Failed to update profile. Please try again.");
     } finally {
       setIsUpdatingProfile(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!currentPassword || !newPassword) {
+      setError("Please enter your current password and a new password.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("New password and confirmation do not match.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+
+    try {
+      const response = await fetch("/api/users/me/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      if (response.ok) {
+        setSuccess("Password updated successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setTimeout(() => setSuccess(null), 3000);
+      } else {
+        const errorText = await response.text();
+        setError(errorText || "Failed to update password");
+      }
+    } catch (err) {
+      console.error("Error updating password:", err);
+      setError("Failed to update password. Please try again.");
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -388,6 +438,117 @@ export default function AccountManagement(): JSX.Element {
             {isUpdatingProfile ? "Updating..." : "Update Profile"}
           </button>
         </form>
+
+        <div
+          style={{
+            marginTop: "24px",
+            paddingTop: "16px",
+            borderTop: "1px solid #e2e8f0",
+          }}
+        >
+          <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600 }}>
+            Change Password
+          </h3>
+          <form onSubmit={handlePasswordUpdate}>
+            <div style={{ marginBottom: "16px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "6px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#4a5568",
+                }}
+              >
+                Current Password
+              </label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "6px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#4a5568",
+                }}
+              >
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "6px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#4a5568",
+                }}
+              >
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter new password"
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isUpdatingPassword}
+              style={{
+                padding: "8px 16px",
+                background: isUpdatingPassword ? "#94a3b8" : "#2563eb",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: 500,
+                cursor: isUpdatingPassword ? "not-allowed" : "pointer",
+              }}
+            >
+              {isUpdatingPassword ? "Updating..." : "Update Password"}
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* User Management Section (Admin Only) */}
