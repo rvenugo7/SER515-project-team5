@@ -1,6 +1,7 @@
 package com.asu.ser515.agiletool.controller;
 
 import com.asu.ser515.agiletool.dto.EstimateRequest;
+import com.asu.ser515.agiletool.dto.JiraIssueResponse;
 import com.asu.ser515.agiletool.dto.ReleasePlanResponseDTO;
 
 import com.asu.ser515.agiletool.models.*;
@@ -90,6 +91,20 @@ public class StoryController {
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/export/jira")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> exportToJira(@PathVariable Long id) {
+        try {
+            JiraIssueResponse response = userStoryService.exportStoryToJira(id);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error exporting story to JIRA: " + e.getMessage());
         }
     }
 
