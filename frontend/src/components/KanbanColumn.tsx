@@ -83,7 +83,6 @@ export default function KanbanColumn({
 					))
 				)}
 			</div>
-			<button className="add-story-link">+ Add Story</button>
 		</div>
 	)
 }
