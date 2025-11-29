@@ -7,9 +7,7 @@ import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.service.ReleasePlanService;
 import com.asu.ser515.agiletool.service.UserStoryService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -159,21 +157,17 @@ public class StoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
+    
 
     public static class CreateStoryReq {
         @NotBlank(message = "Title is required")
-        @Size(max = 500, message = "Title must not exceed 500 characters")
         private String title;
 
         @NotBlank(message = "Description is required")
         private String description;
 
         private String acceptanceCriteria;
-
-        @Min(value = 0, message = "Business value must be 0 or greater")
         private Integer businessValue;
-
         private StoryPriority priority;
 
         public String getTitle() { return title; }
