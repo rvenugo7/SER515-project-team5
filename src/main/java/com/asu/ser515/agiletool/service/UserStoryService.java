@@ -150,4 +150,11 @@ public class UserStoryService {
         UserStory story = getStoryById(id);
         return jiraService.createIssueFromStory(story);
     }
+
+    @Transactional
+    public UserStory updateMvp(Long id, boolean mvp) {
+        UserStory story = getStoryById(id);
+        story.setIsMvp(mvp);
+        return storyRepo.save(story);
+    }
 }
