@@ -46,6 +46,14 @@ interface FrontendStory {
   releasePlanName?: string
 }
 
+interface CurrentUser {
+  id: number;
+  username: string;
+  email?: string;
+  fullName?: string;
+  roles: string[];
+}
+
 export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [activeTab, setActiveTab] = useState("Scrum Board");
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +62,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [stories, setStories] = useState<FrontendStory[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
@@ -94,6 +103,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
   useEffect(() => {
     fetchStories();
+    fetchCurrentUser();
     return () => {
       if (toastTimer.current) {
         window.clearTimeout(toastTimer.current);
@@ -237,6 +247,29 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
     }
   };
 
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch("/api/users/me", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const user: CurrentUser = await response.json();
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch current user:", error);
+      setCurrentUser(null);
+    }
+  };
+
+  const canManageSprintReady = Boolean(
+    currentUser?.roles?.some(
+      (role) => role === "PRODUCT_OWNER" || role === "SCRUM_MASTER"
+    )
+  );
+
   return (
     <div className="scrum-container">
       {/* Header */}
@@ -376,7 +409,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       )}
 
       {activeTab === "Product Backlog" && (
-        <ProductBacklog stories={stories} onRefresh={fetchStories} />
+        <ProductBacklog
+          stories={stories}
+          onRefresh={fetchStories}
+          canEditSprintReady={canManageSprintReady}
+        />
       )}
       {isCreateOpen && (
         <div

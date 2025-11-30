@@ -133,7 +133,7 @@ public class StoryController {
     
 
     @PutMapping("/{id}/sprint-ready")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER')")
     public ResponseEntity<?> updateSprintReady(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSprintReadyReq req
