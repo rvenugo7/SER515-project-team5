@@ -174,6 +174,21 @@ public class StoryController {
     }
     
 
+    @PutMapping("/{id}/mvp")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
+    public ResponseEntity<?> updateMvp(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateMvpReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateMvp(id, req.isMvp());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
     public static class CreateStoryReq {
         @NotBlank(message = "Title is required")
         private String title;
@@ -247,6 +262,24 @@ public class StoryController {
             return starred != null && starred;
         }
     }
+
+    public static class UpdateMvpReq {
+        @NotNull(message = "MVP value is required")
+        private Boolean mvp;
+
+        public Boolean getMvp() {
+            return mvp;
+        }
+
+        public void setMvp(Boolean mvp) {
+            this.mvp = mvp;
+        }
+
+        public boolean isMvp() {
+            return mvp != null && mvp;
+        }
+    }
+
     public static class LinkReleasePlanReq {
         @NotBlank(message = "Release plan id or key is required")
         private String releasePlanId;

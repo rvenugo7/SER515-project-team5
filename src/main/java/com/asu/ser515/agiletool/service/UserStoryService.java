@@ -139,6 +139,7 @@ public class UserStoryService {
         return storyRepo.save(story);
     }
 
+
     @Transactional(readOnly = true)
     public UserStory getStoryById(Long id) {
         return storyRepo.findById(id)
@@ -149,5 +150,12 @@ public class UserStoryService {
     public JiraIssueResponse exportStoryToJira(Long id) {
         UserStory story = getStoryById(id);
         return jiraService.createIssueFromStory(story);
+
+    @Transactional
+    public UserStory updateMvp(Long id, boolean mvp) {
+        UserStory story = getStoryByID(id)
+        story.setIsMvp(mvp);
+        return storyRepo.save(story);
+
     }
 }
