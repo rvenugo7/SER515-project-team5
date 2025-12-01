@@ -9,6 +9,8 @@ interface StoryCardProps {
 	labels: string[]
 	assignee: string
 	tags?: string[]
+	acceptanceCriteria?: string
+	businessValue?: number
 	onEdit?: (story: any) => void
 	onDragStart?: (storyId: number, isAllowed: boolean) => void
 	isSprintReady?: boolean
@@ -31,7 +33,9 @@ export default function StoryCard({
 	isSprintReady = true,
 	releasePlanKey,
 	releasePlanName,
-	onLinked
+	onLinked,
+	acceptanceCriteria,
+	businessValue
 }: StoryCardProps): JSX.Element {
 	const [linkedPlanKey, setLinkedPlanKey] = React.useState<string | undefined>(
 		releasePlanKey
@@ -110,8 +114,8 @@ export default function StoryCard({
 									labels,
 									assignee,
 									tags,
-									acceptanceCriteria: '',
-									businessValue: undefined
+									acceptanceCriteria,
+									businessValue
 								})
 							}
 						}}

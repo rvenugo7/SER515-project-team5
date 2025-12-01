@@ -40,6 +40,14 @@ public class UserService {
             throw new RuntimeException("Selection must be done!");
         }
 
+        if (user.getRoles().size() != 1) {
+            throw new RuntimeException("Exactly one role must be selected.");
+        }
+
+        if (user.getRoles().contains(UserRole.SYSTEM_ADMIN)) {
+            throw new RuntimeException("System Admin accounts cannot be self-registered.");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         return userRepository.save(user);
@@ -86,6 +94,22 @@ public class UserService {
     public User getCurrentUserProfile(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+    }
+
+    public void changePassword(String username, String currentPassword, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        if (currentPassword.equals(newPassword)) {
+            throw new RuntimeException("New password must be different from the current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     public User updateUserProfile(String username, UserProfileUpdateDTO dto) {

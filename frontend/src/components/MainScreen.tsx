@@ -222,6 +222,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       tags: [],
       isStarred: Boolean((s as any).isStarred),
       isSprintReady: Boolean((s as any).sprintReady),
+      acceptanceCriteria: (s as any).acceptanceCriteria,
+      businessValue: (s as any).businessValue,
       releasePlanId: s.releasePlanId,
       releasePlanKey: s.releasePlanKey,
       releasePlanName: s.releasePlanName,
