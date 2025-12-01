@@ -97,6 +97,25 @@ main {
   background: #2d3748;
 }
 
+.create-project-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #3182ce;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.create-project-btn:hover {
+  background: #2c5282;
+}
+
 .logout-btn {
   padding: 10px 16px;
   background: white;

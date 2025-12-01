@@ -4,6 +4,7 @@ import KanbanColumn from "./KanbanColumn";
 import ProductBacklog from "./ProductBacklog";
 import ReleasePlans from "./ReleasePlans";
 import CreateUserStoryModal from "./CreateUserStoryModal";
+import CreateProjectModal from "./CreateProjectModal";
 import AccountManagement from "./AccountManagement";
 
 interface MainScreenProps {
@@ -51,6 +52,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All Priorities");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [stories, setStories] = useState<FrontendStory[]>([]);
@@ -251,6 +253,13 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
           </div>
         </div>
         <div className="header-actions">
+          <button
+            className="create-project-btn"
+            onClick={() => setIsCreateProjectOpen(true)}
+          >
+            <span className="plus-icon">+</span>
+            New Project
+          </button>
           {activeTab !== "Product Backlog" && (
             <button
               className="create-story-btn"
@@ -431,6 +440,17 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       {activeTab === "Release Plans" && <ReleasePlans />}
 
       {activeTab === "Account" && <AccountManagement />}
+
+      {isCreateProjectOpen && (
+        <CreateProjectModal
+          isOpen={isCreateProjectOpen}
+          onClose={() => setIsCreateProjectOpen(false)}
+          onCreated={() => {
+            setIsCreateProjectOpen(false);
+            // Optionally refresh data if needed
+          }}
+        />
+      )}
     </div>
   );
 }
