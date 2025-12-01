@@ -101,7 +101,7 @@ public class UserController {
 
     @PatchMapping("/{id}/roles")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public ResponseEntity<?> updateUserRoles(@PathVariable Long id, @Valid @RequestBody UserRoleUpdateDTO dto) {
+    public ResponseEntity<?> updateUserSystemRoles(@PathVariable Long id, @Valid @RequestBody UserRoleUpdateDTO dto) {
         try {
             User updatedUser = userService.updateUserRoles(id, dto.getRoles());
             return ResponseEntity.ok(updatedUser);
