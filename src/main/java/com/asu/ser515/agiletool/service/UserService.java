@@ -10,9 +10,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -22,6 +24,9 @@ public class UserService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ProjectService projectService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -48,9 +53,18 @@ public class UserService {
             throw new RuntimeException("System Admin accounts cannot be self-registered.");
         }
 
+        Set<UserRole> selectedRoles = user.getRoles();
+        UserRole primaryRole = selectedRoles.iterator().next();
+
+        user.setSystemRoles(new HashSet<>());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        com.asu.ser515.agiletool.models.Project defaultProject = projectService.getDefaultProject();
+        projectService.addUserToProject(defaultProject.getId(), savedUser.getId(), primaryRole);
+
+        return savedUser;
     }
 
     public Optional<User> getUserByUsername(String username) {
@@ -73,7 +87,7 @@ public class UserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        entityManager.createNativeQuery("DELETE FROM project_members WHERE user_id = :userId")
+        entityManager.createNativeQuery("DELETE FROM project_member_roles WHERE user_id = :userId")
                 .setParameter("userId", id)
                 .executeUpdate();
         entityManager.createQuery("UPDATE UserStory us SET us.createdBy = NULL WHERE us.createdBy.id = :userId")
@@ -139,11 +153,11 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        if (roles == null || roles.isEmpty()) {
-            throw new RuntimeException("At least one role must be provided");
-        }
+        Set<UserRole> systemRoles = roles.stream()
+                .filter(r -> r == UserRole.SYSTEM_ADMIN)
+                .collect(Collectors.toSet());
 
-        user.setRoles(roles);
+        user.setSystemRoles(systemRoles);
         return userRepository.save(user);
     }
 }

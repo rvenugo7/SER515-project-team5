@@ -22,20 +22,24 @@ public class CustomUserDetailsService implements UserDetailsService {
         // Allow login via either username or email
         User user = userRepository.findByUsername(usernameOrEmail)
                 .or(() -> userRepository.findByEmail(usernameOrEmail))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username or email: " + usernameOrEmail));
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found with username or email: " + usernameOrEmail));
 
         if (user.getActive() == null || !user.getActive()) {
             throw new UsernameNotFoundException("User account is inactive");
         }
 
-        Set<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+        Set<SimpleGrantedAuthority> authorities = user.getSystemRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
                 .collect(Collectors.toSet());
+
+        if (authorities.isEmpty()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        }
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                authorities
-        );
+                authorities);
     }
 }
