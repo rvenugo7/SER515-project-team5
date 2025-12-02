@@ -23,11 +23,13 @@ interface Story {
 interface ProductBacklogProps {
   stories: Story[];
   onRefresh?: () => void;
+  activeProjectId?: number | null;
 }
 
 export default function ProductBacklog({
   stories = [],
   onRefresh,
+  activeProjectId,
 }: ProductBacklogProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [releaseFilter, setReleaseFilter] = useState("All Releases");

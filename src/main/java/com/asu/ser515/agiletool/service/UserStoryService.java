@@ -27,15 +27,18 @@ public class UserStoryService {
                             String description,
                             String acceptanceCriteria,
                             Integer businessValue,
-                            StoryPriority priority) {
+                            StoryPriority priority,
+                            Long projectId) {
 
         if (title == null || title.isBlank())
             throw new IllegalArgumentException("Title is required");
         if (description == null || description.isBlank())
             throw new IllegalArgumentException("Description is required");
 
-        Project project = projectRepo.findById(GLOBAL_PROJECT_ID)
-                .orElseThrow(() -> new IllegalStateException("GLOBAL project missing — seed it first"));
+        // Use provided projectId or fall back to GLOBAL_PROJECT_ID
+        Long targetProjectId = projectId != null ? projectId : GLOBAL_PROJECT_ID;
+        Project project = projectRepo.findById(targetProjectId)
+                .orElseThrow(() -> new IllegalStateException("Project not found with ID: " + targetProjectId));
 
         UserStory s = new UserStory();
         s.setProject(project);
@@ -48,7 +51,9 @@ public class UserStoryService {
 
         s = storyRepo.save(s);
 
-        String storyKey = GLOBAL_KEY + "-" + String.format("%0" + PAD + "d", s.getId());
+        // Generate story key based on project key
+        String projectKey = project.getProjectKey() != null ? project.getProjectKey() : GLOBAL_KEY;
+        String storyKey = projectKey + "-" + String.format("%0" + PAD + "d", s.getId());
         s.setStoryKey(storyKey);
 
         return storyRepo.save(s);
@@ -57,6 +62,11 @@ public class UserStoryService {
     @Transactional(readOnly = true)
     public List<UserStory> listAll() {
         return storyRepo.findAllByOrderByIdAsc();
+    }
+    
+    @Transactional(readOnly = true)
+    public List<UserStory> listByProjectId(Long projectId) {
+        return storyRepo.findByProjectIdOrderByIdAsc(projectId);
     }
 
     @Transactional

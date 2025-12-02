@@ -11,6 +11,14 @@ interface MainScreenProps {
   onLogout?: () => void;
 }
 
+interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  projectKey: string;
+  active: boolean;
+}
+
 interface BackendStory {
   id: number;
   title: string;
@@ -59,6 +67,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
+  
+  // Project management state
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
 
   // Map backend status to frontend status
   const mapBackendStatusToFrontend = (backendStatus: string): string => {
@@ -95,13 +107,53 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   };
 
   useEffect(() => {
-    fetchStories();
+    fetchProjects();
     return () => {
       if (toastTimer.current) {
         window.clearTimeout(toastTimer.current);
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (activeProjectId) {
+      fetchStories();
+    } else {
+      setStories([]);
+      setIsLoading(false);
+    }
+  }, [activeProjectId]);
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch("/api/projects", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const projectList: Project[] = await response.json();
+        setProjects(projectList);
+        
+        // Restore from localStorage if exists, otherwise use first project
+        const stored = localStorage.getItem("activeProjectId");
+        if (stored && projectList.length > 0) {
+          const storedId = parseInt(stored, 10);
+          if (projectList.some(p => p.id === storedId)) {
+            setActiveProjectId(storedId);
+          } else if (projectList.length > 0) {
+            // Stored project no longer exists, use first available
+            setActiveProjectId(projectList[0].id);
+            localStorage.setItem("activeProjectId", projectList[0].id.toString());
+          }
+        } else if (projectList.length > 0 && !activeProjectId) {
+          // No stored project, use first available
+          setActiveProjectId(projectList[0].id);
+          localStorage.setItem("activeProjectId", projectList[0].id.toString());
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+    }
+  };
 
   const totalStories = stories.length;
   const totalPoints = stories.reduce((sum, story) => sum + story.points, 0);
@@ -221,8 +273,14 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   };
 
   const fetchStories = async () => {
+    if (!activeProjectId) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch("/api/stories", {
+      setIsLoading(true);
+      const response = await fetch(`/api/stories?projectId=${activeProjectId}`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -252,6 +310,36 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
             </p>
           </div>
         </div>
+        <div className="header-middle">
+          {projects.length > 0 && (
+            <select
+              className="project-selector"
+              value={activeProjectId || ""}
+              onChange={(e) => {
+                const projectId = parseInt(e.target.value, 10);
+                setActiveProjectId(projectId);
+                localStorage.setItem("activeProjectId", projectId.toString());
+              }}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "8px",
+                border: "2px solid #e2e8f0",
+                fontSize: "14px",
+                fontWeight: 500,
+                backgroundColor: "white",
+                color: "#2d3748",
+                cursor: "pointer",
+                minWidth: "200px",
+              }}
+            >
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name} ({project.projectKey})
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="header-actions">
           <button
             className="create-project-btn"
@@ -260,7 +348,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
             <span className="plus-icon">+</span>
             New Project
           </button>
-          {activeTab !== "Product Backlog" && (
+          {activeTab !== "Product Backlog" && activeProjectId && (
             <button
               className="create-story-btn"
               onClick={() => setIsCreateOpen(true)}
@@ -307,11 +395,23 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
         </button>
       </div>
 
-      {activeTab === "Scrum Board" && (
+          {activeTab === "Scrum Board" && (
         <>
-          {toastMessage && <div className="toast-message">{toastMessage}</div>}
-          {/* Search and Filters */}
-          <div className="search-filters">
+          {!activeProjectId && (
+            <div style={{ 
+              textAlign: "center", 
+              padding: "40px",
+              color: "#718096",
+              fontSize: "16px"
+            }}>
+              Please select a project to view stories
+            </div>
+          )}
+          {activeProjectId && (
+            <>
+              {toastMessage && <div className="toast-message">{toastMessage}</div>}
+              {/* Search and Filters */}
+              <div className="search-filters">
             <div className="search-bar">
               <span className="search-icon">⌕</span>
               <input
@@ -381,11 +481,17 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
               />
             </div>
           )}
+            </>
+          )}
         </>
       )}
 
       {activeTab === "Product Backlog" && (
-        <ProductBacklog stories={stories} onRefresh={fetchStories} />
+        <ProductBacklog 
+          stories={stories} 
+          onRefresh={fetchStories}
+          activeProjectId={activeProjectId}
+        />
       )}
       {isCreateOpen && (
         <div
@@ -406,6 +512,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
               fetchStories();
               setIsCreateOpen(false);
             }}
+            projectId={activeProjectId}
           />
         </div>
       )}
@@ -433,11 +540,14 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
               setEditingStory(null);
             }}
             story={editingStory}
+            projectId={activeProjectId}
           />
         </div>
       )}
 
-      {activeTab === "Release Plans" && <ReleasePlans />}
+      {activeTab === "Release Plans" && (
+        <ReleasePlans activeProjectId={activeProjectId} />
+      )}
 
       {activeTab === "Account" && <AccountManagement />}
 
@@ -445,9 +555,16 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
         <CreateProjectModal
           isOpen={isCreateProjectOpen}
           onClose={() => setIsCreateProjectOpen(false)}
-          onCreated={() => {
+          onCreated={(newProject) => {
             setIsCreateProjectOpen(false);
-            // Optionally refresh data if needed
+            // Refresh projects list
+            fetchProjects().then(() => {
+              // Set the new project as active
+              if (newProject && newProject.projectId) {
+                setActiveProjectId(newProject.projectId);
+                localStorage.setItem("activeProjectId", newProject.projectId.toString());
+              }
+            });
           }}
         />
       )}

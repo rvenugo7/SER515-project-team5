@@ -72,6 +72,14 @@ main {
   color: #718096;
 }
 
+.header-middle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
 .header-actions {
   display: flex;
   align-items: center;

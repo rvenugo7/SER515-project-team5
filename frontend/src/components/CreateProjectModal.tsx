@@ -3,7 +3,7 @@ import React, { useState, FormEvent, useEffect } from "react";
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated?: () => void;
+  onCreated?: (project?: any) => void;
 }
 
 export default function CreateProjectModal({
@@ -32,7 +32,7 @@ export default function CreateProjectModal({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -42,14 +42,44 @@ export default function CreateProjectModal({
       return;
     }
 
-    // Just close the modal for now - no backend integration yet
     setIsSubmitting(true);
-    setTimeout(() => {
-      resetForm();
-      onCreated?.();
-      onClose();
+
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim() || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuccess(`Project "${data.projectKey}" created successfully!`);
+        setTimeout(() => {
+          resetForm();
+          if (onCreated) {
+            // Pass project with projectId field for compatibility
+            onCreated({ ...data, projectId: data.id });
+          }
+          onClose();
+        }, 1500);
+      } else {
+        const errorData = await response.json();
+        setError(
+          errorData.message || errorData.error || "Failed to create project"
+        );
+      }
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      setError("Failed to create project. Please try again.");
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
 
   return (
