@@ -42,7 +42,8 @@ export default function ProductBacklog({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<Story | null>(null);
   const [localStories, setLocalStories] = useState(stories);
-
+  const [selectedStoryIds, setSelectedStoryIds] = useState<number[]>([]);
+  
   React.useEffect(() => {
     setLocalStories(stories);
   }, [stories]);
@@ -58,6 +59,16 @@ export default function ProductBacklog({
   const sprintReadyCount = stories.filter(
     (story) => story.isSprintReady
   ).length;
+
+  const isStorySelected = (id: number) => selectedStoryIds.includes(id);
+
+  const toggleStorySelection = (id: number, checked: boolean) => {
+    setSelectedStoryIds((prev) =>
+      checked ? [...prev, id] : prev.filter((storyId) => storyId !== id)
+    );
+  };
+
+  const clearSelection = () => setSelectedStoryIds([]);
 
   return (
     <div className="product-backlog">
@@ -92,6 +103,10 @@ export default function ProductBacklog({
         >
           <option>All Stories</option>
         </select>
+        <button disabled={selectedStoryIds.length === 0}>
+          Export Selected to Jira
+        </button>
+        <p>{selectedStoryIds.length} story(ies) selected</p>
         <button
           className={`export-btn ${sprintReadyCount === 0 ? "disabled" : ""}`}
           disabled={sprintReadyCount === 0}
@@ -111,6 +126,10 @@ export default function ProductBacklog({
               story={story}
               canEditSprintReady={canEditSprintReady}
               canToggleMvp={canToggleMvp}
+              checked={isStorySelected(story.id)}
+              onToggleCheck={(nextChecked) =>
+                toggleStorySelection(story.id, nextChecked)
+              }
               onEdit={(story) => {
                 setEditingStory(story);
                 setIsEditModalOpen(true);
