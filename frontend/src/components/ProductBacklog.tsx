@@ -68,10 +68,16 @@ export default function ProductBacklog({
     );
   };
 
-  const clearSelection = () => setSelectedStoryIds([]);
+  const selectedStories = localStories.filter((s) =>
+    selectedStoryIds.includes(s.id)
+  );
+  const sprintReadySelections = selectedStories.filter((s) => s.isSprintReady);
+  const notReadySelections = selectedStories.filter((s) => !s.isSprintReady);
+
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
-    <div className="product-backlog">
+  <div className="product-backlog">
       <div className="backlog-header">
         <h2 className="backlog-title">Product Backlog</h2>
         <p className="backlog-description">
@@ -103,13 +109,16 @@ export default function ProductBacklog({
         >
           <option>All Stories</option>
         </select>
-        <button disabled={selectedStoryIds.length === 0}>
-          Export Selected to Jira
-        </button>
-        <p>{selectedStoryIds.length} story(ies) selected</p>
         <button
-          className={`export-btn ${sprintReadyCount === 0 ? "disabled" : ""}`}
-          disabled={sprintReadyCount === 0}
+          className={`export-btn ${
+            selectedStoryIds.length > 0 && notReadySelections.length === 0
+              ? ""
+              : "disabled"
+          }`}
+          disabled={
+            !(selectedStoryIds.length > 0 && notReadySelections.length === 0)
+          }
+          onClick={() => setShowConfirm(true)}
         >
           <span className="export-icon">↓</span>
           Export Sprint-Ready Stories ({sprintReadyCount})
@@ -194,6 +203,82 @@ export default function ProductBacklog({
             }}
             story={editingStory}
           />
+        </div>
+      )}
+
+      {showConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-container confirm-modal">
+            <div className="modal-header">
+              <h3>Export to Jira</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowConfirm(false)}
+                aria-label="Close export confirmation"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>
+                You are about to export {sprintReadySelections.length} sprint-ready
+                stor{selectedStoryIds.length === 1 ? "y" : "ies"}.
+              </p>
+              {notReadySelections.length > 0 && (
+                <div className="warning">
+                  {notReadySelections.length} selected stor
+                  {notReadySelections.length === 1 ? "y is" : "ies are"} not
+                  sprint-ready and will be skipped.
+                </div>
+              )}
+              {sprintReadySelections.map((story) => (
+                <div key={story.id} className="confirm-story-card">
+                  <div className="confirm-field">
+                    <label>Title</label>
+                    <div>{`#${story.id} ${story.title}`}</div>
+                  </div>
+                  <div className="confirm-field">
+                    <label>Description</label>
+                    <p>{story.description || "No description provided"}</p>
+                  </div>
+                  <div className="confirm-row">
+                    <div className="confirm-field">
+                      <label>Acceptance Criteria</label>
+                      <p>{story.acceptanceCriteria || "Not provided"}</p>
+                    </div>
+                    <div className="confirm-field">
+                      <label>Business Value</label>
+                      <p>{story.businessValue ?? "Not set"}</p>
+                    </div>
+                  </div>
+                  <div className="confirm-row">
+                    <div className="confirm-field">
+                      <label>Priority</label>
+                      <p>{story.priority}</p>
+                    </div>
+                    <div className="confirm-field">
+                      <label>Story Points</label>
+                      <p>{story.points ?? story.storyPoints ?? "Not estimated"}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn secondary" onClick={() => setShowConfirm(false)}>
+                Cancel
+              </button>
+              <button
+                className="modal-btn primary"
+                disabled={sprintReadySelections.length === 0}
+                onClick={() => {
+                  setShowConfirm(false);
+                }}
+              >
+                Confirm Export
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
