@@ -21,10 +21,19 @@ interface ProductBacklogStoryCardProps {
 	story: Story
 	onEdit?: (story: Story) => void
 	onUpdate?: (updatedStory: Story) => void
+	checked?: boolean
+	onToggleCheck?: (checked: boolean) => void
 }
 
-export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: ProductBacklogStoryCardProps): JSX.Element {
-	const [isChecked, setIsChecked] = useState(false)
+export default function ProductBacklogStoryCard({
+	story,
+	onEdit,
+	onUpdate,
+	checked,
+	onToggleCheck,
+}: ProductBacklogStoryCardProps): JSX.Element {
+	const [internalChecked, setInternalChecked] = useState(false)
+	const isChecked = checked ?? internalChecked
 	const [isStarred, setIsStarred] = useState(story.isStarred || false)
 	const [isSprintReady, setIsSprintReady] = useState(story.isSprintReady || false)
 	const [storyPoints, setStoryPoints] = useState(story.points || 0)
@@ -112,7 +121,14 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 				<input
 					type="checkbox"
 					checked={isChecked}
-					onChange={(e) => setIsChecked(e.target.checked)}
+					onChange={(e) => {
+						const next = e.target.checked
+						if (onToggleCheck) {
+							onToggleCheck(next)
+						} else {
+							setInternalChecked(next)
+						}
+					}}
 					className="story-checkbox tooltipped"
 					data-tooltip="Select story"
 					aria-label="Select story"
