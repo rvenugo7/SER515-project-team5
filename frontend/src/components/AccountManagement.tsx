@@ -36,6 +36,8 @@ export default function AccountManagement(): JSX.Element {
     { value: "SYSTEM_ADMIN", label: "System Admin" },
   ];
 
+  const systemRoles = [{ value: "SYSTEM_ADMIN", label: "System Admin" }];
+
   useEffect(() => {
     fetchCurrentUser();
   }, []);
@@ -178,11 +180,6 @@ export default function AccountManagement(): JSX.Element {
   };
 
   const handleUpdateRoles = async (userId: number) => {
-    if (selectedRoles.length === 0) {
-      setError("At least one role must be selected");
-      return;
-    }
-
     setError(null);
     setSuccess(null);
     setIsUpdatingRoles(true);
@@ -214,7 +211,11 @@ export default function AccountManagement(): JSX.Element {
   };
 
   const handleDeleteUser = async (userId: number, username: string) => {
-    if (!window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete user "${username}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
@@ -446,7 +447,9 @@ export default function AccountManagement(): JSX.Element {
             borderTop: "1px solid #e2e8f0",
           }}
         >
-          <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600 }}>
+          <h3
+            style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600 }}
+          >
             Change Password
           </h3>
           <form onSubmit={handlePasswordUpdate}>
@@ -664,7 +667,7 @@ export default function AccountManagement(): JSX.Element {
                             gap: "8px",
                           }}
                         >
-                          {availableRoles.map((role) => (
+                          {systemRoles.map((role) => (
                             <label
                               key={role.value}
                               style={{
@@ -684,6 +687,18 @@ export default function AccountManagement(): JSX.Element {
                               {role.label}
                             </label>
                           ))}
+                          <p
+                            style={{
+                              fontSize: "12px",
+                              color: "#718096",
+                              marginTop: "8px",
+                              marginBottom: "0",
+                            }}
+                          >
+                            Note: This manages the System Admin role only.
+                            Project-specific roles (Product Owner, Scrum Master,
+                            Developer) are managed per project.
+                          </p>
                         </div>
                       ) : (
                         <div
@@ -770,16 +785,22 @@ export default function AccountManagement(): JSX.Element {
                             Edit Roles
                           </button>
                           <button
-                            onClick={() => handleDeleteUser(user.id, user.username)}
+                            onClick={() =>
+                              handleDeleteUser(user.id, user.username)
+                            }
                             disabled={isDeletingUser}
                             style={{
                               padding: "6px 12px",
-                              background: isDeletingUser ? "#fca5a5" : "#fee2e2",
+                              background: isDeletingUser
+                                ? "#fca5a5"
+                                : "#fee2e2",
                               color: "#991b1b",
                               border: "1px solid #fca5a5",
                               borderRadius: "6px",
                               fontSize: "13px",
-                              cursor: isDeletingUser ? "not-allowed" : "pointer",
+                              cursor: isDeletingUser
+                                ? "not-allowed"
+                                : "pointer",
                             }}
                           >
                             Delete
