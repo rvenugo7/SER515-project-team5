@@ -42,6 +42,11 @@ export default function CreateProjectModal({
       return;
     }
 
+    if (name.trim().length > 200) {
+      setError("Project name must not exceed 200 characters");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -69,10 +74,29 @@ export default function CreateProjectModal({
           onClose();
         }, 1500);
       } else {
-        const errorData = await response.json();
-        setError(
-          errorData.message || errorData.error || "Failed to create project"
-        );
+        let errorMessage = "Failed to create project";
+        try {
+          const errorData = await response.json();
+          // Handle different error response formats
+          if (typeof errorData === "string") {
+            errorMessage = errorData;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (errorData.details) {
+            // Handle validation errors with details
+            const details = Object.entries(errorData.details)
+              .map(([field, msg]) => `${field}: ${msg}`)
+              .join(", ");
+            errorMessage = errorData.message || `Validation errors: ${details}`;
+          }
+        } catch (parseError) {
+          // If response is not JSON, try to get text
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        setError(errorMessage);
       }
     } catch (error) {
       console.error("Failed to create project:", error);

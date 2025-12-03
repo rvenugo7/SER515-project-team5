@@ -117,6 +117,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
   useEffect(() => {
     if (activeProjectId) {
+      // Clear existing stories and filters immediately when project changes
+      setStories([]);
+      setSearchQuery("");
+      setPriorityFilter("All Priorities");
+      setIsLoading(true);
       fetchStories();
     } else {
       setStories([]);

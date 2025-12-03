@@ -41,6 +41,15 @@ export default function ProductBacklog({
   React.useEffect(() => {
     setLocalStories(stories);
   }, [stories]);
+
+  // Clear filters when project changes
+  React.useEffect(() => {
+    if (activeProjectId) {
+      setSearchQuery("");
+      setReleaseFilter("All Releases");
+      setStoryFilter("All Stories");
+    }
+  }, [activeProjectId]);
   const sprintReadyCount = stories.filter(
     (story) => story.isSprintReady
   ).length;

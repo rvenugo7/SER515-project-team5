@@ -59,6 +59,10 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
   };
 
   useEffect(() => {
+    // Clear existing data immediately when project changes
+    setReleasePlans([]);
+    setFilteredPlans([]);
+    setIsLoading(true);
     fetchReleasePlans();
   }, [activeProjectId]);
 
