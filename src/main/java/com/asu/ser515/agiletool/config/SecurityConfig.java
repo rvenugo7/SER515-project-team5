@@ -1,11 +1,9 @@
 package com.asu.ser515.agiletool.config;
 
-import com.asu.ser515.agiletool.security.CustomMethodSecurityExpressionHandler;
 import com.asu.ser515.agiletool.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,17 +19,9 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
-    @Autowired
-    private CustomMethodSecurityExpressionHandler customExpressionHandler;
-
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public MethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        return customExpressionHandler;
     }
 
     @Bean
