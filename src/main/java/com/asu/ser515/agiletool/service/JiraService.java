@@ -23,13 +23,8 @@ import java.util.Map;
 @Service
 public class JiraService {
 
-    private final RestTemplate restTemplate;
-    private final String baseUrl;
-    private final String userEmail;
-    private final String apiToken;
-    private final String projectKey;
-    private final String issueTypeId;
-    private final String storyPointsFieldId;
+    private final RestTemplateBuilder restTemplateBuilder;
+    private final JiraConfig defaultConfig;
 
     public JiraService(RestTemplateBuilder restTemplateBuilder,
                        @Value("${jira.base-url:}") String baseUrl,
@@ -38,36 +33,51 @@ public class JiraService {
                        @Value("${jira.project-key:}") String projectKey,
                        @Value("${jira.issue-type-id:}") String issueTypeId,
                        @Value("${jira.story-points-field-id:customfield_10016}") String storyPointsFieldId) {
-        this.restTemplate = restTemplateBuilder
-                .rootUri(StringUtils.hasText(baseUrl) ? baseUrl : "")
-                .build();
-        this.baseUrl = baseUrl;
-        this.userEmail = userEmail;
-        this.apiToken = apiToken;
-        this.projectKey = projectKey;
-        this.issueTypeId = issueTypeId;
-        this.storyPointsFieldId = storyPointsFieldId;
+        this.restTemplateBuilder = restTemplateBuilder;
+        this.defaultConfig = new JiraConfig(
+                baseUrl,
+                userEmail,
+                apiToken,
+                projectKey,
+                issueTypeId,
+                storyPointsFieldId
+        );
     }
 
     public JiraIssueResponse createIssueFromStory(UserStory story) {
-        validateConfiguration();
+        return createIssueFromStory(story, defaultConfig);
+    }
+
+    public JiraIssueResponse createIssueFromStory(UserStory story, JiraConfig overrideConfig) {
+        JiraConfig effectiveConfig = overrideConfig == null
+                ? defaultConfig
+                : overrideConfig.merge(defaultConfig);
+        return createIssue(story, effectiveConfig);
+    }
+
+    private JiraIssueResponse createIssue(UserStory story, JiraConfig config) {
+        validateConfiguration(config);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(userEmail, apiToken);
+        headers.setBasicAuth(config.getUserEmail(), config.getApiToken());
 
-        Map<String, Object> payload = buildIssuePayload(story);
+        Map<String, Object> payload = buildIssuePayload(story, config);
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(payload, headers);
 
         try {
+            RestTemplate restTemplate = restTemplateBuilder
+                    .rootUri(config.getBaseUrl())
+                    .build();
+
             ResponseEntity<Map> response = restTemplate.postForEntity("/rest/api/3/issue", requestEntity, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
                 String issueId = body.get("id") != null ? body.get("id").toString() : null;
                 String issueKey = body.get("key") != null ? body.get("key").toString() : null;
                 String self = body.get("self") != null ? body.get("self").toString() : null;
-                String browseUrl = StringUtils.hasText(issueKey) && StringUtils.hasText(baseUrl)
-                        ? baseUrl + "/browse/" + issueKey
+                String browseUrl = StringUtils.hasText(issueKey) && StringUtils.hasText(config.getBaseUrl())
+                        ? config.getBaseUrl() + "/browse/" + issueKey
                         : null;
                 return new JiraIssueResponse(issueId, issueKey, self, browseUrl, "CREATED");
             }
@@ -80,11 +90,11 @@ public class JiraService {
         }
     }
 
-    private Map<String, Object> buildIssuePayload(UserStory story) {
+    private Map<String, Object> buildIssuePayload(UserStory story, JiraConfig config) {
         Map<String, Object> fields = new HashMap<>();
 
-        fields.put("project", Map.of("key", projectKey));
-        fields.put("issuetype", Map.of("id", issueTypeId));
+        fields.put("project", Map.of("key", config.getProjectKey()));
+        fields.put("issuetype", Map.of("id", config.getIssueTypeId()));
         fields.put("summary", story.getTitle());
         fields.put("description", buildDescriptionDocument(story));
 
@@ -92,8 +102,8 @@ public class JiraService {
             fields.put("priority", Map.of("name", mapPriority(story.getPriority())));
         }
 
-        if (story.getStoryPoints() != null && StringUtils.hasText(storyPointsFieldId)) {
-            fields.put(storyPointsFieldId, story.getStoryPoints());
+        if (story.getStoryPoints() != null && StringUtils.hasText(config.getStoryPointsFieldId())) {
+            fields.put(config.getStoryPointsFieldId(), story.getStoryPoints());
         }
 
         return Map.of("fields", fields);
@@ -145,13 +155,74 @@ public class JiraService {
         };
     }
 
-    private void validateConfiguration() {
-        if (!StringUtils.hasText(baseUrl)
-                || !StringUtils.hasText(userEmail)
-                || !StringUtils.hasText(apiToken)
-                || !StringUtils.hasText(projectKey)
-                || !StringUtils.hasText(issueTypeId)) {
+    private void validateConfiguration(JiraConfig config) {
+        if (!StringUtils.hasText(config.getBaseUrl())
+                || !StringUtils.hasText(config.getUserEmail())
+                || !StringUtils.hasText(config.getApiToken())
+                || !StringUtils.hasText(config.getProjectKey())
+                || !StringUtils.hasText(config.getIssueTypeId())) {
             throw new IllegalStateException("JIRA integration is not configured. Please set jira.base-url, jira.user-email, jira.api-token, jira.project-key, and jira.issue-type-id properties.");
+        }
+    }
+
+    public static class JiraConfig {
+        private final String baseUrl;
+        private final String userEmail;
+        private final String apiToken;
+        private final String projectKey;
+        private final String issueTypeId;
+        private final String storyPointsFieldId;
+
+        public JiraConfig(String baseUrl,
+                          String userEmail,
+                          String apiToken,
+                          String projectKey,
+                          String issueTypeId,
+                          String storyPointsFieldId) {
+            this.baseUrl = baseUrl;
+            this.userEmail = userEmail;
+            this.apiToken = apiToken;
+            this.projectKey = projectKey;
+            this.issueTypeId = issueTypeId;
+            this.storyPointsFieldId = storyPointsFieldId;
+        }
+
+        public String getBaseUrl() {
+            return baseUrl;
+        }
+
+        public String getUserEmail() {
+            return userEmail;
+        }
+
+        public String getApiToken() {
+            return apiToken;
+        }
+
+        public String getProjectKey() {
+            return projectKey;
+        }
+
+        public String getIssueTypeId() {
+            return issueTypeId;
+        }
+
+        public String getStoryPointsFieldId() {
+            return storyPointsFieldId;
+        }
+
+        public JiraConfig merge(JiraConfig fallback) {
+            if (fallback == null) {
+                return this;
+            }
+            return new JiraConfig(
+                    StringUtils.hasText(this.baseUrl) ? this.baseUrl : fallback.baseUrl,
+                    StringUtils.hasText(this.userEmail) ? this.userEmail : fallback.userEmail,
+                    StringUtils.hasText(this.apiToken) ? this.apiToken : fallback.apiToken,
+                    StringUtils.hasText(this.projectKey) ? this.projectKey : fallback.projectKey,
+                    StringUtils.hasText(this.issueTypeId) ? this.issueTypeId : fallback.issueTypeId,
+                    StringUtils.hasText(this.storyPointsFieldId) ? this.storyPointsFieldId : fallback.storyPointsFieldId
+            );
         }
     }
 }
