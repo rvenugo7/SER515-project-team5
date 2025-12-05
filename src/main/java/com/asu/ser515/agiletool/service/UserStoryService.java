@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.service;
 
+import com.asu.ser515.agiletool.dto.JiraExportRequest;
 import com.asu.ser515.agiletool.dto.JiraIssueResponse;
 import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.repository.ProjectRepository;
@@ -149,6 +150,20 @@ public class UserStoryService {
     public JiraIssueResponse exportStoryToJira(Long id) {
         UserStory story = getStoryById(id);
         return jiraService.createIssueFromStory(story);
+    }
+
+    @Transactional
+    public JiraIssueResponse exportStoryToJira(Long id, JiraExportRequest request) {
+        UserStory story = getStoryById(id);
+        JiraService.JiraConfig overrideConfig = new JiraService.JiraConfig(
+                request.getBaseUrl(),
+                request.getUserEmail(),
+                request.getApiToken(),
+                request.getProjectKey(),
+                request.getIssueTypeId(),
+                request.getStoryPointsFieldId()
+        );
+        return jiraService.createIssueFromStory(story, overrideConfig);
     }
 
     @Transactional

@@ -20,6 +20,15 @@ interface Story {
   businessValue?: number;
 }
 
+interface JiraFormState {
+  baseUrl: string;
+  userEmail: string;
+  apiToken: string;
+  projectKey: string;
+  issueTypeId: string;
+  storyPointsFieldId: string;
+}
+
 interface ProductBacklogProps {
   stories: Story[];
   onRefresh?: () => void;
@@ -29,6 +38,15 @@ export default function ProductBacklog({
   stories = [],
   onRefresh,
 }: ProductBacklogProps): JSX.Element {
+  const jiraRedirectUrl = import.meta.env.VITE_JIRA_REDIRECT_URL?.trim();
+  const createEmptyJiraForm = (): JiraFormState => ({
+    baseUrl: "",
+    userEmail: "",
+    apiToken: "",
+    projectKey: "",
+    issueTypeId: "",
+    storyPointsFieldId: "customfield_10016",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [releaseFilter, setReleaseFilter] = useState("All Releases");
   const [storyFilter, setStoryFilter] = useState("All Stories");
@@ -36,7 +54,13 @@ export default function ProductBacklog({
   const [editingStory, setEditingStory] = useState<Story | null>(null);
   const [localStories, setLocalStories] = useState(stories);
   const [selectedStoryIds, setSelectedStoryIds] = useState<number[]>([]);
-  
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showJiraModal, setShowJiraModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [jiraForm, setJiraForm] = useState<JiraFormState>(() => createEmptyJiraForm());
+  const [jiraFormError, setJiraFormError] = useState<string | null>(null);
+
   React.useEffect(() => {
     setLocalStories(stories);
   }, [stories]);
@@ -58,7 +82,90 @@ export default function ProductBacklog({
   const sprintReadySelections = selectedStories.filter((s) => s.isSprintReady);
   const notReadySelections = selectedStories.filter((s) => !s.isSprintReady);
 
-  const [showConfirm, setShowConfirm] = useState(false);
+  const requiredJiraFields: Array<keyof JiraFormState> = [
+    "baseUrl",
+    "userEmail",
+    "apiToken",
+    "projectKey",
+    "issueTypeId",
+  ];
+
+  const isJiraFormComplete = requiredJiraFields.every(
+    (field) => jiraForm[field].trim().length > 0
+  );
+
+  const resetJiraForm = () => {
+    setJiraForm(createEmptyJiraForm());
+    setJiraFormError(null);
+  };
+
+  const handleJiraFieldChange = (
+    field: keyof JiraFormState,
+    value: string
+  ) => {
+    setJiraForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleConfirmExport = async () => {
+    if (sprintReadySelections.length === 0 || isExporting) {
+      return;
+    }
+
+    if (!isJiraFormComplete) {
+      setJiraFormError("Please fill in all required Jira connection details.");
+      return;
+    }
+
+    setExportError(null);
+    setJiraFormError(null);
+    setIsExporting(true);
+
+    try {
+      const jiraResponses: Array<{ browseUrl?: string; selfUrl?: string }> = [];
+
+      for (const story of sprintReadySelections) {
+        const response = await fetch(`/api/stories/${story.id}/export/jira`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jiraForm),
+        });
+
+        if (!response.ok) {
+          const txt = await response.text();
+          throw new Error(
+            txt || `Failed to export story #${story.id} to Jira`
+          );
+        }
+
+        const data = await response.json();
+        jiraResponses.push(data);
+      }
+
+      const redirectUrl =
+        jiraResponses.find((res) => res?.browseUrl)?.browseUrl ||
+        jiraResponses.find((res) => res?.selfUrl)?.selfUrl ||
+        null;
+
+      const targetUrl = jiraRedirectUrl || redirectUrl;
+      setShowConfirm(false);
+      setShowJiraModal(false);
+      resetJiraForm();
+      if (targetUrl) {
+        window.location.href = targetUrl;
+      } else {
+        alert("Stories exported to Jira successfully.");
+      }
+      onRefresh?.();
+    } catch (err: any) {
+      setExportError(err.message || "Failed to export stories to Jira.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
   <div className="product-backlog">
@@ -102,7 +209,13 @@ export default function ProductBacklog({
           disabled={
             !(selectedStoryIds.length > 0 && notReadySelections.length === 0)
           }
-          onClick={() => setShowConfirm(true)}
+          onClick={() => {
+            setExportError(null);
+            resetJiraForm();
+            setJiraFormError(null);
+            setShowJiraModal(false);
+            setShowConfirm(true);
+          }}
         >
           <span className="export-icon">↓</span>
           Export Sprint-Ready Stories ({sprintReadyCount})
@@ -190,7 +303,11 @@ export default function ProductBacklog({
               <h3>Export to Jira</h3>
               <button
                 className="modal-close"
-                onClick={() => setShowConfirm(false)}
+                onClick={() => {
+                  setShowConfirm(false);
+                  setExportError(null);
+                  setJiraFormError(null);
+                }}
                 aria-label="Close export confirmation"
               >
                 ×
@@ -206,6 +323,11 @@ export default function ProductBacklog({
                   {notReadySelections.length} selected stor
                   {notReadySelections.length === 1 ? "y is" : "ies are"} not
                   sprint-ready and will be skipped.
+                </div>
+              )}
+              {exportError && (
+                <div className="warning" role="alert">
+                  {exportError}
                 </div>
               )}
               {sprintReadySelections.map((story) => (
@@ -242,7 +364,14 @@ export default function ProductBacklog({
               ))}
             </div>
             <div className="modal-footer">
-              <button className="modal-btn secondary" onClick={() => setShowConfirm(false)}>
+              <button
+                className="modal-btn secondary"
+                onClick={() => {
+                  setShowConfirm(false);
+                  setExportError(null);
+                  setJiraFormError(null);
+                }}
+              >
                 Cancel
               </button>
               <button
@@ -250,9 +379,146 @@ export default function ProductBacklog({
                 disabled={sprintReadySelections.length === 0}
                 onClick={() => {
                   setShowConfirm(false);
+                  setExportError(null);
+                  setJiraFormError(null);
+                  setShowJiraModal(true);
                 }}
               >
                 Confirm Export
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showJiraModal && (
+        <div className="modal-overlay">
+          <div className="modal-container confirm-modal">
+            <div className="modal-header">
+              <h3>Jira Connection</h3>
+              <button
+                className="modal-close"
+                onClick={() => {
+                  setShowJiraModal(false);
+                  setExportError(null);
+                  resetJiraForm();
+                }}
+                aria-label="Close Jira configuration"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Provide your Jira connection details to finish exporting.</p>
+              <div className="jira-config">
+                <div className="jira-config-grid">
+                  <label className="confirm-field">
+                    <span>Base URL *</span>
+                    <input
+                      type="url"
+                      placeholder="https://your-domain.atlassian.net"
+                      value={jiraForm.baseUrl}
+                      onChange={(e) =>
+                        handleJiraFieldChange("baseUrl", e.target.value)
+                      }
+                    />
+                  </label>
+                  <label className="confirm-field">
+                    <span>User Email *</span>
+                    <input
+                      type="email"
+                      placeholder="you@company.com"
+                      value={jiraForm.userEmail}
+                      onChange={(e) =>
+                        handleJiraFieldChange("userEmail", e.target.value)
+                      }
+                    />
+                  </label>
+                  <label className="confirm-field">
+                    <span>API Token *</span>
+                    <input
+                      type="password"
+                      placeholder="Jira API token"
+                      value={jiraForm.apiToken}
+                      onChange={(e) =>
+                        handleJiraFieldChange("apiToken", e.target.value)
+                      }
+                    />
+                  </label>
+                  <label className="confirm-field">
+                    <span>Project Key *</span>
+                    <input
+                      type="text"
+                      placeholder="e.g. ABC"
+                      value={jiraForm.projectKey}
+                      onChange={(e) =>
+                        handleJiraFieldChange("projectKey", e.target.value)
+                      }
+                    />
+                  </label>
+                  <label className="confirm-field">
+                    <span>Issue Type ID *</span>
+                    <input
+                      type="text"
+                      placeholder="e.g. 10001"
+                      value={jiraForm.issueTypeId}
+                      onChange={(e) =>
+                        handleJiraFieldChange("issueTypeId", e.target.value)
+                      }
+                    />
+                  </label>
+                  <label className="confirm-field">
+                    <span>Story Points Field ID</span>
+                    <input
+                      type="text"
+                      placeholder="customfield_10016"
+                      value={jiraForm.storyPointsFieldId}
+                      onChange={(e) =>
+                        handleJiraFieldChange(
+                          "storyPointsFieldId",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+                <p className="jira-hint">
+                  * Required fields. Your API token is only used to contact Jira
+                  for this export.
+                </p>
+              </div>
+              {jiraFormError && (
+                <div className="warning" role="alert">
+                  {jiraFormError}
+                </div>
+              )}
+              {exportError && (
+                <div className="warning" role="alert">
+                  {exportError}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="modal-btn secondary"
+                onClick={() => {
+                  setShowJiraModal(false);
+                  setExportError(null);
+                  resetJiraForm();
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-btn primary"
+                disabled={
+                  sprintReadySelections.length === 0 ||
+                  isExporting ||
+                  !isJiraFormComplete
+                }
+                onClick={handleConfirmExport}
+              >
+                {isExporting ? "Exporting..." : "Submit & Export"}
               </button>
             </div>
           </div>
