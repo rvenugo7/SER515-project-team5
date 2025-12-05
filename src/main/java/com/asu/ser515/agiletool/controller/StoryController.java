@@ -1,15 +1,14 @@
 package com.asu.ser515.agiletool.controller;
 
 import com.asu.ser515.agiletool.dto.EstimateRequest;
+import com.asu.ser515.agiletool.dto.JiraIssueResponse;
 import com.asu.ser515.agiletool.dto.ReleasePlanResponseDTO;
 
 import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.service.ReleasePlanService;
 import com.asu.ser515.agiletool.service.UserStoryService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -100,6 +99,20 @@ public class StoryController {
         }
     }
 
+    @PostMapping("/{id}/export/jira")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> exportToJira(@PathVariable Long id) {
+        try {
+            JiraIssueResponse response = userStoryService.exportStoryToJira(id);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error exporting story to JIRA: " + e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/status")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateStatus(
@@ -138,7 +151,7 @@ public class StoryController {
     
 
     @PutMapping("/{id}/sprint-ready")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER')")
     public ResponseEntity<?> updateSprintReady(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSprintReadyReq req
@@ -164,21 +177,31 @@ public class StoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+    @PutMapping("/{id}/mvp")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
+    public ResponseEntity<?> updateMvp(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateMvpReq req
+    ) {
+        try {
+            UserStory updated = userStoryService.updateMvp(id, req.isMvp());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
 
     public static class CreateStoryReq {
         @NotBlank(message = "Title is required")
-        @Size(max = 500, message = "Title must not exceed 500 characters")
         private String title;
 
         @NotBlank(message = "Description is required")
         private String description;
 
         private String acceptanceCriteria;
-
-        @Min(value = 0, message = "Business value must be 0 or greater")
         private Integer businessValue;
-
         private StoryPriority priority;
 
         public String getTitle() { return title; }
@@ -243,6 +266,24 @@ public class StoryController {
             return starred != null && starred;
         }
     }
+
+    public static class UpdateMvpReq {
+        @NotNull(message = "MVP value is required")
+        private Boolean mvp;
+
+        public Boolean getMvp() {
+            return mvp;
+        }
+
+        public void setMvp(Boolean mvp) {
+            this.mvp = mvp;
+        }
+
+        public boolean isMvp() {
+            return mvp != null && mvp;
+        }
+    }
+
     public static class LinkReleasePlanReq {
         @NotBlank(message = "Release plan id or key is required")
         private String releasePlanId;

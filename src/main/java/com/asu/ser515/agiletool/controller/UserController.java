@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.controller;
 
+import com.asu.ser515.agiletool.dto.ChangePasswordDTO;
 import com.asu.ser515.agiletool.dto.UserProfileUpdateDTO;
 import com.asu.ser515.agiletool.dto.UserRoleUpdateDTO;
 import com.asu.ser515.agiletool.models.User;
@@ -69,6 +70,19 @@ public class UserController {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             User updatedUser = userService.updateUserProfile(username, dto);
             return ResponseEntity.ok(updatedUser);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/me/password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> changePassword(
+            @Valid @RequestBody ChangePasswordDTO dto) {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            userService.changePassword(username, dto.getCurrentPassword(), dto.getNewPassword());
+            return ResponseEntity.ok("Password updated successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
