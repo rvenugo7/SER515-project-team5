@@ -21,6 +21,8 @@ interface BackendStory {
   businessValue?: number;
   sprintReady?: boolean;
   isStarred?: boolean;
+  mvp?: boolean;
+  isMvp?: boolean;
   releasePlanId?: number
   releasePlanKey?: string
   releasePlanName?: string
@@ -37,6 +39,7 @@ interface FrontendStory {
   assignee: string;
   assigneeName?: string;
   tags?: string[];
+  isMvp?: boolean;
   isStarred?: boolean;
   isSprintReady?: boolean;
   acceptanceCriteria?: string;
@@ -208,6 +211,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       | "medium"
       | "high"
       | "critical";
+    const sprintReadyVal = Boolean((s as any).sprintReady);
+    const isMvp = Boolean((s as any).mvp ?? (s as any).isMvp);
+    const tagSet = new Set<string>();
+    if (isMvp) tagSet.add("MVP");
+    if (sprintReadyVal) tagSet.add("Sprint Ready");
 
     return {
       id: s.id,
@@ -219,9 +227,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       labels: [],
       assignee: s.assigneeInitials || "U",
       assigneeName: s.assigneeName,
-      tags: [],
+      tags: Array.from(tagSet),
+      isMvp,
       isStarred: Boolean((s as any).isStarred),
-      isSprintReady: Boolean((s as any).sprintReady),
+      isSprintReady: sprintReadyVal,
       acceptanceCriteria: (s as any).acceptanceCriteria,
       businessValue: (s as any).businessValue,
       releasePlanId: s.releasePlanId,
@@ -269,6 +278,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const canManageSprintReady = Boolean(
     currentUser?.roles?.some(
       (role) => role === "PRODUCT_OWNER" || role === "SCRUM_MASTER"
+    )
+  );
+  const canManageMvp = Boolean(
+    currentUser?.roles?.some(
+      (role) => role === "PRODUCT_OWNER" || role === "SYSTEM_ADMIN"
     )
   );
 
@@ -415,6 +429,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
           stories={stories}
           onRefresh={fetchStories}
           canEditSprintReady={canManageSprintReady}
+          canToggleMvp={canManageMvp}
         />
       )}
       {isCreateOpen && (
