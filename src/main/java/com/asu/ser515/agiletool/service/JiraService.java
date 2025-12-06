@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -56,18 +57,17 @@ public class JiraService {
     }
 
     private JiraIssueResponse createIssue(UserStory story, JiraConfig config) {
-        validateConfiguration(config);
+        validateBaseConfiguration(config);
+        JiraConfig resolvedConfig = resolveConfigWithMetadata(config);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(config.getUserEmail(), config.getApiToken());
+        HttpHeaders headers = buildAuthHeaders(resolvedConfig);
 
-        Map<String, Object> payload = buildIssuePayload(story, config);
+        Map<String, Object> payload = buildIssuePayload(story, resolvedConfig);
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(payload, headers);
 
         try {
             RestTemplate restTemplate = restTemplateBuilder
-                    .rootUri(config.getBaseUrl())
+                    .rootUri(resolvedConfig.getBaseUrl())
                     .build();
 
             ResponseEntity<Map> response = restTemplate.postForEntity("/rest/api/3/issue", requestEntity, Map.class);
@@ -76,8 +76,8 @@ public class JiraService {
                 String issueId = body.get("id") != null ? body.get("id").toString() : null;
                 String issueKey = body.get("key") != null ? body.get("key").toString() : null;
                 String self = body.get("self") != null ? body.get("self").toString() : null;
-                String browseUrl = StringUtils.hasText(issueKey) && StringUtils.hasText(config.getBaseUrl())
-                        ? config.getBaseUrl() + "/browse/" + issueKey
+                String browseUrl = StringUtils.hasText(issueKey) && StringUtils.hasText(resolvedConfig.getBaseUrl())
+                        ? resolvedConfig.getBaseUrl() + "/browse/" + issueKey
                         : null;
                 return new JiraIssueResponse(issueId, issueKey, self, browseUrl, "CREATED");
             }
@@ -155,13 +155,102 @@ public class JiraService {
         };
     }
 
-    private void validateConfiguration(JiraConfig config) {
+    private void validateBaseConfiguration(JiraConfig config) {
         if (!StringUtils.hasText(config.getBaseUrl())
                 || !StringUtils.hasText(config.getUserEmail())
                 || !StringUtils.hasText(config.getApiToken())
-                || !StringUtils.hasText(config.getProjectKey())
-                || !StringUtils.hasText(config.getIssueTypeId())) {
-            throw new IllegalStateException("JIRA integration is not configured. Please set jira.base-url, jira.user-email, jira.api-token, jira.project-key, and jira.issue-type-id properties.");
+                || !StringUtils.hasText(config.getProjectKey())) {
+            throw new IllegalStateException("JIRA integration is not configured. Please set jira.base-url, jira.user-email, jira.api-token, and jira.project-key properties.");
+        }
+    }
+
+    private HttpHeaders buildAuthHeaders(JiraConfig config) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(config.getUserEmail(), config.getApiToken());
+        return headers;
+    }
+
+    private JiraConfig resolveConfigWithMetadata(JiraConfig config) {
+        RestTemplate restTemplate = restTemplateBuilder
+                .rootUri(config.getBaseUrl())
+                .build();
+        HttpHeaders headers = buildAuthHeaders(config);
+
+        String issueTypeId = StringUtils.hasText(config.getIssueTypeId())
+                ? config.getIssueTypeId()
+                : fetchIssueTypeId(restTemplate, headers, config.getProjectKey());
+
+        String storyPointsFieldId = StringUtils.hasText(config.getStoryPointsFieldId())
+                ? config.getStoryPointsFieldId()
+                : fetchStoryPointsFieldId(restTemplate, headers);
+
+        return new JiraConfig(
+                config.getBaseUrl(),
+                config.getUserEmail(),
+                config.getApiToken(),
+                config.getProjectKey(),
+                issueTypeId,
+                storyPointsFieldId
+        );
+    }
+
+    private String fetchIssueTypeId(RestTemplate restTemplate, HttpHeaders headers, String projectKey) {
+        String path = String.format("/rest/api/3/issue/createmeta?projectKeys=%s&expand=projects.issuetypes", projectKey);
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    path, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+            Map<String, Object> body = response.getBody();
+            if (body == null || body.get("projects") == null) {
+                throw new IllegalStateException("JIRA createmeta response is missing project information.");
+            }
+            List<Map<String, Object>> projects = (List<Map<String, Object>>) body.get("projects");
+            if (projects.isEmpty()) {
+                throw new IllegalStateException("No projects found for the provided project key.");
+            }
+            List<Map<String, Object>> issueTypes = (List<Map<String, Object>>) projects.get(0).get("issuetypes");
+            if (issueTypes == null || issueTypes.isEmpty()) {
+                throw new IllegalStateException("No issue types returned for the project.");
+            }
+            for (Map<String, Object> issueType : issueTypes) {
+                String name = issueType.get("name") != null ? issueType.get("name").toString() : "";
+                if ("story".equalsIgnoreCase(name) || "user story".equalsIgnoreCase(name)) {
+                    return issueType.get("id").toString();
+                }
+            }
+            Object fallbackId = issueTypes.get(0).get("id");
+            if (fallbackId != null) {
+                return fallbackId.toString();
+            }
+            throw new IllegalStateException("Unable to determine issue type ID from JIRA metadata.");
+        } catch (RestClientResponseException ex) {
+            throw new IllegalStateException(
+                    "Failed to fetch JIRA issue types: " + ex.getStatusText() + " - " + ex.getResponseBodyAsString(), ex);
+        } catch (RestClientException ex) {
+            throw new IllegalStateException("Error calling JIRA API for issue types: " + ex.getMessage(), ex);
+        }
+    }
+
+    private String fetchStoryPointsFieldId(RestTemplate restTemplate, HttpHeaders headers) {
+        try {
+            ResponseEntity<List> response = restTemplate.exchange(
+                    "/rest/api/3/field", HttpMethod.GET, new HttpEntity<>(headers), List.class);
+            List<Map<String, Object>> fields = response.getBody();
+            if (fields == null || fields.isEmpty()) {
+                throw new IllegalStateException("No JIRA fields returned when looking up Story Points.");
+            }
+            for (Map<String, Object> field : fields) {
+                String name = field.get("name") != null ? field.get("name").toString() : "";
+                if (name.toLowerCase().contains("story point")) {
+                    return field.get("id").toString();
+                }
+            }
+            throw new IllegalStateException("Unable to determine Story Points field ID from JIRA metadata.");
+        } catch (RestClientResponseException ex) {
+            throw new IllegalStateException(
+                    "Failed to fetch JIRA fields: " + ex.getStatusText() + " - " + ex.getResponseBodyAsString(), ex);
+        } catch (RestClientException ex) {
+            throw new IllegalStateException("Error calling JIRA API for fields: " + ex.getMessage(), ex);
         }
     }
 

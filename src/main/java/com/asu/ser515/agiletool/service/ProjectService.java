@@ -42,23 +42,9 @@ public class ProjectService {
         project.setDescription(dto.getDescription() != null ? dto.getDescription().trim() : null);
         project.setActive(true);
         
-        // Set a temporary unique project key to satisfy NOT NULL constraint
-        // We'll update it with the final key after getting the ID
-        // Using nanoTime for better uniqueness, especially under concurrent requests
-        String tempKey = "TEMP-" + System.nanoTime();
-        project.setProjectKey(tempKey);
-
-        // Save to get the ID for key generation
-        project = projectRepo.save(project);
-
-        // Generate final project key based on ID (IDs are auto-generated and unique)
-        Long projectId = project.getId();
-        if (projectId == null) {
-            throw new IllegalStateException("Project ID is null after save");
-        }
-        String projectKey = PROJECT_KEY_PREFIX + "-" + String.format("%0" + PAD + "d", projectId);
+        // Use the generated key (unique per name) up front
         project.setProjectKey(projectKey);
-        project.setActive(true);
+        project = projectRepo.save(project);
         
         // Assign members and roles
         Set<User> membersSet = new HashSet<>();
@@ -212,4 +198,3 @@ public class ProjectService {
         return projectKey;
     }
 }
-
