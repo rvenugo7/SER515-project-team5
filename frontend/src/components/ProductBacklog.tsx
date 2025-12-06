@@ -13,6 +13,7 @@ interface Story {
   assignee: string;
   assigneeName?: string;
   tags?: string[];
+  isMvp?: boolean;
   isStarred?: boolean;
   isSprintReady?: boolean;
   storyPoints?: number;
@@ -25,6 +26,7 @@ interface ProductBacklogProps {
   onRefresh?: () => void;
   activeProjectId?: number | null;
   canEditSprintReady?: boolean;
+  canToggleMvp?: boolean;
 }
 
 export default function ProductBacklog({
@@ -32,6 +34,7 @@ export default function ProductBacklog({
   onRefresh,
   activeProjectId,
   canEditSprintReady = false,
+  canToggleMvp = false,
 }: ProductBacklogProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [releaseFilter, setReleaseFilter] = useState("All Releases");
@@ -107,6 +110,7 @@ export default function ProductBacklog({
               key={story.id}
               story={story}
               canEditSprintReady={canEditSprintReady}
+              canToggleMvp={canToggleMvp}
               onEdit={(story) => {
                 setEditingStory(story);
                 setIsEditModalOpen(true);
@@ -122,6 +126,11 @@ export default function ProductBacklog({
                             (updatedStory as any).storyPoints ??
                             updatedStory.points ??
                             s.points,
+                          tags: updatedStory.tags ?? s.tags,
+                          isMvp:
+                            (updatedStory as any).mvp ??
+                            updatedStory.isMvp ??
+                            s.isMvp,
                           isSprintReady:
                             (updatedStory as any).sprintReady ??
                             updatedStory.isSprintReady ??

@@ -37,6 +37,7 @@ export default function StoryCard({
 	acceptanceCriteria,
 	businessValue
 }: StoryCardProps): JSX.Element {
+	const isMvpStory = tags.includes('MVP')
 	const [linkedPlanKey, setLinkedPlanKey] = React.useState<string | undefined>(
 		releasePlanKey
 	)
@@ -65,8 +66,8 @@ export default function StoryCard({
 	}
 
 	const isDraggable = Boolean(isSprintReady)
-	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'} ${
-		isDraggable ? '' : 'tooltipped'
+	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'} ${isDraggable ? '' : 'tooltipped'} ${
+		isMvpStory ? 'mvp-card' : ''
 	}`.trim()
 	const lockedTooltip = 'Mark Sprint Ready to move this story'
 
