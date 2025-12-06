@@ -19,7 +19,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regFullName, setRegFullName] = useState("");
-  const [regRoles, setRegRoles] = useState<string[]>([]);
+  const [regRole, setRegRole] = useState("");
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,8 +61,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setError("");
     setSuccess("");
 
-    if (regRoles.length === 0) {
-      setError("Please select at least one role.");
+    if (!regRole) {
+      setError("Please select a role.");
       return;
     }
 
@@ -79,7 +79,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           email: regEmail,
           password: regPassword,
           fullName: regFullName,
-          roles: regRoles,
+          roles: [regRole],
         }),
         credentials: "include",
       });
@@ -91,7 +91,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         setRegEmail("");
         setRegPassword("");
         setRegFullName("");
-        setRegRoles([]);
+        setRegRole("");
       } else {
         const errorMessage = await response.text();
         setError(errorMessage || "Registration failed. Please try again.");
@@ -105,9 +105,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   };
 
   const toggleRole = (role: string) => {
-    setRegRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
-    );
+    setRegRole(role);
   };
 
   return (
@@ -247,14 +245,14 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
             <div className="form-group">
               <label>
-                Select Your Role(s) <span className="required">*</span>
+                Select Your Role <span className="required">*</span>
               </label>
               <div className="role-selector">
                 <div className="role-option">
                   <input
-                    type="checkbox"
+                    type="radio"
                     id="role-dev"
-                    checked={regRoles.includes("DEVELOPER")}
+                    checked={regRole === "DEVELOPER"}
                     onChange={() => toggleRole("DEVELOPER")}
                     disabled={isLoading}
                   />
@@ -262,9 +260,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </div>
                 <div className="role-option">
                   <input
-                    type="checkbox"
+                    type="radio"
                     id="role-po"
-                    checked={regRoles.includes("PRODUCT_OWNER")}
+                    checked={regRole === "PRODUCT_OWNER"}
                     onChange={() => toggleRole("PRODUCT_OWNER")}
                     disabled={isLoading}
                   />
@@ -272,23 +270,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </div>
                 <div className="role-option">
                   <input
-                    type="checkbox"
+                    type="radio"
                     id="role-sm"
-                    checked={regRoles.includes("SCRUM_MASTER")}
+                    checked={regRole === "SCRUM_MASTER"}
                     onChange={() => toggleRole("SCRUM_MASTER")}
                     disabled={isLoading}
                   />
                   <label htmlFor="role-sm">Scrum Master</label>
-                </div>
-                <div className="role-option">
-                  <input
-                    type="checkbox"
-                    id="role-admin"
-                    checked={regRoles.includes("SYSTEM_ADMIN")}
-                    onChange={() => toggleRole("SYSTEM_ADMIN")}
-                    disabled={isLoading}
-                  />
-                  <label htmlFor="role-admin">System Admin</label>
                 </div>
               </div>
               <p className="help-text">Select one role</p>

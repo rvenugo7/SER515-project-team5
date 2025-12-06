@@ -55,6 +55,14 @@ interface FrontendStory {
   releasePlanName?: string
 }
 
+interface CurrentUser {
+  id: number;
+  username: string;
+  email?: string;
+  fullName?: string;
+  roles: string[];
+}
+
 export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [activeTab, setActiveTab] = useState("Scrum Board");
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +72,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [stories, setStories] = useState<FrontendStory[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
@@ -108,6 +117,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 
   useEffect(() => {
     fetchProjects();
+    fetchStories();
+    fetchCurrentUser();
     return () => {
       if (toastTimer.current) {
         window.clearTimeout(toastTimer.current);
@@ -271,6 +282,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       tags: [],
       isStarred: Boolean((s as any).isStarred),
       isSprintReady: Boolean((s as any).sprintReady),
+      acceptanceCriteria: (s as any).acceptanceCriteria,
+      businessValue: (s as any).businessValue,
       releasePlanId: s.releasePlanId,
       releasePlanKey: s.releasePlanKey,
       releasePlanName: s.releasePlanName,
@@ -301,6 +314,29 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       setIsLoading(false);
     }
   };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch("/api/users/me", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const user: CurrentUser = await response.json();
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch current user:", error);
+      setCurrentUser(null);
+    }
+  };
+
+  const canManageSprintReady = Boolean(
+    currentUser?.roles?.some(
+      (role) => role === "PRODUCT_OWNER" || role === "SCRUM_MASTER"
+    )
+  );
 
   return (
     <div className="scrum-container">
@@ -496,6 +532,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
           stories={stories} 
           onRefresh={fetchStories}
           activeProjectId={activeProjectId}
+          canEditSprintReady={canManageSprintReady}
         />
       )}
       {isCreateOpen && (

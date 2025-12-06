@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface UserStoryRepository extends JpaRepository<UserStory, Long> {
     List<UserStory> findAllByOrderByIdAsc();
+    List<UserStory> findByProjectId(Long projectId);
     List<UserStory> findByProjectIdOrderByIdAsc(Long projectId);
 }

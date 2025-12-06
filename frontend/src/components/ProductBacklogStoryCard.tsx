@@ -13,15 +13,23 @@ interface Story {
 	tags?: string[]
 	isStarred?: boolean
 	isSprintReady?: boolean
+	acceptanceCriteria?: string
+	businessValue?: number
 }
 
 interface ProductBacklogStoryCardProps {
 	story: Story
 	onEdit?: (story: Story) => void
 	onUpdate?: (updatedStory: Story) => void
+	canEditSprintReady?: boolean
 }
 
-export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: ProductBacklogStoryCardProps): JSX.Element {
+export default function ProductBacklogStoryCard({
+	story,
+	onEdit,
+	onUpdate,
+	canEditSprintReady = false,
+}: ProductBacklogStoryCardProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState(false)
 	const [isStarred, setIsStarred] = useState(story.isStarred || false)
 	const [isSprintReady, setIsSprintReady] = useState(story.isSprintReady || false)
@@ -32,6 +40,13 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 	const [estimateError, setEstimateError] = useState<string | null>(null)
 	const [isTogglingStar, setIsTogglingStar] = useState(false)
 	const [isTogglingSprint, setIsTogglingSprint] = useState(false)
+	const [showDetails, setShowDetails] = useState(false)
+
+	const sprintReadyTooltip = canEditSprintReady
+		? isSprintReady
+			? 'Mark as not sprint-ready'
+			: 'Mark as sprint-ready'
+		: 'Access Denied'
 
 	useEffect(() => {
 		setIsStarred(story.isStarred || false)
@@ -153,13 +168,14 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 				>
 					★
 				</button>
-				<button
-					className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''} tooltipped`}
-					onClick={async () => {
-						if (isTogglingSprint) return
-						const next = !isSprintReady
-						setIsSprintReady(next)
-						setIsTogglingSprint(true)
+			<button
+				className={`sprint-ready-btn ${isSprintReady ? 'ready' : ''} tooltipped`}
+				disabled={!canEditSprintReady}
+				onClick={async () => {
+					if (!canEditSprintReady || isTogglingSprint) return
+					const next = !isSprintReady
+					setIsSprintReady(next)
+					setIsTogglingSprint(true)
 						try {
 							const response = await fetch(`/api/stories/${story.id}/sprint-ready`, {
 								method: "PUT",
@@ -186,12 +202,12 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 						} finally {
 							setIsTogglingSprint(false)
 						}
-					}}
-					data-tooltip={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
-					aria-label={isSprintReady ? 'Mark as not sprint-ready' : 'Mark as sprint-ready'}
-				>
-					{isSprintReady ? '✓' : '○'}
-				</button>
+				}}
+				data-tooltip={sprintReadyTooltip}
+				aria-label={sprintReadyTooltip}
+			>
+				{isSprintReady ? '✓' : '○'}
+			</button>
 			</div>
 
 			<div className="story-content">
@@ -230,7 +246,11 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 			</div>
 
 			<div className="story-actions">
-				<button className="action-btn view-btn">
+				<button
+					className="action-btn view-btn"
+					title="View story details"
+					onClick={() => setShowDetails(true)}
+				>
 					<span className="action-icon">👁</span>
 					View Details
 				</button>
@@ -253,6 +273,39 @@ export default function ProductBacklogStoryCard({ story, onEdit, onUpdate }: Pro
 				</button>
 			</div>
 		</div>
+
+		{showDetails && (
+			<div className="modal-overlay">
+				<div className="modal-container" style={{ maxWidth: 480 }}>
+					<div className="modal-header">
+						<h2>Story Details</h2>
+						<button className="modal-close-btn" onClick={() => setShowDetails(false)}>
+							×
+						</button>
+					</div>
+					<div className="modal-body">
+						<p className="modal-field"><strong>Title:</strong> {story.title}</p>
+						<p className="modal-field"><strong>Description:</strong> {story.description}</p>
+						<p className="modal-field">
+							<strong>Acceptance Criteria:</strong>{' '}
+							{story.acceptanceCriteria ? story.acceptanceCriteria : '—'}
+						</p>
+						<p className="modal-field">
+							<strong>Business Value:</strong>{' '}
+							{story.businessValue !== undefined ? story.businessValue : '—'}
+						</p>
+						<p className="modal-field"><strong>Status:</strong> {story.status}</p>
+						<p className="modal-field"><strong>Priority:</strong> {story.priority}</p>
+						<p className="modal-field"><strong>Story Points:</strong> {story.points}</p>
+					</div>
+					<div className="form-actions">
+						<button className="btn-cancel" onClick={() => setShowDetails(false)}>
+							Close
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
 
 		{showEstimateModal && (
 			<div className="modal-overlay">

@@ -1,44 +1,42 @@
 package com.asu.ser515.agiletool.service;
 
 import com.asu.ser515.agiletool.dto.CreateProjectDTO;
-import com.asu.ser515.agiletool.dto.ProjectResponseDTO;
-import com.asu.ser515.agiletool.models.Project;
-import com.asu.ser515.agiletool.models.User;
+import com.asu.ser515.agiletool.dto.CreateProjectResponseDTO;
+import com.asu.ser515.agiletool.models.*;
+import com.asu.ser515.agiletool.repository.ProjectMemberRepository;
 import com.asu.ser515.agiletool.repository.ProjectRepository;
 import com.asu.ser515.agiletool.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @Service
 public class ProjectService {
-
+    
     private final ProjectRepository projectRepo;
     private final UserRepository userRepo;
-
-    private static final String PROJECT_KEY_PREFIX = "PROJ";
-    private static final int PAD = 3;
-
-    public ProjectService(ProjectRepository projectRepo, UserRepository userRepo) {
+    private final ProjectMemberRepository projectMemberRepo;
+    
+    public ProjectService(ProjectRepository projectRepo, 
+                         UserRepository userRepo,
+                         ProjectMemberRepository projectMemberRepo) {
         this.projectRepo = projectRepo;
         this.userRepo = userRepo;
+        this.projectMemberRepo = projectMemberRepo;
     }
-
+    
     @Transactional
-    public ProjectResponseDTO create(CreateProjectDTO dto, String username) {
-        if (dto.getName() == null || dto.getName().isBlank()) {
-            throw new IllegalArgumentException("Project name is required");
-        }
-
-        // Get the creator user
-        User createdBy = null;
-        if (username != null) {
-            createdBy = userRepo.findByUsername(username).orElse(null);
-        }
-
-        // Create the project
+    public CreateProjectResponseDTO createProject(CreateProjectDTO dto) {
+        // Validate input
+        validateProjectDTO(dto);
+        
+        // Generate unique project key
+        String projectKey = generateProjectKey(dto.getName());
+        
+        // Create project
         Project project = new Project();
         project.setName(dto.getName().trim());
         project.setDescription(dto.getDescription() != null ? dto.getDescription().trim() : null);
@@ -60,64 +58,158 @@ public class ProjectService {
         }
         String projectKey = PROJECT_KEY_PREFIX + "-" + String.format("%0" + PAD + "d", projectId);
         project.setProjectKey(projectKey);
-
-        // Add creator as a project member if user exists
-        if (createdBy != null) {
-            project.getMembers().add(createdBy);
+        project.setActive(true);
+        
+        // Assign members and roles
+        Set<User> membersSet = new HashSet<>();
+        if (dto.getMembers() != null && !dto.getMembers().isEmpty()) {
+            // First, set members before saving
+            for (CreateProjectDTO.ProjectMemberDTO memberDTO : dto.getMembers()) {
+                // Validate and fetch user
+                User user = userRepo.findById(memberDTO.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found with ID: " + memberDTO.getUserId()));
+                
+                // Add user to members set
+                membersSet.add(user);
+            }
+            project.setMembers(membersSet);
         }
-
+        
+        // Save project (with members already set)
         project = projectRepo.save(project);
-
-        return toResponseDTO(project);
+        
+        // Now create project member role assignments
+        if (dto.getMembers() != null && !dto.getMembers().isEmpty()) {
+            for (CreateProjectDTO.ProjectMemberDTO memberDTO : dto.getMembers()) {
+                User user = userRepo.findById(memberDTO.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found with ID: " + memberDTO.getUserId()));
+                
+                // Create project member role assignment (no need to check for new project)
+                ProjectMember projectMember = new ProjectMember();
+                projectMember.setProject(project);
+                projectMember.setUser(user);
+                projectMember.setRole(memberDTO.getRole());
+                projectMemberRepo.save(projectMember);
+            }
+        }
+        
+        // Return response with project ID and key
+        return new CreateProjectResponseDTO(
+            "Project created successfully",
+            project.getId(),
+            project.getProjectKey()
+        );
     }
-
+    
     @Transactional(readOnly = true)
-    public ProjectResponseDTO findById(Long id) {
-        Project project = projectRepo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found with id: " + id));
-        return toResponseDTO(project);
+    public List<Project> getAllProjects() {
+        return projectRepo.findAll();
     }
-
+    
     @Transactional(readOnly = true)
-    public List<ProjectResponseDTO> listAll() {
-        return projectRepo.findAll()
-                .stream()
-                .map(this::toResponseDTO)
-                .collect(Collectors.toList());
+    public Project getProjectById(Long projectId) {
+        return projectRepo.findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("Project not found with ID: " + projectId));
     }
-
-    private ProjectResponseDTO toResponseDTO(Project project) {
-        ProjectResponseDTO dto = new ProjectResponseDTO();
-        dto.setId(project.getId());
-        dto.setProjectKey(project.getProjectKey());
-        dto.setName(project.getName());
-        dto.setDescription(project.getDescription());
-        dto.setActive(project.getActive());
-        dto.setCreatedAt(project.getCreatedAt());
-        dto.setUpdatedAt(project.getUpdatedAt());
-
-        // Set member count
-        if (project.getMembers() != null) {
-            dto.setMemberCount(project.getMembers().size());
-        } else {
-            dto.setMemberCount(0);
+    
+    @Transactional(readOnly = true)
+    public Project getProjectByProjectKey(String projectKey) {
+        return projectRepo.findByProjectKey(projectKey)
+            .orElseThrow(() -> new IllegalArgumentException("Project not found with key: " + projectKey));
+    }
+    
+    @Transactional(readOnly = true)
+    public List<ProjectMember> getProjectMembers(Long projectId) {
+        Project project = getProjectById(projectId);
+        return projectMemberRepo.findByProject(project);
+    }
+    
+    private void validateProjectDTO(CreateProjectDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Project data is required");
         }
-
-        // Set release plan count
-        if (project.getReleasePlans() != null) {
-            dto.setReleasePlanCount(project.getReleasePlans().size());
-        } else {
-            dto.setReleasePlanCount(0);
+        
+        if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Project name is required");
         }
-
-        // Set user story count
-        if (project.getUserStories() != null) {
-            dto.setUserStoryCount(project.getUserStories().size());
-        } else {
-            dto.setUserStoryCount(0);
+        
+        if (dto.getName().length() > 200) {
+            throw new IllegalArgumentException("Project name must not exceed 200 characters");
         }
-
-        return dto;
+        
+        if (dto.getMembers() == null || dto.getMembers().isEmpty()) {
+            throw new IllegalArgumentException("At least one project member with role is required");
+        }
+        
+        // Validate each member
+        Set<Long> userIds = new HashSet<>();
+        for (CreateProjectDTO.ProjectMemberDTO member : dto.getMembers()) {
+            if (member.getUserId() == null) {
+                throw new IllegalArgumentException("User ID is required for all members");
+            }
+            
+            if (member.getRole() == null) {
+                throw new IllegalArgumentException("Role is required for all members");
+            }
+            
+            // Check for duplicate user IDs in the same request
+            if (userIds.contains(member.getUserId())) {
+                throw new IllegalArgumentException("Duplicate user ID found: " + member.getUserId());
+            }
+            userIds.add(member.getUserId());
+        }
+    }
+    
+    private String generateProjectKey(String projectName) {
+        // Generate a project key from the project name
+        // Take first letters of words, convert to uppercase, limit to 10 characters
+        String baseKey = projectName.trim()
+            .replaceAll("[^A-Za-z0-9\\s]", "") // Remove special characters
+            .replaceAll("\\s+", " ") // Normalize whitespace
+            .toUpperCase();
+        
+        // Extract first letters or first few characters
+        String[] words = baseKey.split("\\s+");
+        StringBuilder keyBuilder = new StringBuilder();
+        
+        if (words.length > 1) {
+            // Multi-word: take first letter of each word
+            for (String word : words) {
+                if (!word.isEmpty() && keyBuilder.length() < 10) {
+                    keyBuilder.append(word.charAt(0));
+                }
+            }
+        } else if (!baseKey.isEmpty()) {
+            // Single word: take first characters
+            keyBuilder.append(baseKey.substring(0, Math.min(10, baseKey.length())));
+        }
+        
+        String baseKeyValue = keyBuilder.length() > 0 
+            ? keyBuilder.toString() 
+            : "PROJ";
+        
+        // Ensure minimum length of 2
+        if (baseKeyValue.length() < 2) {
+            baseKeyValue = baseKeyValue + "X";
+        }
+        
+        // Check if key already exists, append number if needed
+        String projectKey = baseKeyValue;
+        int counter = 1;
+        while (projectRepo.existsByProjectKey(projectKey)) {
+            String suffix = String.valueOf(counter);
+            int remainingLength = 10 - baseKeyValue.length() - suffix.length();
+            if (remainingLength < 0) {
+                // Truncate base key if needed
+                baseKeyValue = baseKeyValue.substring(0, 10 - suffix.length());
+            }
+            projectKey = baseKeyValue + counter;
+            counter++;
+        }
+        
+        return projectKey;
     }
 }
 

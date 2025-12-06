@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.service;
 
+import com.asu.ser515.agiletool.dto.JiraIssueResponse;
 import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.repository.ProjectRepository;
 import com.asu.ser515.agiletool.repository.UserStoryRepository;
@@ -12,10 +13,12 @@ public class UserStoryService {
 
     private final UserStoryRepository storyRepo;
     private final ProjectRepository projectRepo;
+    private final JiraService jiraService;
 
-    public UserStoryService(UserStoryRepository storyRepo, ProjectRepository projectRepo) {
+    public UserStoryService(UserStoryRepository storyRepo, ProjectRepository projectRepo, JiraService jiraService) {
         this.storyRepo = storyRepo;
         this.projectRepo = projectRepo;
+        this.jiraService = jiraService;
     }
 
     private static final String GLOBAL_KEY = "GLOBAL";
@@ -143,6 +146,25 @@ public class UserStoryService {
         UserStory story = storyRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
         story.setIsStarred(starred);
+        return storyRepo.save(story);
+    }
+
+    @Transactional(readOnly = true)
+    public UserStory getStoryById(Long id) {
+        return storyRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User Story not found with id: " + id));
+    }
+
+    @Transactional
+    public JiraIssueResponse exportStoryToJira(Long id) {
+        UserStory story = getStoryById(id);
+        return jiraService.createIssueFromStory(story);
+    }
+
+    @Transactional
+    public UserStory updateMvp(Long id, boolean mvp) {
+        UserStory story = getStoryById(id);
+        story.setIsMvp(mvp);
         return storyRepo.save(story);
     }
 }
