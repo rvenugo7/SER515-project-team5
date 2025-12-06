@@ -60,8 +60,7 @@ public class JiraExportRequest {
         return isNotBlank(baseUrl)
                 && isNotBlank(userEmail)
                 && isNotBlank(apiToken)
-                && isNotBlank(projectKey)
-                && isNotBlank(issueTypeId);
+                && isNotBlank(projectKey);
     }
 
     private boolean isNotBlank(String value) {

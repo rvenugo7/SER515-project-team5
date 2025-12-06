@@ -26,8 +26,6 @@ interface JiraFormState {
   userEmail: string;
   apiToken: string;
   projectKey: string;
-  issueTypeId: string;
-  storyPointsFieldId: string;
 }
 
 interface ProductBacklogProps {
@@ -51,8 +49,6 @@ export default function ProductBacklog({
     userEmail: "",
     apiToken: "",
     projectKey: "",
-    issueTypeId: "",
-    storyPointsFieldId: "customfield_10016",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [releaseFilter, setReleaseFilter] = useState("All Releases");
@@ -103,7 +99,6 @@ export default function ProductBacklog({
     "userEmail",
     "apiToken",
     "projectKey",
-    "issueTypeId",
   ];
 
   const isJiraFormComplete = requiredJiraFields.every(
@@ -476,31 +471,6 @@ export default function ProductBacklog({
                       value={jiraForm.projectKey}
                       onChange={(e) =>
                         handleJiraFieldChange("projectKey", e.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="confirm-field">
-                    <span>Issue Type ID *</span>
-                    <input
-                      type="text"
-                      placeholder="e.g. 10001"
-                      value={jiraForm.issueTypeId}
-                      onChange={(e) =>
-                        handleJiraFieldChange("issueTypeId", e.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="confirm-field">
-                    <span>Story Points Field ID</span>
-                    <input
-                      type="text"
-                      placeholder="customfield_10016"
-                      value={jiraForm.storyPointsFieldId}
-                      onChange={(e) =>
-                        handleJiraFieldChange(
-                          "storyPointsFieldId",
-                          e.target.value
-                        )
                       }
                     />
                   </label>
