@@ -43,7 +43,7 @@ public class DataInitializer implements CommandLineRunner {
         // Set SYSTEM_ADMIN role
         Set<UserRole> systemRoles = new HashSet<>();
         systemRoles.add(UserRole.SYSTEM_ADMIN);
-        admin.setSystemRoles(systemRoles);
+        admin.setRoles(systemRoles);
 
         userRepository.save(admin);
         System.out.println("Default admin account created successfully");

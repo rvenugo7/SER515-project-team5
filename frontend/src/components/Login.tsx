@@ -279,10 +279,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                   <label htmlFor="role-sm">Scrum Master</label>
                 </div>
               </div>
-              <p className="help-text">
-                Select your role. You will be added to the Default project with this role.
-                Additional project memberships and roles can be assigned later.
-              </p>
+              <p className="help-text">Select one role</p>
             </div>
 
             <button type="submit" className="auth-btn" disabled={isLoading}>

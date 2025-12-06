@@ -36,8 +36,6 @@ export default function AccountManagement(): JSX.Element {
     { value: "SYSTEM_ADMIN", label: "System Admin" },
   ];
 
-  const systemRoles = [{ value: "SYSTEM_ADMIN", label: "System Admin" }];
-
   useEffect(() => {
     fetchCurrentUser();
   }, []);
@@ -180,6 +178,11 @@ export default function AccountManagement(): JSX.Element {
   };
 
   const handleUpdateRoles = async (userId: number) => {
+    if (selectedRoles.length === 0) {
+      setError("At least one role must be selected");
+      return;
+    }
+
     setError(null);
     setSuccess(null);
     setIsUpdatingRoles(true);
@@ -667,7 +670,7 @@ export default function AccountManagement(): JSX.Element {
                             gap: "8px",
                           }}
                         >
-                          {systemRoles.map((role) => (
+                          {availableRoles.map((role) => (
                             <label
                               key={role.value}
                               style={{
@@ -687,18 +690,6 @@ export default function AccountManagement(): JSX.Element {
                               {role.label}
                             </label>
                           ))}
-                          <p
-                            style={{
-                              fontSize: "12px",
-                              color: "#718096",
-                              marginTop: "8px",
-                              marginBottom: "0",
-                            }}
-                          >
-                            Note: This manages the System Admin role only.
-                            Project-specific roles (Product Owner, Scrum Master,
-                            Developer) are managed per project.
-                          </p>
                         </div>
                       ) : (
                         <div

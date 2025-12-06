@@ -29,13 +29,9 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User account is inactive");
         }
 
-        Set<SimpleGrantedAuthority> authorities = user.getSystemRoles().stream()
+        Set<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
                 .collect(Collectors.toSet());
-
-        if (authorities.isEmpty()) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        }
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
