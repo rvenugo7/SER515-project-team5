@@ -16,6 +16,8 @@ import java.util.Set;
 @Service
 public class ProjectService {
     
+    private static final int PAD = 3; // Number of digits to pad project ID to
+    
     private final ProjectRepository projectRepo;
     private final UserRepository userRepo;
     private final ProjectMemberRepository projectMemberRepo;
@@ -56,8 +58,9 @@ public class ProjectService {
         if (projectId == null) {
             throw new IllegalStateException("Project ID is null after save");
         }
-        String projectKey = PROJECT_KEY_PREFIX + "-" + String.format("%0" + PAD + "d", projectId);
-        project.setProjectKey(projectKey);
+        // Use the generated base key from the project name and append padded ID
+        String finalProjectKey = projectKey + "-" + String.format("%0" + PAD + "d", projectId);
+        project.setProjectKey(finalProjectKey);
         project.setActive(true);
         
         // Assign members and roles
