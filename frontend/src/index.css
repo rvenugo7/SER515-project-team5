@@ -866,6 +866,114 @@ main {
   padding: 24px;
 }
 
+.confirm-modal {
+  max-width: 640px;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #4a5568;
+}
+
+.confirm-intro {
+  font-size: 15px;
+  color: #1f2933;
+  margin-bottom: 16px;
+}
+
+.story-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.story-summary-card {
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc, #fdfefe);
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.story-summary-row {
+  margin-bottom: 12px;
+}
+
+.story-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.story-summary-grid:last-child,
+.story-summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.summary-label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.summary-value {
+  margin: 0;
+  font-size: 15px;
+  color: #111827;
+  font-weight: 500;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 24px 24px;
+}
+
+.modal-btn {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 10px 24px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-btn.secondary {
+  border-color: #e2e8f0;
+  background: #fff;
+  color: #2d3748;
+}
+
+.modal-btn.primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.warning {
+  background: #fff7ed;
+  border: 1px solid #fb923c;
+  color: #9a3412;
+  padding: 12px;
+  border-radius: 8px;
+}
+
 .error-text {
   margin-top: 8px;
   color: #e53e3e;
@@ -1715,4 +1823,20 @@ main {
   .action-btn {
     flex: 1;
   }
+}
+.jira-config {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.confirm-field.full-width {
+  width: 100%;
+}
+
+.confirm-field.full-width input {
+  width: 100%;
 }
