@@ -44,7 +44,6 @@ public class ProjectService {
         project.setDescription(dto.getDescription() != null ? dto.getDescription().trim() : null);
         project.setActive(true);
         
-<<<<<<< HEAD
         // Set a temporary unique project key to satisfy NOT NULL constraint
         // We'll update it with the final key after getting the ID
         // Using nanoTime for better uniqueness, especially under concurrent requests
