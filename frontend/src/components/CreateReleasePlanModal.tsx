@@ -17,6 +17,7 @@ interface CreateReleasePlanModalProps {
   onClose: () => void;
   onCreated?: () => void;
   plan?: ReleasePlan | null;
+  projectId?: number | null;
 }
 
 type StatusOption = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
@@ -26,6 +27,7 @@ export default function CreateReleasePlanModal({
   onClose,
   onCreated,
   plan = null,
+  projectId: propProjectId,
 }: CreateReleasePlanModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -33,13 +35,14 @@ export default function CreateReleasePlanModal({
   const [startDate, setStartDate] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [status, setStatus] = useState<StatusOption>("PLANNED");
-  const [projectId, setProjectId] = useState<number | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [originalPlan, setOriginalPlan] = useState<ReleasePlan | null>(null);
 
   const isEditMode = plan !== null && plan.id !== undefined;
+
+  const [projectId, setProjectId] = useState<number | undefined>(propProjectId || undefined);
 
   useEffect(() => {
     if (plan && isOpen) {
@@ -49,7 +52,7 @@ export default function CreateReleasePlanModal({
       setStartDate(plan.startDate || "");
       setTargetDate(plan.targetDate || "");
       setStatus(plan.status || "PLANNED");
-      setProjectId(plan.projectId);
+      setProjectId(plan.projectId || propProjectId || undefined);
       // Store original values for change detection
       setOriginalPlan(plan);
     } else if (!plan && isOpen) {
@@ -59,10 +62,10 @@ export default function CreateReleasePlanModal({
       setStartDate("");
       setTargetDate("");
       setStatus("PLANNED");
-      setProjectId(undefined);
+      setProjectId(propProjectId || undefined);
       setOriginalPlan(null);
     }
-  }, [plan, isOpen]);
+  }, [plan, isOpen, propProjectId]);
 
   if (!isOpen) return null;
 
@@ -112,7 +115,7 @@ export default function CreateReleasePlanModal({
           startDate,
           targetDate,
           status,
-          projectId,
+          projectId: propProjectId || projectId,
         };
       }
 
@@ -228,8 +231,8 @@ export default function CreateReleasePlanModal({
             />
           </div>
 
-          {/* Project Id */}
-          {!isEditMode && (
+          {/* Project Id - Hidden when propProjectId is provided */}
+          {!isEditMode && !propProjectId && (
             <div style={{ marginBottom: 10 }}>
               <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
                 Project ID *

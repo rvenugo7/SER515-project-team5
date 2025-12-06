@@ -13,6 +13,7 @@ interface Story {
   assignee: string;
   assigneeName?: string;
   tags?: string[];
+  isMvp?: boolean;
   isStarred?: boolean;
   isSprintReady?: boolean;
   storyPoints?: number;
@@ -30,11 +31,17 @@ interface JiraFormState {
 interface ProductBacklogProps {
   stories: Story[];
   onRefresh?: () => void;
+  activeProjectId?: number | null;
+  canEditSprintReady?: boolean;
+  canToggleMvp?: boolean;
 }
 
 export default function ProductBacklog({
   stories = [],
   onRefresh,
+  activeProjectId,
+  canEditSprintReady = false,
+  canToggleMvp = false,
 }: ProductBacklogProps): JSX.Element {
   const jiraRedirectUrl = import.meta.env.VITE_JIRA_REDIRECT_URL?.trim();
   const createEmptyJiraForm = (): JiraFormState => ({
@@ -60,6 +67,15 @@ export default function ProductBacklog({
   React.useEffect(() => {
     setLocalStories(stories);
   }, [stories]);
+
+  // Clear filters when project changes
+  React.useEffect(() => {
+    if (activeProjectId) {
+      setSearchQuery("");
+      setReleaseFilter("All Releases");
+      setStoryFilter("All Stories");
+    }
+  }, [activeProjectId]);
   const sprintReadyCount = stories.filter(
     (story) => story.isSprintReady
   ).length;
@@ -225,6 +241,8 @@ export default function ProductBacklog({
             <ProductBacklogStoryCard
               key={story.id}
               story={story}
+              canEditSprintReady={canEditSprintReady}
+              canToggleMvp={canToggleMvp}
               checked={isStorySelected(story.id)}
               onToggleCheck={(nextChecked) =>
                 toggleStorySelection(story.id, nextChecked)
@@ -244,6 +262,11 @@ export default function ProductBacklog({
                             (updatedStory as any).storyPoints ??
                             updatedStory.points ??
                             s.points,
+                          tags: updatedStory.tags ?? s.tags,
+                          isMvp:
+                            (updatedStory as any).mvp ??
+                            updatedStory.isMvp ??
+                            s.isMvp,
                           isSprintReady:
                             (updatedStory as any).sprintReady ??
                             updatedStory.isSprintReady ??
@@ -309,7 +332,7 @@ export default function ProductBacklog({
               </button>
             </div>
             <div className="modal-body">
-              <p>
+              <p className="confirm-intro">
                 You are about to export {sprintReadySelections.length} sprint-ready
                 stor{selectedStoryIds.length === 1 ? "y" : "ies"}.
               </p>
@@ -325,38 +348,50 @@ export default function ProductBacklog({
                   {exportError}
                 </div>
               )}
-              {sprintReadySelections.map((story) => (
-                <div key={story.id} className="confirm-story-card">
-                  <div className="confirm-field">
-                    <label>Title</label>
-                    <div>{`#${story.id} ${story.title}`}</div>
-                  </div>
-                  <div className="confirm-field">
-                    <label>Description</label>
-                    <p>{story.description || "No description provided"}</p>
-                  </div>
-                  <div className="confirm-row">
-                    <div className="confirm-field">
-                      <label>Acceptance Criteria</label>
-                      <p>{story.acceptanceCriteria || "Not provided"}</p>
+              <div className="story-summary-list">
+                {sprintReadySelections.map((story) => {
+                  const storyPoints =
+                    story.points ?? story.storyPoints ?? "Not estimated";
+                  return (
+                    <div key={story.id} className="story-summary-card">
+                      <div className="story-summary-row">
+                        <span className="summary-label">Title</span>
+                        <p className="summary-value">{`#${story.id} ${story.title}`}</p>
+                      </div>
+                      <div className="story-summary-row">
+                        <span className="summary-label">Description</span>
+                        <p className="summary-value">
+                          {story.description || "No description provided"}
+                        </p>
+                      </div>
+                      <div className="story-summary-grid">
+                        <div>
+                          <span className="summary-label">Acceptance Criteria</span>
+                          <p className="summary-value">
+                            {story.acceptanceCriteria || "Not provided"}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="summary-label">Business Value</span>
+                          <p className="summary-value">
+                            {story.businessValue ?? "Not set"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="story-summary-grid">
+                        <div>
+                          <span className="summary-label">Priority</span>
+                          <p className="summary-value">{story.priority}</p>
+                        </div>
+                        <div>
+                          <span className="summary-label">Story Points</span>
+                          <p className="summary-value">{storyPoints}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="confirm-field">
-                      <label>Business Value</label>
-                      <p>{story.businessValue ?? "Not set"}</p>
-                    </div>
-                  </div>
-                  <div className="confirm-row">
-                    <div className="confirm-field">
-                      <label>Priority</label>
-                      <p>{story.priority}</p>
-                    </div>
-                    <div className="confirm-field">
-                      <label>Story Points</label>
-                      <p>{story.points ?? story.storyPoints ?? "Not estimated"}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
             <div className="modal-footer">
               <button
@@ -406,52 +441,50 @@ export default function ProductBacklog({
             <div className="modal-body">
               <p>Provide your Jira connection details to finish exporting.</p>
               <div className="jira-config">
-                <div className="jira-config-grid">
-                  <label className="confirm-field">
-                    <span>Base URL *</span>
-                    <input
-                      type="url"
-                      placeholder="https://your-domain.atlassian.net"
-                      value={jiraForm.baseUrl}
-                      onChange={(e) =>
-                        handleJiraFieldChange("baseUrl", e.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="confirm-field">
-                    <span>User Email *</span>
-                    <input
-                      type="email"
-                      placeholder="you@company.com"
-                      value={jiraForm.userEmail}
-                      onChange={(e) =>
-                        handleJiraFieldChange("userEmail", e.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="confirm-field">
-                    <span>API Token *</span>
-                    <input
-                      type="password"
-                      placeholder="Jira API token"
-                      value={jiraForm.apiToken}
-                      onChange={(e) =>
-                        handleJiraFieldChange("apiToken", e.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="confirm-field">
-                    <span>Project Key *</span>
-                    <input
-                      type="text"
-                      placeholder="e.g. ABC"
-                      value={jiraForm.projectKey}
-                      onChange={(e) =>
-                        handleJiraFieldChange("projectKey", e.target.value)
-                      }
-                    />
-                  </label>
-                </div>
+                <label className="confirm-field full-width">
+                  <span>Base URL *</span>
+                  <input
+                    type="url"
+                    placeholder="https://your-domain.atlassian.net"
+                    value={jiraForm.baseUrl}
+                    onChange={(e) =>
+                      handleJiraFieldChange("baseUrl", e.target.value)
+                    }
+                  />
+                </label>
+                <label className="confirm-field full-width">
+                  <span>User Email *</span>
+                  <input
+                    type="email"
+                    placeholder="you@company.com"
+                    value={jiraForm.userEmail}
+                    onChange={(e) =>
+                      handleJiraFieldChange("userEmail", e.target.value)
+                    }
+                  />
+                </label>
+                <label className="confirm-field full-width">
+                  <span>API Token *</span>
+                  <input
+                    type="password"
+                    placeholder="Jira API token"
+                    value={jiraForm.apiToken}
+                    onChange={(e) =>
+                      handleJiraFieldChange("apiToken", e.target.value)
+                    }
+                  />
+                </label>
+                <label className="confirm-field full-width">
+                  <span>Project Key *</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. ABC"
+                    value={jiraForm.projectKey}
+                    onChange={(e) =>
+                      handleJiraFieldChange("projectKey", e.target.value)
+                    }
+                  />
+                </label>
                 <p className="jira-hint">
                   * Required fields. Your API token is only used to contact Jira
                   for this export.

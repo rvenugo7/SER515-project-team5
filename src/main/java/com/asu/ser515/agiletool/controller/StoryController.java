@@ -30,11 +30,11 @@ public class StoryController {
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> create(@Valid @RequestBody CreateStoryReq req) {
+    public ResponseEntity<?> create(@Valid @RequestBody CreateStoryReq req, @RequestParam(required = false) Long projectId) {
         try {
             UserStory s = userStoryService.create(
                 req.getTitle(), req.getDescription(), req.getAcceptanceCriteria(),
-                req.getBusinessValue(), req.getPriority()
+                req.getBusinessValue(), req.getPriority(), projectId
             );
             return ResponseEntity.status(201).body(new CreateStoryRes("User Story created successfully", s));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -44,9 +44,14 @@ public class StoryController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> list() {
+    public ResponseEntity<?> list(@RequestParam(required = false) Long projectId) {
         try {
-            List<UserStory> stories = userStoryService.listAll();
+            List<UserStory> stories;
+            if (projectId != null) {
+                stories = userStoryService.listByProjectId(projectId);
+            } else {
+                stories = userStoryService.listAll();
+            }
             return ResponseEntity.ok(stories);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -153,7 +158,7 @@ public class StoryController {
     
 
     @PutMapping("/{id}/sprint-ready")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER')")
     public ResponseEntity<?> updateSprintReady(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSprintReadyReq req

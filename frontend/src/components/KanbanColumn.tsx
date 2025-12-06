@@ -11,6 +11,7 @@ interface Story {
 	labels: string[]
 	assignee: string
 	tags?: string[]
+	isMvp?: boolean
 	isSprintReady?: boolean
 	acceptanceCriteria?: string
 	businessValue?: number
