@@ -355,6 +355,11 @@ main {
   border: 1px dashed #e2e8f0;
 }
 
+.story-card.mvp-card {
+  border: 1px solid #d6bcfa;
+  box-shadow: 0 6px 16px rgba(85, 60, 154, 0.16);
+}
+
 .story-card:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -1190,6 +1195,50 @@ main {
   color: #68d391;
 }
 
+.mvp-toggle-btn {
+  border: 1px dashed #d6bcfa;
+  background: #faf5ff;
+  color: #6b46c1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mvp-toggle-btn:hover {
+  background: #ede9fe;
+}
+
+.mvp-toggle-btn.active {
+  background: #553c9a;
+  color: white;
+  border-color: #553c9a;
+  box-shadow: 0 6px 16px rgba(85, 60, 154, 0.25);
+}
+
+.mvp-toggle-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mvp-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #d6bcfa;
+  color: #553c9a;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mvp-highlight {
+  border: 1px solid #d6bcfa;
+  box-shadow: 0 10px 30px rgba(85, 60, 154, 0.12);
+}
+
   .sprint-ready-btn.ready {
     background: #68d391;
     border-color: #68d391;
@@ -1314,6 +1363,18 @@ main {
   font-size: 13px;
   color: #4a5568;
   font-weight: 500;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  margin: 8px 0;
+  background: #f8fafc;
 }
 
 .story-actions {
