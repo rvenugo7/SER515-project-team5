@@ -23,12 +23,14 @@ interface Story {
 interface ProductBacklogProps {
   stories: Story[];
   onRefresh?: () => void;
+  activeProjectId?: number | null;
   canEditSprintReady?: boolean;
 }
 
 export default function ProductBacklog({
   stories = [],
   onRefresh,
+  activeProjectId,
   canEditSprintReady = false,
 }: ProductBacklogProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,6 +43,15 @@ export default function ProductBacklog({
   React.useEffect(() => {
     setLocalStories(stories);
   }, [stories]);
+
+  // Clear filters when project changes
+  React.useEffect(() => {
+    if (activeProjectId) {
+      setSearchQuery("");
+      setReleaseFilter("All Releases");
+      setStoryFilter("All Stories");
+    }
+  }, [activeProjectId]);
   const sprintReadyCount = stories.filter(
     (story) => story.isSprintReady
   ).length;

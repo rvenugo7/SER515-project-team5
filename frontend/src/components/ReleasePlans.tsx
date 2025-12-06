@@ -19,7 +19,11 @@ interface ReleasePlan {
   updatedAt: string;
 }
 
-export default function ReleasePlans(): React.JSX.Element {
+interface ReleasePlansProps {
+  activeProjectId?: number | null;
+}
+
+export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): React.JSX.Element {
   const [releasePlans, setReleasePlans] = useState<ReleasePlan[]>([]);
   const [filteredPlans, setFilteredPlans] = useState<ReleasePlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,8 +33,15 @@ export default function ReleasePlans(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchReleasePlans = async () => {
+    if (!activeProjectId) {
+      setReleasePlans([]);
+      setFilteredPlans([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch("/api/release-plans", {
+      const response = await fetch(`/api/release-plans/project/${activeProjectId}`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -48,8 +59,12 @@ export default function ReleasePlans(): React.JSX.Element {
   };
 
   useEffect(() => {
+    // Clear existing data immediately when project changes
+    setReleasePlans([]);
+    setFilteredPlans([]);
+    setIsLoading(true);
     fetchReleasePlans();
-  }, []);
+  }, [activeProjectId]);
 
   useEffect(() => {
     let filtered = [...releasePlans];
@@ -132,7 +147,11 @@ export default function ReleasePlans(): React.JSX.Element {
       </div>
 
       {/* Content */}
-      {isLoading ? (
+      {!activeProjectId ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "#718096" }}>
+          Please select a project to view release plans
+        </div>
+      ) : isLoading ? (
         <div style={{ textAlign: "center", padding: "40px", color: "#718096" }}>
           Loading release plans...
         </div>
@@ -180,6 +199,7 @@ export default function ReleasePlans(): React.JSX.Element {
               setEditingPlan(null);
             }}
             plan={editingPlan}
+            projectId={activeProjectId}
           />
         </div>
       )}
