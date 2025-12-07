@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import StoryCard from "./StoryCard";
 import KanbanColumn from "./KanbanColumn";
 import ProductBacklog from "./ProductBacklog";
@@ -6,17 +7,12 @@ import ReleasePlans from "./ReleasePlans";
 import CreateUserStoryModal from "./CreateUserStoryModal";
 import CreateProjectModal from "./CreateProjectModal";
 import AccountManagement from "./AccountManagement";
+import ProjectSidebar from "./ProjectSidebar";
 
 interface MainScreenProps {
   onLogout?: () => void;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description?: string;
-  projectKey: string;
-  active: boolean;
+  projectId?: number;
+  isAccountView?: boolean;
 }
 
 interface BackendStory {
@@ -32,9 +28,9 @@ interface BackendStory {
   isStarred?: boolean;
   mvp?: boolean;
   isMvp?: boolean;
-  releasePlanId?: number
-  releasePlanKey?: string
-  releasePlanName?: string
+  releasePlanId?: number;
+  releasePlanKey?: string;
+  releasePlanName?: string;
 }
 
 interface FrontendStory {
@@ -53,9 +49,9 @@ interface FrontendStory {
   isSprintReady?: boolean;
   acceptanceCriteria?: string;
   businessValue?: number;
-  releasePlanId?: number
-  releasePlanKey?: string
-  releasePlanName?: string
+  releasePlanId?: number;
+  releasePlanKey?: string;
+  releasePlanName?: string;
 }
 
 interface CurrentUser {
@@ -66,7 +62,12 @@ interface CurrentUser {
   roles: string[];
 }
 
-export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
+export default function MainScreen({
+  onLogout,
+  projectId,
+  isAccountView = false,
+}: MainScreenProps): JSX.Element {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Scrum Board");
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All Priorities");
@@ -78,11 +79,8 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentProject, setCurrentProject] = useState<any>(null);
   const toastTimer = useRef<number | null>(null);
-  
-  // Project management state
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
 
   // Map backend status to frontend status
   const mapBackendStatusToFrontend = (backendStatus: string): string => {
@@ -119,58 +117,35 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   };
 
   useEffect(() => {
-    fetchProjects();
-    fetchStories();
+    if (!isAccountView) {
+      if (projectId) {
+        fetchProjectDetails(projectId);
+      } else {
+        setCurrentProject(null);
+      }
+      fetchStories();
+    } else {
+      setCurrentProject(null);
+    }
     fetchCurrentUser();
     return () => {
       if (toastTimer.current) {
         window.clearTimeout(toastTimer.current);
       }
     };
-  }, []);
+  }, [projectId, isAccountView]);
 
-  useEffect(() => {
-    if (activeProjectId) {
-      // Clear existing stories and filters immediately when project changes
-      setStories([]);
-      setSearchQuery("");
-      setPriorityFilter("All Priorities");
-      setIsLoading(true);
-      fetchStories();
-    } else {
-      setStories([]);
-      setIsLoading(false);
-    }
-  }, [activeProjectId]);
-
-  const fetchProjects = async () => {
+  const fetchProjectDetails = async (id: number) => {
     try {
-      const response = await fetch("/api/projects", {
+      const res = await fetch(`/api/projects/${id}`, {
         credentials: "include",
       });
-      if (response.ok) {
-        const projectList: Project[] = await response.json();
-        setProjects(projectList);
-        
-        // Restore from localStorage if exists, otherwise use first project
-        const stored = localStorage.getItem("activeProjectId");
-        if (stored && projectList.length > 0) {
-          const storedId = parseInt(stored, 10);
-          if (projectList.some(p => p.id === storedId)) {
-            setActiveProjectId(storedId);
-          } else if (projectList.length > 0) {
-            // Stored project no longer exists, use first available
-            setActiveProjectId(projectList[0].id);
-            localStorage.setItem("activeProjectId", projectList[0].id.toString());
-          }
-        } else if (projectList.length > 0 && !activeProjectId) {
-          // No stored project, use first available
-          setActiveProjectId(projectList[0].id);
-          localStorage.setItem("activeProjectId", projectList[0].id.toString());
-        }
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentProject(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error);
+    } catch (e) {
+      console.error("Failed to fetch project", e);
     }
   };
 
@@ -300,14 +275,16 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   };
 
   const fetchStories = async () => {
-    if (!activeProjectId) {
+    if (!projectId) {
+      setStories([]);
       setIsLoading(false);
       return;
     }
-
     try {
-      setIsLoading(true);
-      const response = await fetch(`/api/stories?projectId=${activeProjectId}`, {
+      const url = projectId
+        ? `/api/stories?projectId=${projectId}`
+        : "/api/stories";
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
@@ -353,278 +330,283 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   );
 
   return (
-    <div className="scrum-container">
-      {/* Header */}
-      <div className="scrum-header">
-        <div className="header-left">
-          <div className="logo">✓</div>
-          <div>
-            <h1 className="scrum-title">Scrum Management System</h1>
-            <p className="scrum-subtitle">
-              Manage releases, user stories, and sprints
-            </p>
-          </div>
-        </div>
-        <div className="header-middle">
-          {projects.length > 0 && (
-            <select
-              className="project-selector"
-              value={activeProjectId || ""}
-              onChange={(e) => {
-                const projectId = parseInt(e.target.value, 10);
-                setActiveProjectId(projectId);
-                localStorage.setItem("activeProjectId", projectId.toString());
-              }}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "2px solid #e2e8f0",
-                fontSize: "14px",
-                fontWeight: 500,
-                backgroundColor: "white",
-                color: "#2d3748",
-                cursor: "pointer",
-                minWidth: "200px",
-              }}
-            >
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name} ({project.projectKey})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-        <div className="header-actions">
-          <button
-            className="create-project-btn"
-            onClick={() => setIsCreateProjectOpen(true)}
-          >
-            <span className="plus-icon">+</span>
-            New Project
-          </button>
-          {activeTab !== "Product Backlog" && activeProjectId && (
-            <button
-              className="create-story-btn"
-              onClick={() => setIsCreateOpen(true)}
-            >
-              <span className="plus-icon">+</span>
-              Create User Story
-            </button>
-          )}
-          {onLogout && (
-            <button className="logout-btn" onClick={onLogout}>
-              Log Out
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="nav-tabs">
-        <button
-          className={`nav-tab ${activeTab === "Scrum Board" ? "active" : ""}`}
-          onClick={() => handleTabClick("Scrum Board")}
-        >
-          Scrum Board
-        </button>
-        <button
-          className={`nav-tab ${
-            activeTab === "Product Backlog" ? "active" : ""
-          }`}
-          onClick={() => handleTabClick("Product Backlog")}
-        >
-          Product Backlog
-        </button>
-        <button
-          className={`nav-tab ${activeTab === "Release Plans" ? "active" : ""}`}
-          onClick={() => handleTabClick("Release Plans")}
-        >
-          Release Plans
-        </button>
-        <button
-          className={`nav-tab ${activeTab === "Account" ? "active" : ""}`}
-          onClick={() => handleTabClick("Account")}
-        >
-          Account
-        </button>
-      </div>
-
-          {activeTab === "Scrum Board" && (
-        <>
-          {!activeProjectId && (
-            <div style={{ 
-              textAlign: "center", 
-              padding: "40px",
-              color: "#718096",
-              fontSize: "16px"
-            }}>
-              Please select a project to view stories
+    <div className="app-layout">
+      <ProjectSidebar
+        currentUser={currentUser}
+        currentProjectId={projectId}
+        onProjectSelect={(id) => navigate(`/project/${id}`)}
+      />
+      <div className="main-content">
+        <div className="scrum-container">
+          {/* Header */}
+          <div className="scrum-header">
+            <div className="header-left">
+              <div className="logo">📄</div>
+              <div>
+                <h1 className="scrum-title">
+                  {isAccountView
+                    ? "Account Settings"
+                    : currentProject
+                    ? currentProject.name
+                    : "Scrum Management System"}
+                </h1>
+                <p className="scrum-subtitle">
+                  {isAccountView
+                    ? "Manage your profile and preferences"
+                    : currentProject
+                    ? currentProject.description
+                    : "Select a project to start"}
+                </p>
+              </div>
             </div>
-          )}
-          {activeProjectId && (
+            <div className="header-actions">
+              {!isAccountView && currentProject && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    marginRight: "16px",
+                    paddingRight: "16px",
+                    borderRight: "1px solid #e2e8f0",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#718096",
+                      fontWeight: "600",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    Project Code
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "700",
+                      color: "#2d3748",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {currentProject.projectCode || "N/A"}
+                  </span>
+                </div>
+              )}
+              {!isAccountView &&
+                activeTab !== "Product Backlog" &&
+                currentProject && (
+                  <button
+                    className="create-story-btn"
+                    onClick={() => setIsCreateOpen(true)}
+                  >
+                    <span className="plus-icon">+</span>
+                    Create User Story
+                  </button>
+                )}
+              {onLogout && (
+                <button className="logout-btn" onClick={onLogout}>
+                  Log Out
+                </button>
+              )}
+            </div>
+          </div>
+
+          {isAccountView ? (
+            <AccountManagement />
+          ) : currentProject ? (
             <>
-              {toastMessage && <div className="toast-message">{toastMessage}</div>}
-              {/* Search and Filters */}
-              <div className="search-filters">
-            <div className="search-bar">
-              <span className="search-icon">⌕</span>
-              <input
-                type="text"
-                placeholder="Search stories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <select
-              className="priority-filter"
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-            >
-              <option>All Priorities</option>
-              <option>Critical</option>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
-          </div>
+              {/* Navigation Tabs */}
+              <div className="nav-tabs">
+                <button
+                  className={`nav-tab ${
+                    activeTab === "Scrum Board" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("Scrum Board")}
+                >
+                  Scrum Board
+                </button>
+                <button
+                  className={`nav-tab ${
+                    activeTab === "Product Backlog" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("Product Backlog")}
+                >
+                  Product Backlog
+                </button>
+                <button
+                  className={`nav-tab ${
+                    activeTab === "Release Plans" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("Release Plans")}
+                >
+                  Release Plans
+                </button>
+              </div>
 
-          {/* Summary Statistics */}
-          <div className="summary-stats">
-            <span>Total Stories: {totalStories}</span>
-            <span>Total Points: {totalPoints}</span>
-          </div>
+              {activeTab === "Scrum Board" && (
+                <>
+                  {toastMessage && (
+                    <div className="toast-message">{toastMessage}</div>
+                  )}
+                  {/* Search and Filters */}
+                  <div className="search-filters">
+                    <div className="search-bar">
+                      <span className="search-icon">⌕</span>
+                      <input
+                        type="text"
+                        placeholder="Search stories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <select
+                      className="priority-filter"
+                      value={priorityFilter}
+                      onChange={(e) => setPriorityFilter(e.target.value)}
+                    >
+                      <option>All Priorities</option>
+                      <option>Critical</option>
+                      <option>High</option>
+                      <option>Medium</option>
+                      <option>Low</option>
+                    </select>
+                  </div>
 
-          {/* Kanban Board */}
-          {isLoading ? (
-            <div style={{ textAlign: "center", padding: "40px" }}>
-              Loading stories...
-            </div>
-          ) : (
-            <div className="kanban-board">
-              <KanbanColumn
-                title="Backlog"
-                stories={getStoriesByStatus("Backlog")}
-                onEditStory={handleEditStory}
-								onStoryDrop={handleStoryDrop}
-								onStoryDragStart={handleStoryDragStart}
-								onStoryLinked={fetchStories}
-              />
-              <KanbanColumn
-                title="To Do"
-                stories={getStoriesByStatus("To Do")}
-                onEditStory={handleEditStory}
-								onStoryDrop={handleStoryDrop}
-								onStoryDragStart={handleStoryDragStart}
-								onStoryLinked={fetchStories}
-              />
-              <KanbanColumn
-                title="In Progress"
-                stories={getStoriesByStatus("In Progress")}
-                onEditStory={handleEditStory}
-								onStoryDrop={handleStoryDrop}
-								onStoryDragStart={handleStoryDragStart}
-								onStoryLinked={fetchStories}
-              />
-              <KanbanColumn
-                title="Done"
-                stories={getStoriesByStatus("Done")}
-                onEditStory={handleEditStory}
-								onStoryDrop={handleStoryDrop}
-								onStoryDragStart={handleStoryDragStart}
-								onStoryLinked={fetchStories}
-              />
-            </div>
-          )}
+                  {/* Summary Statistics */}
+                  <div className="summary-stats">
+                    <span>Total Stories: {totalStories}</span>
+                    <span>Total Points: {totalPoints}</span>
+                  </div>
+
+                  {/* Kanban Board */}
+                  {isLoading ? (
+                    <div style={{ textAlign: "center", padding: "40px" }}>
+                      Loading stories...
+                    </div>
+                  ) : (
+                    <div className="kanban-board">
+                      <KanbanColumn
+                        title="Backlog"
+                        stories={getStoriesByStatus("Backlog")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                      <KanbanColumn
+                        title="To Do"
+                        stories={getStoriesByStatus("To Do")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                      <KanbanColumn
+                        title="In Progress"
+                        stories={getStoriesByStatus("In Progress")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                      <KanbanColumn
+                        title="Done"
+                        stories={getStoriesByStatus("Done")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeTab === "Product Backlog" && (
+                <ProductBacklog
+                  stories={stories}
+                  onRefresh={fetchStories}
+                  canEditSprintReady={canManageSprintReady}
+                />
+              )}
+              {isCreateOpen && (
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 9999,
+                  }}
+                >
+                  <CreateUserStoryModal
+                    isOpen={isCreateOpen}
+                    onClose={() => setIsCreateOpen(false)}
+                    onCreated={() => {
+                      fetchStories();
+                      setIsCreateOpen(false);
+                    }}
+                    projectId={projectId}
+                  />
+                </div>
+              )}
+              {isEditModalOpen && (
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 9999,
+                  }}
+                >
+                  <CreateUserStoryModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                      setIsEditModalOpen(false);
+                      setEditingStory(null);
+                    }}
+                    onCreated={() => {
+                      fetchStories();
+                      setIsEditModalOpen(false);
+                      setEditingStory(null);
+                    }}
+                    story={editingStory}
+                    projectId={projectId}
+                  />
+                </div>
+              )}
+
+              {activeTab === "Release Plans" && (
+                <ReleasePlans projectId={projectId} />
+              )}
             </>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "50vh",
+                color: "#718096",
+              }}
+            >
+              <h2 style={{ color: "#2d3748" }}>No Project Selected</h2>
+              <p>
+                Select a project from the sidebar or create a new one to get
+                started.
+              </p>
+            </div>
           )}
-        </>
-      )}
-
-      {activeTab === "Product Backlog" && (
-        <ProductBacklog 
-          stories={stories} 
-          onRefresh={fetchStories}
-          activeProjectId={activeProjectId}
-          canEditSprintReady={canManageSprintReady}
-          canToggleMvp={canManageMvp}
-        />
-      )}
-      {isCreateOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <CreateUserStoryModal
-            isOpen={isCreateOpen}
-            onClose={() => setIsCreateOpen(false)}
-            onCreated={() => {
-              fetchStories();
-              setIsCreateOpen(false);
-            }}
-            projectId={activeProjectId}
-          />
         </div>
-      )}
-      {isEditModalOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <CreateUserStoryModal
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setEditingStory(null);
-            }}
-            onCreated={() => {
-              fetchStories();
-              setIsEditModalOpen(false);
-              setEditingStory(null);
-            }}
-            story={editingStory}
-            projectId={activeProjectId}
-          />
-        </div>
-      )}
-
-      {activeTab === "Release Plans" && (
-        <ReleasePlans activeProjectId={activeProjectId} />
-      )}
-
-      {activeTab === "Account" && <AccountManagement />}
-
-      {isCreateProjectOpen && (
-        <CreateProjectModal
-          isOpen={isCreateProjectOpen}
-          onClose={() => setIsCreateProjectOpen(false)}
-          onCreated={(newProject) => {
-            setIsCreateProjectOpen(false);
-            // Refresh projects list
-            fetchProjects().then(() => {
-              // Set the new project as active
-              if (newProject && newProject.projectId) {
-                setActiveProjectId(newProject.projectId);
-                localStorage.setItem("activeProjectId", newProject.projectId.toString());
-              }
-            });
-          }}
-        />
-      )}
+      </div>
     </div>
   );
 }

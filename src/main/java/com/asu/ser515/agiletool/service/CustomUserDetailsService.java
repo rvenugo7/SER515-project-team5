@@ -22,7 +22,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         // Allow login via either username or email
         User user = userRepository.findByUsername(usernameOrEmail)
                 .or(() -> userRepository.findByEmail(usernameOrEmail))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username or email: " + usernameOrEmail));
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found with username or email: " + usernameOrEmail));
 
         if (user.getActive() == null || !user.getActive()) {
             throw new UsernameNotFoundException("User account is inactive");
@@ -35,7 +36,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                authorities
-        );
+                authorities);
     }
 }

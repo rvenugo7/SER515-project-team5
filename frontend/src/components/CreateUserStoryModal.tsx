@@ -6,7 +6,15 @@ interface Story {
   description?: string;
   acceptanceCriteria?: string;
   businessValue?: number;
-  priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | "low" | "medium" | "high" | "critical";
+  priority?:
+    | "LOW"
+    | "MEDIUM"
+    | "HIGH"
+    | "CRITICAL"
+    | "low"
+    | "medium"
+    | "high"
+    | "critical";
 }
 
 interface CreateUserStoryModalProps {
@@ -14,7 +22,7 @@ interface CreateUserStoryModalProps {
   onClose: () => void;
   onCreated?: () => void;
   story?: Story | null;
-  projectId?: number | null;
+  projectId?: number;
 }
 
 type PriorityOption = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -31,7 +39,8 @@ export default function CreateUserStoryModal({
   const [acceptanceCriteria, setAcceptanceCriteria] = useState("");
   const [businessValue, setBusinessValue] = useState<number | "">("");
   const [priority, setPriority] = useState<PriorityOption | null>(null);
-  const [originalPriority, setOriginalPriority] = useState<PriorityOption | null>(null);
+  const [originalPriority, setOriginalPriority] =
+    useState<PriorityOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,7 +105,7 @@ export default function CreateUserStoryModal({
       const method = isEditMode ? "PUT" : "POST";
 
       // Build request body
-      // For priority: 
+      // For priority:
       // - In edit mode: send the current priority value (null if originally null and unchanged)
       // - In create mode: always send MEDIUM as default
       const requestBody: any = {
@@ -104,16 +113,11 @@ export default function CreateUserStoryModal({
         description,
         acceptanceCriteria,
         businessValue: businessValue === "" ? null : Number(businessValue),
-        priority: isEditMode ? priority : (priority || "MEDIUM"),
+        priority: isEditMode ? priority : priority || "MEDIUM",
+        projectId: projectId,
       };
 
-      // Add projectId as query parameter for filtering
-      let finalUrl = url;
-      if (projectId && !isEditMode) {
-        finalUrl = `${url}?projectId=${projectId}`;
-      }
-
-      const response = await fetch(finalUrl, {
+      const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -122,7 +126,9 @@ export default function CreateUserStoryModal({
 
       if (!response.ok) {
         const txt = await response.text();
-        throw new Error(txt || `Failed to ${isEditMode ? "update" : "create"} story`);
+        throw new Error(
+          txt || `Failed to ${isEditMode ? "update" : "create"} story`
+        );
       }
 
       // tell parent to reload stories
@@ -208,9 +214,7 @@ export default function CreateUserStoryModal({
         <form onSubmit={handleSubmit}>
           {/* Title */}
           <div style={{ marginBottom: 10 }}>
-            <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-            >
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
               Title *
             </label>
             <input
@@ -232,9 +236,7 @@ export default function CreateUserStoryModal({
 
           {/* Description */}
           <div style={{ marginBottom: 10 }}>
-            <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-            >
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
               Description *
             </label>
             <textarea
@@ -257,9 +259,7 @@ export default function CreateUserStoryModal({
 
           {/* Acceptance Criteria */}
           <div style={{ marginBottom: 10 }}>
-            <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-            >
+            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
               Acceptance Criteria
             </label>
             <textarea
@@ -321,9 +321,7 @@ export default function CreateUserStoryModal({
               </label>
               <select
                 value={priority || "MEDIUM"}
-                onChange={(e) =>
-                  setPriority(e.target.value as PriorityOption)
-                }
+                onChange={(e) => setPriority(e.target.value as PriorityOption)}
                 style={{
                   width: "100%",
                   marginTop: 4,
@@ -381,9 +379,13 @@ export default function CreateUserStoryModal({
                 cursor: "pointer",
               }}
             >
-              {isSubmitting 
-                ? (isEditMode ? "Updating..." : "Creating...") 
-                : (isEditMode ? "Update Story" : "Create Story")}
+              {isSubmitting
+                ? isEditMode
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditMode
+                ? "Update Story"
+                : "Create Story"}
             </button>
           </div>
         </form>

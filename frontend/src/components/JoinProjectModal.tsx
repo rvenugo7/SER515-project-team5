@@ -1,18 +1,17 @@
 import React, { useState, FormEvent } from "react";
 
-interface CreateProjectModalProps {
+interface JoinProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated?: (project: any) => void;
+  onJoined?: () => void;
 }
 
-export default function CreateProjectModal({
+export default function JoinProjectModal({
   isOpen,
   onClose,
-  onCreated,
-}: CreateProjectModalProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  onJoined,
+}: JoinProjectModalProps) {
+  const [projectCode, setProjectCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,36 +21,30 @@ export default function CreateProjectModal({
     e.preventDefault();
     setError(null);
 
-    if (!name.trim()) {
-      setError("Project Name is required");
+    if (!projectCode.trim()) {
+      setError("Project Code is required");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/projects", {
+      const response = await fetch("/api/projects/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ projectCode }),
       });
 
       if (!response.ok) {
         const txt = await response.text();
-        throw new Error(txt || "Failed to create project");
+        throw new Error(txt || "Failed to join project");
       }
 
-      const project = await response.json();
-
-      // Success
-      alert(
-        `Project Created!\nCode: ${project.projectCode}\nSave this code to invite others.`
-      );
-
-      onCreated?.(project);
-      setName("");
-      setDescription("");
+      alert("Successfully joined project!");
+      
+      onJoined?.();
+      setProjectCode("");
       onClose();
     } catch (e: any) {
       setError(e.message);
@@ -62,9 +55,9 @@ export default function CreateProjectModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-container" style={{ maxWidth: 520 }}>
+      <div className="modal-container" style={{ maxWidth: 400 }}>
         <div className="modal-header">
-          <h2>Create New Project</h2>
+          <h2>Join Project</h2>
           <button className="modal-close-btn" onClick={onClose}>
             ✕
           </button>
@@ -79,31 +72,25 @@ export default function CreateProjectModal({
 
           <form onSubmit={handleSubmit} className="add-story-form">
             <div className="form-group">
-              <label htmlFor="project-name">
-                Project Name <span className="required">*</span>
+              <label htmlFor="project-code">
+                Project Code <span className="required">*</span>
               </label>
               <input
                 type="text"
-                id="project-name"
+                id="project-code"
                 required
-                placeholder="e.g. Mobile App Redesign"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="project-desc">Description</label>
-              <textarea
-                id="project-desc"
-                placeholder="Project goals and details..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter 8-character code"
+                value={projectCode}
+                onChange={(e) => setProjectCode(e.target.value)}
               />
             </div>
 
             <div className="form-actions">
-              <button type="button" className="btn-cancel" onClick={onClose}>
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={onClose}
+              >
                 Cancel
               </button>
               <button
@@ -111,7 +98,7 @@ export default function CreateProjectModal({
                 className="btn-submit"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating..." : "Create Project"}
+                {isSubmitting ? "Joining..." : "Join Project"}
               </button>
             </div>
           </form>

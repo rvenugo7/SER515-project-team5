@@ -20,10 +20,12 @@ interface ReleasePlan {
 }
 
 interface ReleasePlansProps {
-  activeProjectId?: number | null;
+  projectId?: number;
 }
 
-export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): React.JSX.Element {
+export default function ReleasePlans({
+  projectId,
+}: ReleasePlansProps): React.JSX.Element {
   const [releasePlans, setReleasePlans] = useState<ReleasePlan[]>([]);
   const [filteredPlans, setFilteredPlans] = useState<ReleasePlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +35,7 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchReleasePlans = async () => {
-    if (!activeProjectId) {
+    if (!projectId) {
       setReleasePlans([]);
       setFilteredPlans([]);
       setIsLoading(false);
@@ -41,7 +43,10 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
     }
 
     try {
-      const response = await fetch(`/api/release-plans/project/${activeProjectId}`, {
+      const url = projectId
+        ? `/api/release-plans/project/${projectId}`
+        : "/api/release-plans";
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
@@ -64,7 +69,7 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
     setFilteredPlans([]);
     setIsLoading(true);
     fetchReleasePlans();
-  }, [activeProjectId]);
+  }, [projectId]); // Refetch when projectId changes
 
   useEffect(() => {
     let filtered = [...releasePlans];
@@ -147,7 +152,7 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
       </div>
 
       {/* Content */}
-      {!activeProjectId ? (
+      {!projectId ? (
         <div style={{ textAlign: "center", padding: "40px", color: "#718096" }}>
           Please select a project to view release plans
         </div>
@@ -199,7 +204,7 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
               setEditingPlan(null);
             }}
             plan={editingPlan}
-            projectId={activeProjectId}
+            projectId={projectId}
           />
         </div>
       )}

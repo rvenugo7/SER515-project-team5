@@ -1,137 +1,88 @@
 package com.asu.ser515.agiletool.controller;
 
-import com.asu.ser515.agiletool.dto.CreateProjectDTO;
-import com.asu.ser515.agiletool.dto.CreateProjectResponseDTO;
 import com.asu.ser515.agiletool.models.Project;
-import com.asu.ser515.agiletool.models.ProjectMember;
+import com.asu.ser515.agiletool.models.User;
 import com.asu.ser515.agiletool.service.ProjectService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import com.asu.ser515.agiletool.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/projects")
 public class ProjectController {
-    
-    private final ProjectService projectService;
-    
-    public ProjectController(ProjectService projectService) {
-        this.projectService = projectService;
-    }
-    
+
+    @Autowired
+    private ProjectService projectService;
+
+    @Autowired
+    private UserService userService;
+
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> createProject(@Valid @RequestBody CreateProjectDTO dto) {
+    @PreAuthorize("hasRole('PRODUCT_OWNER') or hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<?> createProject(@RequestBody Map<String, String> payload) {
+        String name = payload.get("name");
+        String description = payload.get("description");
+
+        if (name == null || name.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Project name is required");
+        }
+
         try {
-            CreateProjectResponseDTO response = projectService.createProject(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Validation Error");
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            User creator = userService.getCurrentUserProfile(username);
+            Project project = projectService.createProject(name, description, creator);
+            return ResponseEntity.ok(project);
         } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Internal Server Error");
-            errorResponse.put("message", "Failed to create project: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    
+
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<?> getAllProjects() {
+        return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyProjects() {
         try {
-            List<Project> projects = projectService.getAllProjects();
-            return ResponseEntity.ok(projects);
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            return ResponseEntity.ok(projectService.getProjectsByUser(username));
         } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Internal Server Error");
-            errorResponse.put("message", "Failed to retrieve projects: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    
+
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getProjectById(@PathVariable Long id) {
+    public ResponseEntity<?> getProject(@PathVariable Long id) {
         try {
-            Project project = projectService.getProjectById(id);
-            return ResponseEntity.ok(project);
-        } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Not Found");
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            // In a real app, we'd check if the user is a member of this project
+            return ResponseEntity.ok(projectService.getProjectById(id));
         } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Internal Server Error");
-            errorResponse.put("message", "Failed to retrieve project: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.notFound().build();
         }
     }
-    
-    @GetMapping("/key/{projectKey}")
+
+    @PostMapping("/join")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getProjectByKey(@PathVariable String projectKey) {
-        try {
-            Project project = projectService.getProjectByProjectKey(projectKey);
-            return ResponseEntity.ok(project);
-        } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Not Found");
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Internal Server Error");
-            errorResponse.put("message", "Failed to retrieve project: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    public ResponseEntity<?> joinProject(@RequestBody Map<String, String> payload) {
+        String projectCode = payload.get("projectCode");
+        if (projectCode == null || projectCode.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Project code is required");
         }
-    }
-    
-    @GetMapping("/{id}/members")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getProjectMembers(@PathVariable Long id) {
+
         try {
-            List<ProjectMember> members = projectService.getProjectMembers(id);
-            return ResponseEntity.ok(members);
-        } catch (IllegalArgumentException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Not Found");
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userService.getCurrentUserProfile(username);
+            projectService.addUserToProject(projectCode, user);
+            return ResponseEntity.ok("Successfully joined project");
         } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Internal Server Error");
-            errorResponse.put("message", "Failed to retrieve project members: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-    }
-    
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Validation Error");
-        errorResponse.put("message", "Invalid input data");
-        errorResponse.put("details", errors);
-        return ResponseEntity.badRequest().body(errorResponse);
     }
 }
-
