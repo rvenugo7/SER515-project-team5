@@ -11,6 +11,7 @@ interface Story {
 	assignee: string
 	assigneeName?: string
 	tags?: string[]
+	isMvp?: boolean
 	isStarred?: boolean
 	isSprintReady?: boolean
 	acceptanceCriteria?: string
@@ -22,6 +23,9 @@ interface ProductBacklogStoryCardProps {
 	onEdit?: (story: Story) => void
 	onUpdate?: (updatedStory: Story) => void
 	canEditSprintReady?: boolean
+	canToggleMvp?: boolean
+	checked?: boolean
+	onToggleCheck?: (checked: boolean) => void
 }
 
 export default function ProductBacklogStoryCard({
@@ -29,10 +33,16 @@ export default function ProductBacklogStoryCard({
 	onEdit,
 	onUpdate,
 	canEditSprintReady = false,
+	canToggleMvp = false,
+	checked,
+	onToggleCheck,
 }: ProductBacklogStoryCardProps): JSX.Element {
-	const [isChecked, setIsChecked] = useState(false)
+	const [internalChecked, setInternalChecked] = useState(false)
+	const isChecked = checked ?? internalChecked
 	const [isStarred, setIsStarred] = useState(story.isStarred || false)
 	const [isSprintReady, setIsSprintReady] = useState(story.isSprintReady || false)
+	const [isMvp, setIsMvp] = useState(Boolean(story.isMvp || story.tags?.includes('MVP')))
+	const [tags, setTags] = useState<string[]>(story.tags || [])
 	const [storyPoints, setStoryPoints] = useState(story.points || 0)
 	const [isSaving, setIsSaving] = useState(false)
 	const [showEstimateModal, setShowEstimateModal] = useState(false)
@@ -40,6 +50,7 @@ export default function ProductBacklogStoryCard({
 	const [estimateError, setEstimateError] = useState<string | null>(null)
 	const [isTogglingStar, setIsTogglingStar] = useState(false)
 	const [isTogglingSprint, setIsTogglingSprint] = useState(false)
+	const [isTogglingMvp, setIsTogglingMvp] = useState(false)
 	const [showDetails, setShowDetails] = useState(false)
 
 	const sprintReadyTooltip = canEditSprintReady
@@ -52,7 +63,9 @@ export default function ProductBacklogStoryCard({
 		setIsStarred(story.isStarred || false)
 		setIsSprintReady(story.isSprintReady || false)
 		setStoryPoints(story.points || 0)
-	}, [story.isStarred, story.isSprintReady, story.points])
+		setIsMvp(Boolean(story.isMvp || story.tags?.includes('MVP')))
+		setTags(story.tags || [])
+	}, [story.isStarred, story.isSprintReady, story.points, story.isMvp, story.tags])
 
 
 	const getPriorityColor = (priority: string) => {
@@ -107,6 +120,8 @@ export default function ProductBacklogStoryCard({
       			...story,
       			...updatedStory,
       			points: nextPoints,
+      			isMvp,
+				tags
     })
 
 			setShowEstimateSuccess(true) 
@@ -117,18 +132,67 @@ export default function ProductBacklogStoryCard({
 			setIsSaving(false)
 		}
 	}
+	const cardClass = `backlog-story-card ${isMvp ? 'mvp-highlight' : ''}`.trim()
+	const mvpTooltip = canToggleMvp ? (isMvp ? 'Unset MVP' : 'Mark as MVP') : 'Access Denied'
+
+	const handleToggleMvp = async () => {
+		if (!canToggleMvp || isTogglingMvp) return
+		const next = !isMvp
+		setIsMvp(next)
+		setIsTogglingMvp(true)
+		try {
+			const response = await fetch(`/api/stories/${story.id}/mvp`, {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ mvp: next })
+			})
+			if (!response.ok) {
+				throw new Error("Failed to update MVP flag")
+			}
+			const updatedStory = await response.json()
+			const mvpVal = Boolean((updatedStory as any).mvp ?? (updatedStory as any).isMvp ?? next)
+			setIsMvp(mvpVal)
+			const nextTags = new Set(tags)
+			if (mvpVal) nextTags.add('MVP')
+			else nextTags.delete('MVP')
+			const merged = {
+				...story,
+				...updatedStory,
+				points: updatedStory.storyPoints ?? story.points,
+				isMvp: mvpVal,
+				tags: Array.from(nextTags)
+			} as Story
+			setTags(Array.from(nextTags))
+			onUpdate?.(merged)
+		} catch (err) {
+			console.error(err)
+			alert("Could not update MVP flag")
+			setIsMvp(!next)
+		} finally {
+			setIsTogglingMvp(false)
+		}
+	}
+
 	return (
 		<>
-		<div className="backlog-story-card">
+		<div className={cardClass}>
 			<div className="story-controls-left">
 				<input
 					type="checkbox"
 					checked={isChecked}
-					onChange={(e) => setIsChecked(e.target.checked)}
+					onChange={(e) => {
+						const next = e.target.checked
+						if (onToggleCheck) {
+							onToggleCheck(next)
+						} else {
+							setInternalChecked(next)
+						}
+					}}
 					className="story-checkbox tooltipped"
-					data-tooltip="Select story"
-					aria-label="Select story"
-				/>
+				data-tooltip="Select story"
+				aria-label="Select story"
+			/>
 				<button
 					className={`star-btn ${isStarred ? 'starred' : ''} tooltipped`}
 					onClick={async () => {
@@ -154,6 +218,8 @@ export default function ProductBacklogStoryCard({
 								...updatedStory,
 								points: updatedStory.storyPoints ?? story.points,
 								isStarred: starredVal,
+								isMvp,
+								tags
 							} as Story)
 						} catch (err) {
 							console.error(err)
@@ -188,12 +254,19 @@ export default function ProductBacklogStoryCard({
 							}
 							const updatedStory = await response.json()
 							const sprintReadyVal = Boolean((updatedStory as any).sprintReady)
+							const nextTags = new Set(tags)
+							if (sprintReadyVal) nextTags.add('Sprint Ready')
+							else nextTags.delete('Sprint Ready')
+							const updatedTags = Array.from(nextTags)
+							setTags(updatedTags)
 							setIsSprintReady(sprintReadyVal)
 							onUpdate?.({
 								...story,
 								...updatedStory,
 								points: updatedStory.storyPoints ?? story.points,
-								isSprintReady: sprintReadyVal
+								isSprintReady: sprintReadyVal,
+								isMvp,
+								tags: updatedTags
 							} as Story)
 						} catch (err) {
 							console.error(err)
@@ -208,11 +281,21 @@ export default function ProductBacklogStoryCard({
 			>
 				{isSprintReady ? '✓' : '○'}
 			</button>
+			<button
+				className={`mvp-toggle-btn ${isMvp ? 'active' : ''} tooltipped`}
+				onClick={handleToggleMvp}
+				data-tooltip={mvpTooltip}
+				aria-label={mvpTooltip}
+				disabled={isTogglingMvp || !canToggleMvp}
+			>
+				MVP
+			</button>
 			</div>
 
 			<div className="story-content">
 				<h3 className="story-title">
 					<span className="story-id">#{story.id}</span> {story.title}
+					{isMvp && <span className="mvp-badge">MVP</span>}
 				</h3>
 				<div className="story-tags">
 					<span className={`priority-tag ${getPriorityColor(story.priority)}`}>
@@ -223,8 +306,8 @@ export default function ProductBacklogStoryCard({
 						{story.status.toLowerCase()}
 					</span>
 					<span className="points-tag">{story.points} pts</span>
-					{story.tags?.includes('MVP') && <span className="status-tag mvp-tag">MVP</span>}
-					{story.tags?.includes('Sprint Ready') && (
+					{tags.includes('MVP') && <span className="status-tag mvp-tag">MVP</span>}
+					{tags.includes('Sprint Ready') && (
 						<span className="status-tag sprint-ready-tag">Sprint Ready</span>
 					)}
 				</div>
@@ -297,6 +380,18 @@ export default function ProductBacklogStoryCard({
 						<p className="modal-field"><strong>Status:</strong> {story.status}</p>
 						<p className="modal-field"><strong>Priority:</strong> {story.priority}</p>
 						<p className="modal-field"><strong>Story Points:</strong> {story.points}</p>
+						<p className="modal-field"><strong>MVP:</strong> {isMvp ? 'Yes' : 'No'}</p>
+						<div className="toggle-row">
+							<span>Toggle MVP</span>
+							<button
+								className={`mvp-toggle-btn ${isMvp ? 'active' : ''}`}
+								onClick={handleToggleMvp}
+								disabled={isTogglingMvp || !canToggleMvp}
+								aria-label={mvpTooltip}
+							>
+								{isMvp ? 'Unset MVP' : 'Mark as MVP'}
+							</button>
+						</div>
 					</div>
 					<div className="form-actions">
 						<button className="btn-cancel" onClick={() => setShowDetails(false)}>

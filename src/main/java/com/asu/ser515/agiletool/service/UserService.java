@@ -4,7 +4,6 @@ import com.asu.ser515.agiletool.dto.UserProfileUpdateDTO;
 import com.asu.ser515.agiletool.models.User;
 import com.asu.ser515.agiletool.models.UserRole;
 import com.asu.ser515.agiletool.repository.UserRepository;
-import com.asu.ser515.agiletool.repository.ProjectRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -20,9 +19,6 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ProjectRepository projectRepository;
 
     @Autowired
     private ProjectService projectService;

@@ -42,6 +42,10 @@ export default function CreateReleasePlanModal({
 
   const isEditMode = plan !== null && plan.id !== undefined;
 
+  const [projectId, setProjectId] = useState<number | undefined>(
+    propProjectId || undefined
+  );
+
   useEffect(() => {
     if (plan && isOpen) {
       setName(plan.name || "");
@@ -61,7 +65,7 @@ export default function CreateReleasePlanModal({
       setStatus("PLANNED");
       setOriginalPlan(null);
     }
-  }, [plan, isOpen]);
+  }, [plan, isOpen, propProjectId]);
 
   if (!isOpen) return null;
 
@@ -240,11 +244,7 @@ export default function CreateReleasePlanModal({
 
             {/* Buttons */}
             <div className="form-actions">
-              <button
-                type="button"
-                className="btn-cancel"
-                onClick={onClose}
-              >
+              <button type="button" className="btn-cancel" onClick={onClose}>
                 Cancel
               </button>
               <button

@@ -5,6 +5,7 @@ import KanbanColumn from "./KanbanColumn";
 import ProductBacklog from "./ProductBacklog";
 import ReleasePlans from "./ReleasePlans";
 import CreateUserStoryModal from "./CreateUserStoryModal";
+import CreateProjectModal from "./CreateProjectModal";
 import AccountManagement from "./AccountManagement";
 import ProjectSidebar from "./ProjectSidebar";
 
@@ -25,9 +26,11 @@ interface BackendStory {
   businessValue?: number;
   sprintReady?: boolean;
   isStarred?: boolean;
-  releasePlanId?: number
-  releasePlanKey?: string
-  releasePlanName?: string
+  mvp?: boolean;
+  isMvp?: boolean;
+  releasePlanId?: number;
+  releasePlanKey?: string;
+  releasePlanName?: string;
 }
 
 interface FrontendStory {
@@ -41,13 +44,14 @@ interface FrontendStory {
   assignee: string;
   assigneeName?: string;
   tags?: string[];
+  isMvp?: boolean;
   isStarred?: boolean;
   isSprintReady?: boolean;
   acceptanceCriteria?: string;
   businessValue?: number;
-  releasePlanId?: number
-  releasePlanKey?: string
-  releasePlanName?: string
+  releasePlanId?: number;
+  releasePlanKey?: string;
+  releasePlanName?: string;
 }
 
 interface CurrentUser {
@@ -68,6 +72,7 @@ export default function MainScreen({
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All Priorities");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [stories, setStories] = useState<FrontendStory[]>([]);
@@ -241,6 +246,11 @@ export default function MainScreen({
       | "medium"
       | "high"
       | "critical";
+    const sprintReadyVal = Boolean((s as any).sprintReady);
+    const isMvp = Boolean((s as any).mvp ?? (s as any).isMvp);
+    const tagSet = new Set<string>();
+    if (isMvp) tagSet.add("MVP");
+    if (sprintReadyVal) tagSet.add("Sprint Ready");
 
     return {
       id: s.id,
@@ -252,9 +262,10 @@ export default function MainScreen({
       labels: [],
       assignee: s.assigneeInitials || "U",
       assigneeName: s.assigneeName,
-      tags: [],
+      tags: Array.from(tagSet),
+      isMvp,
       isStarred: Boolean((s as any).isStarred),
-      isSprintReady: Boolean((s as any).sprintReady),
+      isSprintReady: sprintReadyVal,
       acceptanceCriteria: (s as any).acceptanceCriteria,
       businessValue: (s as any).businessValue,
       releasePlanId: s.releasePlanId,
@@ -310,6 +321,11 @@ export default function MainScreen({
   const canManageSprintReady = Boolean(
     currentUser?.roles?.some(
       (role) => role === "PRODUCT_OWNER" || role === "SCRUM_MASTER"
+    )
+  );
+  const canManageMvp = Boolean(
+    currentUser?.roles?.some(
+      (role) => role === "PRODUCT_OWNER" || role === "SYSTEM_ADMIN"
     )
   );
 
@@ -378,15 +394,17 @@ export default function MainScreen({
                   </span>
                 </div>
               )}
-              {!isAccountView && activeTab !== "Product Backlog" && currentProject && (
-                <button
-                  className="create-story-btn"
-                  onClick={() => setIsCreateOpen(true)}
-                >
-                  <span className="plus-icon">+</span>
-                  Create User Story
-                </button>
-              )}
+              {!isAccountView &&
+                activeTab !== "Product Backlog" &&
+                currentProject && (
+                  <button
+                    className="create-story-btn"
+                    onClick={() => setIsCreateOpen(true)}
+                  >
+                    <span className="plus-icon">+</span>
+                    Create User Story
+                  </button>
+                )}
               {onLogout && (
                 <button className="logout-btn" onClick={onLogout}>
                   Log Out
@@ -565,7 +583,9 @@ export default function MainScreen({
                 </div>
               )}
 
-              {activeTab === "Release Plans" && <ReleasePlans projectId={projectId} />}
+              {activeTab === "Release Plans" && (
+                <ReleasePlans projectId={projectId} />
+              )}
             </>
           ) : (
             <div

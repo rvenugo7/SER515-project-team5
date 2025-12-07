@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.service;
 
+import com.asu.ser515.agiletool.dto.JiraExportRequest;
 import com.asu.ser515.agiletool.dto.JiraIssueResponse;
 import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.repository.ProjectRepository;
@@ -27,11 +28,11 @@ public class UserStoryService {
 
     @Transactional
     public UserStory create(String title,
-                            String description,
-                            String acceptanceCriteria,
-                            Integer businessValue,
-                            StoryPriority priority,
-                            Long projectId) { // Add projectId parameter
+            String description,
+            String acceptanceCriteria,
+            Integer businessValue,
+            StoryPriority priority,
+            Long projectId) { // Add projectId parameter
 
         if (title == null || title.isBlank())
             throw new IllegalArgumentException("Title is required");
@@ -54,7 +55,8 @@ public class UserStoryService {
 
         s = storyRepo.save(s);
 
-        String storyKey = (project.getProjectKey() != null ? project.getProjectKey() : GLOBAL_KEY) + "-" + String.format("%0" + PAD + "d", s.getId());
+        String storyKey = (project.getProjectKey() != null ? project.getProjectKey() : GLOBAL_KEY) + "-"
+                + String.format("%0" + PAD + "d", s.getId());
         s.setStoryKey(storyKey);
 
         return storyRepo.save(s);
@@ -72,11 +74,11 @@ public class UserStoryService {
 
     @Transactional
     public UserStory updateUserStory(Long id,
-                                    String title,
-                                    String description,
-                                    String acceptanceCriteria,
-                                    Integer businessValue,
-                                    StoryPriority priority) {
+            String title,
+            String description,
+            String acceptanceCriteria,
+            Integer businessValue,
+            StoryPriority priority) {
         UserStory story = storyRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
 
@@ -90,7 +92,8 @@ public class UserStoryService {
         story.setAcceptanceCriteria(acceptanceCriteria);
         story.setBusinessValue(businessValue);
         // Note: Priority is only updated if explicitly provided (not null).
-        // This allows partial updates where priority remains unchanged if not specified.
+        // This allows partial updates where priority remains unchanged if not
+        // specified.
         if (priority != null) {
             story.setPriority(priority);
         }
@@ -103,18 +106,19 @@ public class UserStoryService {
         UserStory story = storyRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User Story not found with id: " + id));
 
-        // Delete the user story (associated tasks will be deleted automatically due to orphanRemoval = true)
+        // Delete the user story (associated tasks will be deleted automatically due to
+        // orphanRemoval = true)
         storyRepo.delete(story);
     }
 
     @Transactional
     public UserStory updateEstimation(Long storyId, int storyPoints) {
-    UserStory story = storyRepo.findById(storyId)
-            .orElseThrow(() -> new RuntimeException("User Story not found with id: " + storyId));
+        UserStory story = storyRepo.findById(storyId)
+                .orElseThrow(() -> new RuntimeException("User Story not found with id: " + storyId));
 
-    story.setStoryPoints(storyPoints);
+        story.setStoryPoints(storyPoints);
 
-    return storyRepo.save(story);   
+        return storyRepo.save(story);
     }
 
     @Transactional
@@ -157,6 +161,19 @@ public class UserStoryService {
     public JiraIssueResponse exportStoryToJira(Long id) {
         UserStory story = getStoryById(id);
         return jiraService.createIssueFromStory(story);
+    }
+
+    @Transactional
+    public JiraIssueResponse exportStoryToJira(Long id, JiraExportRequest request) {
+        UserStory story = getStoryById(id);
+        JiraService.JiraConfig overrideConfig = new JiraService.JiraConfig(
+                request.getBaseUrl(),
+                request.getUserEmail(),
+                request.getApiToken(),
+                request.getProjectKey(),
+                request.getIssueTypeId(),
+                request.getStoryPointsFieldId());
+        return jiraService.createIssueFromStory(story, overrideConfig);
     }
 
     @Transactional

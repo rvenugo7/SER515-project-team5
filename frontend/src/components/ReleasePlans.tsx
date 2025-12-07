@@ -23,7 +23,9 @@ interface ReleasePlansProps {
   projectId?: number;
 }
 
-export default function ReleasePlans({ projectId }: ReleasePlansProps): React.JSX.Element {
+export default function ReleasePlans({
+  projectId,
+}: ReleasePlansProps): React.JSX.Element {
   const [releasePlans, setReleasePlans] = useState<ReleasePlan[]>([]);
   const [filteredPlans, setFilteredPlans] = useState<ReleasePlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,8 +35,17 @@ export default function ReleasePlans({ projectId }: ReleasePlansProps): React.JS
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchReleasePlans = async () => {
+    if (!activeProjectId) {
+      setReleasePlans([]);
+      setFilteredPlans([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const url = projectId ? `/api/release-plans/project/${projectId}` : "/api/release-plans";
+      const url = projectId
+        ? `/api/release-plans/project/${projectId}`
+        : "/api/release-plans";
       const response = await fetch(url, {
         credentials: "include",
       });
@@ -53,6 +64,10 @@ export default function ReleasePlans({ projectId }: ReleasePlansProps): React.JS
   };
 
   useEffect(() => {
+    // Clear existing data immediately when project changes
+    setReleasePlans([]);
+    setFilteredPlans([]);
+    setIsLoading(true);
     fetchReleasePlans();
   }, [projectId]); // Refetch when projectId changes
 
@@ -137,7 +152,11 @@ export default function ReleasePlans({ projectId }: ReleasePlansProps): React.JS
       </div>
 
       {/* Content */}
-      {isLoading ? (
+      {!activeProjectId ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "#718096" }}>
+          Please select a project to view release plans
+        </div>
+      ) : isLoading ? (
         <div style={{ textAlign: "center", padding: "40px", color: "#718096" }}>
           Loading release plans...
         </div>

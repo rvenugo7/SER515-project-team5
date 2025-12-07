@@ -61,7 +61,7 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getProject(@PathVariable Long id) {
         try {
-             // In a real app, we'd check if the user is a member of this project
+            // In a real app, we'd check if the user is a member of this project
             return ResponseEntity.ok(projectService.getProjectById(id));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

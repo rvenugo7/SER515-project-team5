@@ -43,10 +43,12 @@ export default function CreateProjectModal({
       }
 
       const project = await response.json();
-      
+
       // Success
-      alert(`Project Created!\nCode: ${project.projectCode}\nSave this code to invite others.`);
-      
+      alert(
+        `Project Created!\nCode: ${project.projectCode}\nSave this code to invite others.`
+      );
+
       onCreated?.(project);
       setName("");
       setDescription("");
@@ -101,11 +103,7 @@ export default function CreateProjectModal({
             </div>
 
             <div className="form-actions">
-              <button
-                type="button"
-                className="btn-cancel"
-                onClick={onClose}
-              >
+              <button type="button" className="btn-cancel" onClick={onClose}>
                 Cancel
               </button>
               <button
