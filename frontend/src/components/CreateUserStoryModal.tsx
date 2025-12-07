@@ -142,12 +142,32 @@ export default function CreateUserStoryModal({
     }
   };
 
+  const inputStyle = {
+    width: "100%",
+    marginTop: 4,
+    padding: "10px 12px",
+    borderRadius: 8,
+    border: "1px solid #e2e8f0",
+    fontSize: 14,
+    transition: "border-color 0.2s, box-shadow 0.2s",
+    outline: "none",
+    boxSizing: "border-box" as const,
+  };
+
+  const labelStyle = {
+    display: "block",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#4a5568",
+    marginBottom: 4,
+  };
+
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.45)",
+        background: "rgba(0,0,0,0.5)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -158,10 +178,11 @@ export default function CreateUserStoryModal({
         style={{
           background: "white",
           borderRadius: 12,
-          boxShadow: "0 18px 40px rgba(15,23,42,0.35)",
+          boxShadow: "0 20px 50px rgba(15,23,42,0.25)",
           width: "100%",
           maxWidth: 520,
-          padding: "20px 22px 18px",
+          maxHeight: "90vh",
+          overflow: "auto",
           fontFamily:
             'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
         }}
@@ -172,11 +193,23 @@ export default function CreateUserStoryModal({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: 12,
+            padding: "16px 20px",
+            borderBottom: "1px solid #e2e8f0",
+            position: "sticky",
+            top: 0,
+            background: "white",
+            zIndex: 1,
           }}
         >
-          <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>
-            {isEditMode ? "Edit User Story" : "Create User Story"}
+          <h2 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: "#1a202c" }}>
+            {isEditMode ? (
+              <>
+                <span style={{ color: "#718096", fontWeight: 500 }}>#{story?.id}</span>{" "}
+                Edit User Story
+              </>
+            ) : (
+              "Create User Story"
+            )}
           </h2>
           <button
             type="button"
@@ -186,209 +219,187 @@ export default function CreateUserStoryModal({
             }}
             style={{
               border: "none",
-              background: "transparent",
-              fontSize: 18,
+              background: "#f1f5f9",
+              borderRadius: 6,
+              width: 28,
+              height: 28,
+              fontSize: 16,
               cursor: "pointer",
               color: "#64748b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background 0.2s",
             }}
           >
-            ✕
+            ×
           </button>
         </div>
 
-        {error && (
-          <div
-            style={{
-              marginBottom: 10,
-              padding: "6px 10px",
-              borderRadius: 6,
-              fontSize: 13,
-              background: "#fee2e2",
-              color: "#b91c1c",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Title */}
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-              Title *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="As a user, I want to..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+        <div style={{ padding: "20px" }}>
+          {error && (
+            <div
               style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
+                marginBottom: 16,
+                padding: "10px 14px",
                 borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
+                fontSize: 13,
+                background: "#fef2f2",
+                color: "#dc2626",
+                border: "1px solid #fecaca",
               }}
-            />
-          </div>
+            >
+              {error}
+            </div>
+          )}
 
-          {/* Description */}
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-              Description *
-            </label>
-            <textarea
-              required
-              placeholder="Describe the story, context, etc."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-                resize: "vertical",
-                minHeight: 70,
-              }}
-            />
-          </div>
-
-          {/* Acceptance Criteria */}
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-              Acceptance Criteria
-            </label>
-            <textarea
-              placeholder="Given..., when..., then..."
-              value={acceptanceCriteria}
-              onChange={(e) => setAcceptanceCriteria(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-                resize: "vertical",
-                minHeight: 60,
-              }}
-            />
-          </div>
-
-          {/* Business value + priority */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginBottom: 14,
-            }}
-          >
-            <div>
-              <label
-                style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-              >
-                Business Value
+          <form onSubmit={handleSubmit}>
+            {/* Title */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>
+                Title <span style={{ color: "#dc2626" }}>*</span>
               </label>
               <input
-                type="number"
-                placeholder="0"
-                value={businessValue}
-                onChange={(e) =>
-                  setBusinessValue(
-                    e.target.value === "" ? "" : Number(e.target.value)
-                  )
-                }
+                type="text"
+                required
+                placeholder="As a user, I want to..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Description */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>
+                Description <span style={{ color: "#dc2626" }}>*</span>
+              </label>
+              <textarea
+                required
+                placeholder="Describe the story, context, etc."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 style={{
-                  width: "100%",
-                  marginTop: 4,
-                  padding: "7px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
+                  ...inputStyle,
+                  resize: "vertical",
+                  minHeight: 80,
                 }}
               />
             </div>
-            <div>
-              <label
-                style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-              >
-                Priority
-              </label>
-              <select
-                value={priority || "MEDIUM"}
-                onChange={(e) => setPriority(e.target.value as PriorityOption)}
+
+            {/* Acceptance Criteria */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Acceptance Criteria</label>
+              <textarea
+                placeholder="Given..., when..., then..."
+                value={acceptanceCriteria}
+                onChange={(e) => setAcceptanceCriteria(e.target.value)}
                 style={{
-                  width: "100%",
-                  marginTop: 4,
-                  padding: "7px 10px",
+                  ...inputStyle,
+                  resize: "vertical",
+                  minHeight: 70,
+                }}
+              />
+            </div>
+
+            {/* Business value + priority */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 16,
+                marginBottom: 20,
+              }}
+            >
+              <div>
+                <label style={labelStyle}>Business Value</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={businessValue}
+                  onChange={(e) =>
+                    setBusinessValue(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Priority</label>
+                <select
+                  value={priority || "MEDIUM"}
+                  onChange={(e) => setPriority(e.target.value as PriorityOption)}
+                  style={{
+                    ...inputStyle,
+                    cursor: "pointer",
+                    background: "white",
+                  }}
+                >
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                paddingTop: 16,
+                borderTop: "1px solid #e2e8f0",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  onClose();
+                }}
+                style={{
+                  padding: "10px 18px",
                   borderRadius: 8,
-                  border: "1px solid #cbd5e1",
+                  border: "1px solid #e2e8f0",
+                  background: "#f8fafc",
                   fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  color: "#4a5568",
+                  transition: "background 0.2s",
                 }}
               >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="CRITICAL">Critical</option>
-              </select>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: isSubmitting ? "#93c5fd" : "#2563eb",
+                  color: "white",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: isSubmitting ? "not-allowed" : "pointer",
+                  transition: "background 0.2s",
+                }}
+              >
+                {isSubmitting
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditMode
+                  ? "Update Story"
+                  : "Create Story"}
+              </button>
             </div>
-          </div>
-
-          {/* Buttons */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 8,
-              marginTop: 6,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                resetForm();
-                onClose();
-              }}
-              style={{
-                padding: "7px 14px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                background: "#f8fafc",
-                fontSize: 14,
-                cursor: "pointer",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                padding: "7px 16px",
-                borderRadius: 8,
-                border: "none",
-                background: isSubmitting ? "#60a5fa" : "#2563eb",
-                color: "white",
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
-              {isSubmitting
-                ? isEditMode
-                  ? "Updating..."
-                  : "Creating..."
-                : isEditMode
-                ? "Update Story"
-                : "Create Story"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

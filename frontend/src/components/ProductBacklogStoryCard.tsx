@@ -358,30 +358,54 @@ export default function ProductBacklogStoryCard({
 
 		{showDetails && (
 			<div className="modal-overlay">
-				<div className="modal-container" style={{ maxWidth: 480 }}>
+				<div className="modal-container" style={{ maxWidth: 520 }}>
 					<div className="modal-header">
-						<h2>Story Details</h2>
+						<h2>
+							<span className="story-id">#{story.id}</span> {story.title}
+							{isMvp && <span className="mvp-badge" style={{ marginLeft: 8 }}>MVP</span>}
+						</h2>
 						<button className="modal-close-btn" onClick={() => setShowDetails(false)}>
 							×
 						</button>
 					</div>
 					<div className="modal-body">
-						<p className="modal-field"><strong>Title:</strong> {story.title}</p>
-						<p className="modal-field"><strong>Description:</strong> {story.description}</p>
-						<p className="modal-field">
-							<strong>Acceptance Criteria:</strong>{' '}
-							{story.acceptanceCriteria ? story.acceptanceCriteria : '—'}
-						</p>
-						<p className="modal-field">
-							<strong>Business Value:</strong>{' '}
-							{story.businessValue !== undefined ? story.businessValue : '—'}
-						</p>
-						<p className="modal-field"><strong>Status:</strong> {story.status}</p>
-						<p className="modal-field"><strong>Priority:</strong> {story.priority}</p>
-						<p className="modal-field"><strong>Story Points:</strong> {story.points}</p>
-						<p className="modal-field"><strong>MVP:</strong> {isMvp ? 'Yes' : 'No'}</p>
-						<div className="toggle-row">
-							<span>Toggle MVP</span>
+						<div className="detail-tags" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+							<span className={`priority-tag ${getPriorityColor(story.priority)}`}>
+								{story.priority === 'critical' && <span className="critical-icon">!</span>}
+								{story.priority}
+							</span>
+							<span className={`status-tag ${getStatusColor(story.status)}`}>
+								{story.status.toLowerCase()}
+							</span>
+							<span className="points-tag">{story.points} pts</span>
+							{tags.includes('Sprint Ready') && (
+								<span className="status-tag sprint-ready-tag">Sprint Ready</span>
+							)}
+						</div>
+
+						<div className="detail-section" style={{ marginBottom: 16 }}>
+							<label style={{ fontWeight: 600, color: '#4a5568', fontSize: 13, display: 'block', marginBottom: 4 }}>Description</label>
+							<p style={{ margin: 0, color: '#2d3748', lineHeight: 1.5 }}>{story.description || '—'}</p>
+						</div>
+
+						<div className="detail-section" style={{ marginBottom: 16 }}>
+							<label style={{ fontWeight: 600, color: '#4a5568', fontSize: 13, display: 'block', marginBottom: 4 }}>Acceptance Criteria</label>
+							<p style={{ margin: 0, color: '#2d3748', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{story.acceptanceCriteria || '—'}</p>
+						</div>
+
+						<div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+							<div className="detail-item">
+								<label style={{ fontWeight: 600, color: '#4a5568', fontSize: 13, display: 'block', marginBottom: 2 }}>Business Value</label>
+								<span style={{ color: '#2d3748' }}>{story.businessValue !== undefined ? story.businessValue : '—'}</span>
+							</div>
+							<div className="detail-item">
+								<label style={{ fontWeight: 600, color: '#4a5568', fontSize: 13, display: 'block', marginBottom: 2 }}>Assignee</label>
+								<span style={{ color: '#2d3748' }}>{story.assigneeName || 'Not Assigned'}</span>
+							</div>
+						</div>
+
+						<div className="toggle-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', marginLeft: -24, marginRight: -24, borderTop: '1px solid #e2e8f0' }}>
+							<span style={{ fontWeight: 500, color: '#4a5568' }}>MVP Status</span>
 							<button
 								className={`mvp-toggle-btn ${isMvp ? 'active' : ''}`}
 								onClick={handleToggleMvp}
@@ -391,11 +415,6 @@ export default function ProductBacklogStoryCard({
 								{isMvp ? 'Unset MVP' : 'Mark as MVP'}
 							</button>
 						</div>
-					</div>
-					<div className="form-actions">
-						<button className="btn-cancel" onClick={() => setShowDetails(false)}>
-							Close
-						</button>
 					</div>
 				</div>
 			</div>
