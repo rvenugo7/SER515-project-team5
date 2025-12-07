@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -18,6 +20,21 @@ public class ProjectService {
 
     @Autowired
     private UserRepository userRepository;
+
+    public List<Project> getAllProjects() {
+        return projectRepository.findAll();
+    }
+
+    public Project getProjectById(Long id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+    }
+    
+    public Set<Project> getProjectsByUser(String username) {
+         User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+         return user.getProjects();
+    }
 
     @Transactional
     public Project createProject(String name, String description, User creator) {

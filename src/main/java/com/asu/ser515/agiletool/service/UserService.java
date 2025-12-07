@@ -22,7 +22,7 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private ProjectRepository projectRepository; // Kept for consistency if used elsewhere, but not used here directly anymore for registration logic
+    private ProjectRepository projectRepository;
 
     @Autowired
     private ProjectService projectService;

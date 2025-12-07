@@ -30,15 +30,18 @@ public class UserStoryService {
                             String description,
                             String acceptanceCriteria,
                             Integer businessValue,
-                            StoryPriority priority) {
+                            StoryPriority priority,
+                            Long projectId) { // Add projectId parameter
 
         if (title == null || title.isBlank())
             throw new IllegalArgumentException("Title is required");
         if (description == null || description.isBlank())
             throw new IllegalArgumentException("Description is required");
 
-        Project project = projectRepo.findById(GLOBAL_PROJECT_ID)
-                .orElseThrow(() -> new IllegalStateException("GLOBAL project missing — seed it first"));
+        Long targetProjectId = (projectId != null) ? projectId : GLOBAL_PROJECT_ID;
+
+        Project project = projectRepo.findById(targetProjectId)
+                .orElseThrow(() -> new IllegalStateException("Project not found with id: " + targetProjectId));
 
         UserStory s = new UserStory();
         s.setProject(project);
@@ -51,7 +54,7 @@ public class UserStoryService {
 
         s = storyRepo.save(s);
 
-        String storyKey = GLOBAL_KEY + "-" + String.format("%0" + PAD + "d", s.getId());
+        String storyKey = (project.getProjectKey() != null ? project.getProjectKey() : GLOBAL_KEY) + "-" + String.format("%0" + PAD + "d", s.getId());
         s.setStoryKey(storyKey);
 
         return storyRepo.save(s);
@@ -60,6 +63,11 @@ public class UserStoryService {
     @Transactional(readOnly = true)
     public List<UserStory> listAll() {
         return storyRepo.findAllByOrderByIdAsc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserStory> listByProject(Long projectId) {
+        return storyRepo.findAllByProjectIdOrderByIdAsc(projectId);
     }
 
     @Transactional

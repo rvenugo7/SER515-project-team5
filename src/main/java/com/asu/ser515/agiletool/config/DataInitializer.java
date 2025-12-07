@@ -1,7 +1,9 @@
 package com.asu.ser515.agiletool.config;
 
+import com.asu.ser515.agiletool.models.Project;
 import com.asu.ser515.agiletool.models.User;
 import com.asu.ser515.agiletool.models.UserRole;
+import com.asu.ser515.agiletool.repository.ProjectRepository;
 import com.asu.ser515.agiletool.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -9,7 +11,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -18,11 +22,26 @@ public class DataInitializer implements CommandLineRunner {
     private UserRepository userRepository;
 
     @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
         createDefaultAdminAccount();
+        migrateProjectCodes();
+    }
+
+    private void migrateProjectCodes() {
+        List<Project> projects = projectRepository.findAll();
+        for (Project p : projects) {
+            if (p.getProjectCode() == null || p.getProjectCode().isEmpty()) {
+                p.setProjectCode(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                projectRepository.save(p);
+                System.out.println("Generated code for project " + p.getName() + ": " + p.getProjectCode());
+            }
+        }
     }
 
     private void createDefaultAdminAccount() {

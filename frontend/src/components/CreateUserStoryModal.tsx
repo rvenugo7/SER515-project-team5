@@ -14,6 +14,7 @@ interface CreateUserStoryModalProps {
   onClose: () => void;
   onCreated?: () => void;
   story?: Story | null;
+  projectId?: number;
 }
 
 type PriorityOption = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -23,6 +24,7 @@ export default function CreateUserStoryModal({
   onClose,
   onCreated,
   story = null,
+  projectId,
 }: CreateUserStoryModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -103,6 +105,7 @@ export default function CreateUserStoryModal({
         acceptanceCriteria,
         businessValue: businessValue === "" ? null : Number(businessValue),
         priority: isEditMode ? priority : (priority || "MEDIUM"),
+        projectId: projectId,
       };
 
       const response = await fetch(url, {

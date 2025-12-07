@@ -41,4 +41,30 @@ public class ProjectController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<?> getAllProjects() {
+        return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyProjects() {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            return ResponseEntity.ok(projectService.getProjectsByUser(username));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProject(@PathVariable Long id) {
+        try {
+             // In a real app, we'd check if the user is a member of this project
+            return ResponseEntity.ok(projectService.getProjectById(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

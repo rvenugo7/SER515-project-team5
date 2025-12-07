@@ -33,7 +33,7 @@ public class StoryController {
         try {
             UserStory s = userStoryService.create(
                 req.getTitle(), req.getDescription(), req.getAcceptanceCriteria(),
-                req.getBusinessValue(), req.getPriority()
+                req.getBusinessValue(), req.getPriority(), req.getProjectId()
             );
             return ResponseEntity.status(201).body(new CreateStoryRes("User Story created successfully", s));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -43,9 +43,14 @@ public class StoryController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> list() {
+    public ResponseEntity<?> list(@RequestParam(required = false) Long projectId) {
         try {
-            List<UserStory> stories = userStoryService.listAll();
+            List<UserStory> stories;
+            if (projectId != null) {
+                stories = userStoryService.listByProject(projectId);
+            } else {
+                stories = userStoryService.listAll();
+            }
             return ResponseEntity.ok(stories);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -198,6 +203,7 @@ public class StoryController {
         private String acceptanceCriteria;
         private Integer businessValue;
         private StoryPriority priority;
+        private Long projectId;
 
         public String getTitle() { return title; }
         public void setTitle(String v) { title = v; }
@@ -213,6 +219,9 @@ public class StoryController {
 
         public StoryPriority getPriority() { return priority; }
         public void setPriority(StoryPriority v) { priority = v; }
+
+        public Long getProjectId() { return projectId; }
+        public void setProjectId(Long v) { projectId = v; }
     }
 
     public static class UpdateStatusReq {

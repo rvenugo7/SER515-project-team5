@@ -9,6 +9,7 @@ import AccountManagement from "./AccountManagement";
 
 interface MainScreenProps {
   onLogout?: () => void;
+  projectId?: number;
 }
 
 interface BackendStory {
@@ -55,7 +56,7 @@ interface CurrentUser {
   roles: string[];
 }
 
-export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
+export default function MainScreen({ onLogout, projectId }: MainScreenProps): JSX.Element {
   const [activeTab, setActiveTab] = useState("Scrum Board");
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All Priorities");
@@ -65,6 +66,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [editingStory, setEditingStory] = useState<any>(null);
   const [stories, setStories] = useState<FrontendStory[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [currentProject, setCurrentProject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
@@ -106,12 +108,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   useEffect(() => {
     fetchStories();
     fetchCurrentUser();
-    return () => {
-      if (toastTimer.current) {
-        window.clearTimeout(toastTimer.current);
-      }
-    };
-  }, []);
+    if (projectId) {
+       fetchProjectDetails(projectId);
+    }
+  }, [projectId]); // Re-fetch when projectId changes
 
   const totalStories = stories.length;
   const totalPoints = stories.reduce((sum, story) => sum + story.points, 0);
@@ -232,9 +232,22 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
     };
   };
 
+  const fetchProjectDetails = async (id: number) => {
+    try {
+        const res = await fetch(`/api/projects/${id}`, { credentials: "include" });
+        if (res.ok) {
+            const data = await res.json();
+            setCurrentProject(data);
+        }
+    } catch(e) {
+        console.error("Failed to fetch project", e);
+    }
+  };
+
   const fetchStories = async () => {
     try {
-      const response = await fetch("/api/stories", {
+      const url = projectId ? `/api/stories?projectId=${projectId}` : "/api/stories";
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
@@ -287,9 +300,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
         <div className="header-left">
           <div className="logo">✓</div>
           <div>
-            <h1 className="scrum-title">Scrum Management System</h1>
+            <h1 className="scrum-title">
+                {currentProject ? currentProject.name : "Scrum Management System"}
+            </h1>
             <p className="scrum-subtitle">
-              Manage releases, user stories, and sprints
+              {currentProject ? currentProject.description : "Manage releases, user stories, and sprints"}
             </p>
           </div>
         </div>
@@ -454,6 +469,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
               fetchStories();
               setIsCreateOpen(false);
             }}
+            projectId={projectId}
           />
         </div>
       )}
