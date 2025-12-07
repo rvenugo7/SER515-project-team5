@@ -584,7 +584,10 @@ export default function MainScreen({
               )}
 
               {activeTab === "Release Plans" && (
-                <ReleasePlans projectId={projectId} />
+                <ReleasePlans
+                  projectId={projectId}
+                  canCreateReleasePlan={canManageMvp}
+                />
               )}
             </>
           ) : (
