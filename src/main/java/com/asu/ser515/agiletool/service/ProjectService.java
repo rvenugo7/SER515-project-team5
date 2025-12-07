@@ -30,10 +30,8 @@ public class ProjectService {
                 .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
     }
     
-    public Set<Project> getProjectsByUser(String username) {
-         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
-         return user.getProjects();
+    public List<Project> getProjectsByUser(String username) {
+         return projectRepository.findByMembers_Username(username);
     }
 
     @Transactional
