@@ -19,7 +19,11 @@ interface ReleasePlan {
   updatedAt: string;
 }
 
-export default function ReleasePlans(): React.JSX.Element {
+interface ReleasePlansProps {
+  projectId?: number;
+}
+
+export default function ReleasePlans({ projectId }: ReleasePlansProps): React.JSX.Element {
   const [releasePlans, setReleasePlans] = useState<ReleasePlan[]>([]);
   const [filteredPlans, setFilteredPlans] = useState<ReleasePlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,7 +34,8 @@ export default function ReleasePlans(): React.JSX.Element {
 
   const fetchReleasePlans = async () => {
     try {
-      const response = await fetch("/api/release-plans", {
+      const url = projectId ? `/api/release-plans/project/${projectId}` : "/api/release-plans";
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
@@ -49,7 +54,7 @@ export default function ReleasePlans(): React.JSX.Element {
 
   useEffect(() => {
     fetchReleasePlans();
-  }, []);
+  }, [projectId]); // Refetch when projectId changes
 
   useEffect(() => {
     let filtered = [...releasePlans];
@@ -180,6 +185,7 @@ export default function ReleasePlans(): React.JSX.Element {
               setEditingPlan(null);
             }}
             plan={editingPlan}
+            projectId={projectId}
           />
         </div>
       )}

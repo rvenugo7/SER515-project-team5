@@ -17,6 +17,7 @@ interface CreateReleasePlanModalProps {
   onClose: () => void;
   onCreated?: () => void;
   plan?: ReleasePlan | null;
+  projectId?: number;
 }
 
 type StatusOption = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
@@ -26,6 +27,7 @@ export default function CreateReleasePlanModal({
   onClose,
   onCreated,
   plan = null,
+  projectId: propProjectId,
 }: CreateReleasePlanModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -33,7 +35,6 @@ export default function CreateReleasePlanModal({
   const [startDate, setStartDate] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [status, setStatus] = useState<StatusOption>("PLANNED");
-  const [projectId, setProjectId] = useState<number | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +50,6 @@ export default function CreateReleasePlanModal({
       setStartDate(plan.startDate || "");
       setTargetDate(plan.targetDate || "");
       setStatus(plan.status || "PLANNED");
-      setProjectId(plan.projectId);
       // Store original values for change detection
       setOriginalPlan(plan);
     } else if (!plan && isOpen) {
@@ -59,7 +59,6 @@ export default function CreateReleasePlanModal({
       setStartDate("");
       setTargetDate("");
       setStatus("PLANNED");
-      setProjectId(undefined);
       setOriginalPlan(null);
     }
   }, [plan, isOpen]);
@@ -70,6 +69,12 @@ export default function CreateReleasePlanModal({
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
+
+    if (!isEditMode && !propProjectId) {
+      setError("Internal Error: Project ID is missing.");
+      setIsSubmitting(false);
+      return;
+    }
 
     if (targetDate && startDate && new Date(targetDate) < new Date(startDate)) {
       setError("Target date must be after start date");
@@ -112,7 +117,7 @@ export default function CreateReleasePlanModal({
           startDate,
           targetDate,
           status,
-          projectId,
+          projectId: propProjectId,
         };
       }
 
@@ -140,286 +145,124 @@ export default function CreateReleasePlanModal({
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.45)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          borderRadius: 12,
-          boxShadow: "0 18px 40px rgba(15,23,42,0.35)",
-          width: "100%",
-          maxWidth: 520,
-          padding: "20px 22px 18px",
-          fontFamily:
-            'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 12,
-          }}
-        >
-          <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>
-            {isEditMode ? "Edit Release Plan" : "Create Release Plan"}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              border: "none",
-              background: "transparent",
-              fontSize: 18,
-              cursor: "pointer",
-              color: "#64748b",
-            }}
-          >
+    <div className="modal-overlay">
+      <div className="modal-container" style={{ maxWidth: 520 }}>
+        <div className="modal-header">
+          <h2>{isEditMode ? "Edit Release Plan" : "Create Release Plan"}</h2>
+          <button className="modal-close-btn" onClick={onClose}>
             ✕
           </button>
         </div>
 
-        {error && (
-          <div
-            style={{
-              marginBottom: 10,
-              padding: "6px 10px",
-              borderRadius: 6,
-              fontSize: 13,
-              background: "#fee2e2",
-              color: "#b91c1c",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Name */}
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-              Release Name *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g., Version 1.0, Q1 Release"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-              }}
-            />
-          </div>
-
-          {/* Project Id */}
-          {!isEditMode && (
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-                Project ID *
-              </label>
-              <input
-                type="number"
-                required
-                placeholder="Enter project id"
-                value={projectId ?? ""}
-                onChange={(e) => setProjectId(Number(e.target.value) || undefined)}
-                style={{
-                  width: "100%",
-                  marginTop: 4,
-                  padding: "7px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #e2e8f0",
-                  fontSize: 14,
-                }}
-              />
+        <div className="modal-body">
+          {error && (
+            <div className="auth-alert error" style={{ margin: "0 0 16px 0" }}>
+              <span>{error}</span>
             </div>
           )}
 
-          {/* Description */}
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-              Description
-            </label>
-            <textarea
-              placeholder="Release Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-                resize: "vertical",
-                minHeight: 60,
-              }}
-            />
-          </div>
-
-          {/* Goals */}
-          <div style={{ marginBottom: 10 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-              Goals
-            </label>
-            <textarea
-              placeholder="Goals"
-              value={goals}
-              onChange={(e) => setGoals(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-                resize: "vertical",
-                minHeight: 60,
-              }}
-            />
-          </div>
-
-          {/* Start Date and Target Date */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-              marginBottom: 10,
-            }}
-          >
-            <div>
-              <label
-                style={{ display: "block", fontSize: 13, fontWeight: 500 }}
-              >
-                Start Date *
+          <form onSubmit={handleSubmit} className="add-story-form">
+            {/* Name */}
+            <div className="form-group">
+              <label htmlFor="release-name">
+                Release Name <span className="required">*</span>
               </label>
               <input
-                type="date"
+                type="text"
+                id="release-name"
                 required
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                style={{
-                  width: "100%",
-                  marginTop: 4,
-                  padding: "7px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
+                placeholder="e.g., Version 1.0, Q1 Release"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div>
-              <label
-                style={{ display: "block", fontSize: 13, fontWeight: 500 }}
+
+            {/* Description */}
+            <div className="form-group">
+              <label htmlFor="release-desc">Description</label>
+              <textarea
+                id="release-desc"
+                placeholder="Release Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Goals */}
+            <div className="form-group">
+              <label htmlFor="release-goals">Goals</label>
+              <textarea
+                id="release-goals"
+                placeholder="Goals"
+                value={goals}
+                onChange={(e) => setGoals(e.target.value)}
+              />
+            </div>
+
+            {/* Start Date and Target Date */}
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="start-date">Start Date *</label>
+                <input
+                  type="date"
+                  id="start-date"
+                  required
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="target-date">Target Date *</label>
+                <input
+                  type="date"
+                  id="target-date"
+                  required
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="form-group">
+              <label htmlFor="status">Status</label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as StatusOption)}
               >
-                Target Date *
-              </label>
-              <input
-                type="date"
-                required
-                value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
-                style={{
-                  width: "100%",
-                  marginTop: 4,
-                  padding: "7px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                }}
-              />
+                <option value="PLANNED">Planned</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
             </div>
-          </div>
 
-          {/* Status */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as StatusOption)}
-              style={{
-                width: "100%",
-                marginTop: 4,
-                padding: "7px 10px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                fontSize: 14,
-              }}
-            >
-              <option value="PLANNED">Planned</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-          </div>
-
-          {/* Buttons */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 8,
-              marginTop: 6,
-            }}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: "7px 14px",
-                borderRadius: 8,
-                border: "1px solid #cbd5e1",
-                background: "#f8fafc",
-                fontSize: 14,
-                cursor: "pointer",
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                padding: "7px 16px",
-                borderRadius: 8,
-                border: "none",
-                background: isSubmitting ? "#60a5fa" : "#2563eb",
-                color: "white",
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
-              {isSubmitting
-                ? isEditMode
-                  ? "Updating..."
-                  : "Creating..."
-                : isEditMode
-                ? "Update Release"
-                : "Create Release"}
-            </button>
-          </div>
-        </form>
+            {/* Buttons */}
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditMode
+                  ? "Update Release"
+                  : "Create Release"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

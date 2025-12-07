@@ -565,7 +565,7 @@ export default function MainScreen({
                 </div>
               )}
 
-              {activeTab === "Release Plans" && <ReleasePlans />}
+              {activeTab === "Release Plans" && <ReleasePlans projectId={projectId} />}
             </>
           ) : (
             <div
