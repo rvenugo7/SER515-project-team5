@@ -91,6 +91,11 @@ main {
   padding: 10px 0;
 }
 
+.sidebar-footer {
+  padding: 0;
+  background: #1a202c;
+}
+
 .project-item {
   padding: 12px 20px;
   cursor: pointer;

@@ -11,6 +11,7 @@ import ProjectSidebar from "./ProjectSidebar";
 interface MainScreenProps {
   onLogout?: () => void;
   projectId?: number;
+  isAccountView?: boolean;
 }
 
 interface BackendStory {
@@ -24,9 +25,9 @@ interface BackendStory {
   businessValue?: number;
   sprintReady?: boolean;
   isStarred?: boolean;
-  releasePlanId?: number;
-  releasePlanKey?: string;
-  releasePlanName?: string;
+  releasePlanId?: number
+  releasePlanKey?: string
+  releasePlanName?: string
 }
 
 interface FrontendStory {
@@ -44,9 +45,9 @@ interface FrontendStory {
   isSprintReady?: boolean;
   acceptanceCriteria?: string;
   businessValue?: number;
-  releasePlanId?: number;
-  releasePlanKey?: string;
-  releasePlanName?: string;
+  releasePlanId?: number
+  releasePlanKey?: string
+  releasePlanName?: string
 }
 
 interface CurrentUser {
@@ -60,6 +61,7 @@ interface CurrentUser {
 export default function MainScreen({
   onLogout,
   projectId,
+  isAccountView = false,
 }: MainScreenProps): JSX.Element {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Scrum Board");
@@ -110,19 +112,23 @@ export default function MainScreen({
   };
 
   useEffect(() => {
-    fetchStories();
-    fetchCurrentUser();
-    if (projectId) {
-      fetchProjectDetails(projectId);
+    if (!isAccountView) {
+      if (projectId) {
+        fetchProjectDetails(projectId);
+      } else {
+        setCurrentProject(null);
+      }
+      fetchStories();
     } else {
       setCurrentProject(null);
     }
+    fetchCurrentUser();
     return () => {
       if (toastTimer.current) {
         window.clearTimeout(toastTimer.current);
       }
     };
-  }, [projectId]);
+  }, [projectId, isAccountView]);
 
   const fetchProjectDetails = async (id: number) => {
     try {
@@ -319,22 +325,26 @@ export default function MainScreen({
           {/* Header */}
           <div className="scrum-header">
             <div className="header-left">
-              <div className="logo">🚀</div>
+              <div className="logo">📄</div>
               <div>
                 <h1 className="scrum-title">
-                  {currentProject
+                  {isAccountView
+                    ? "Account Settings"
+                    : currentProject
                     ? currentProject.name
                     : "Scrum Management System"}
                 </h1>
                 <p className="scrum-subtitle">
-                  {currentProject
+                  {isAccountView
+                    ? "Manage your profile and preferences"
+                    : currentProject
                     ? currentProject.description
                     : "Select a project to start"}
                 </p>
               </div>
             </div>
             <div className="header-actions">
-              {activeTab !== "Product Backlog" && currentProject && (
+              {!isAccountView && activeTab !== "Product Backlog" && currentProject && (
                 <button
                   className="create-story-btn"
                   onClick={() => setIsCreateOpen(true)}
@@ -351,7 +361,9 @@ export default function MainScreen({
             </div>
           </div>
 
-          {currentProject ? (
+          {isAccountView ? (
+            <AccountManagement />
+          ) : currentProject ? (
             <>
               {/* Navigation Tabs */}
               <div className="nav-tabs">
@@ -378,14 +390,6 @@ export default function MainScreen({
                   onClick={() => handleTabClick("Release Plans")}
                 >
                   Release Plans
-                </button>
-                <button
-                  className={`nav-tab ${
-                    activeTab === "Account" ? "active" : ""
-                  }`}
-                  onClick={() => handleTabClick("Account")}
-                >
-                  Account
                 </button>
               </div>
 
@@ -547,8 +551,6 @@ export default function MainScreen({
               </p>
             </div>
           )}
-
-          {activeTab === "Account" && <AccountManagement />}
         </div>
       </div>
     </div>

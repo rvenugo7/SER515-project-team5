@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import CreateProjectModal from "./CreateProjectModal";
 
 interface Project {
@@ -24,6 +25,8 @@ export default function ProjectSidebar({
   currentProjectId,
   onProjectSelect,
 }: ProjectSidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
@@ -98,6 +101,16 @@ export default function ProjectSidebar({
             </div>
           ))
         )}
+      </div>
+      
+      <div className="sidebar-footer">
+        <div 
+            className={`project-item ${location.pathname === '/account' ? 'active' : ''}`}
+            onClick={() => navigate('/account')}
+            style={{borderTop: '1px solid #2d3748'}}
+        >
+            <div className="project-item-name">⚙️ Account Settings</div>
+        </div>
       </div>
 
       <CreateProjectModal

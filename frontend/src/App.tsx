@@ -4,11 +4,11 @@ import MainScreen from "./components/MainScreen.tsx";
 import Login from "./components/Login.tsx";
 
 // Wrapper to pass route params to MainScreen
-const MainScreenWrapper = ({ onLogout }: { onLogout: () => void }) => {
+const MainScreenWrapper = ({ onLogout, isAccountView }: { onLogout: () => void, isAccountView?: boolean }) => {
   const { projectId } = useParams<{ projectId: string }>();
   // If no projectId, we might want to default to something or show an error
   // For now, MainScreen handles it or we assume user is redirected
-  return <MainScreen onLogout={onLogout} projectId={projectId ? Number(projectId) : undefined} />;
+  return <MainScreen onLogout={onLogout} projectId={projectId ? Number(projectId) : undefined} isAccountView={isAccountView} />;
 };
 
 const ProtectedRoute = ({ children, loggedIn }: { children: JSX.Element; loggedIn: boolean }) => {
@@ -85,6 +85,15 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={!loggedIn ? <Login onLoginSuccess={handleLoginSuccess} /> : <Navigate to="/" />} />
       
+      <Route
+        path="/account"
+        element={
+          <ProtectedRoute loggedIn={loggedIn}>
+            <MainScreenWrapper onLogout={handleLogout} isAccountView={true} />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/project/:projectId"
         element={
