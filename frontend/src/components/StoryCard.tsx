@@ -138,9 +138,10 @@ export default function StoryCard({
 			<div className="story-card-footer secondary-footer">
 				<div className="release-link-section">
 					<button
-						className={`link-release-btn enhanced ${linkedPlanKey ? 'linked' : ''}`}
+						className={`link-release-btn ${linkedPlanKey ? 'linked' : ''}`}
 						title="Link to release plan"
-						onClick={async () => {
+						onClick={async (e) => {
+							e.stopPropagation()
 							const input = prompt(
 								'Enter Release Plan ID or key (e.g., 12 or REL-012) to link this story'
 							)

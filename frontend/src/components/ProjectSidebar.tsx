@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import CreateProjectModal from "./CreateProjectModal";
+import JoinProjectModal from "./JoinProjectModal";
 
 interface Project {
   id: number;
@@ -30,6 +31,7 @@ export default function ProjectSidebar({
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [isJoinProjectOpen, setIsJoinProjectOpen] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -65,19 +67,35 @@ export default function ProjectSidebar({
     (role) => role === "PRODUCT_OWNER" || role === "SYSTEM_ADMIN"
   );
 
+  const canJoinProject = currentUser?.roles.some(
+    (role) => role === "DEVELOPER" || role === "SCRUM_MASTER"
+  );
+
   return (
     <div className="project-sidebar">
       <div className="sidebar-header">
         <h2 className="sidebar-title">Projects</h2>
-        {canCreateProject && (
-          <button
-            className="sidebar-create-btn"
-            onClick={() => setIsCreateProjectOpen(true)}
-            title="Create New Project"
-          >
-            +
-          </button>
-        )}
+        <div style={{ display: "flex", gap: "8px" }}>
+          {canJoinProject && (
+            <button
+              className="sidebar-create-btn"
+              onClick={() => setIsJoinProjectOpen(true)}
+              title="Join Project"
+              style={{ backgroundColor: "#4299e1" }}
+            >
+              ➜
+            </button>
+          )}
+          {canCreateProject && (
+            <button
+              className="sidebar-create-btn"
+              onClick={() => setIsCreateProjectOpen(true)}
+              title="Create New Project"
+            >
+              +
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="projects-list">
@@ -119,6 +137,15 @@ export default function ProjectSidebar({
         onCreated={() => {
           fetchProjects(); // Refresh list
           setIsCreateProjectOpen(false);
+        }}
+      />
+
+      <JoinProjectModal
+        isOpen={isJoinProjectOpen}
+        onClose={() => setIsJoinProjectOpen(false)}
+        onJoined={() => {
+          fetchProjects(); // Refresh list
+          setIsJoinProjectOpen(false);
         }}
       />
     </div>

@@ -611,6 +611,70 @@ main {
   flex-shrink: 0;
 }
 
+.release-link-section {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.link-release-btn {
+  background: white;
+  border: 1px solid #cbd5e0;
+  color: #4a5568;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.link-release-btn:hover {
+  background: #f7fafc;
+  border-color: #a0aec0;
+  color: #2d3748;
+}
+
+.link-release-btn.linked {
+  background: #ebf8ff;
+  border-color: #63b3ed;
+  color: #2b6cb0;
+}
+
+.link-release-btn.linked:hover {
+  background: #bee3f8;
+  border-color: #4299e1;
+}
+
+.release-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: #f7fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #edf2f7;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.release-key {
+  font-weight: 600;
+  color: #2d3748;
+  font-family: monospace;
+}
+
+.release-name {
+  color: #718096;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .kanban-board {

@@ -67,4 +67,22 @@ public class ProjectController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/join")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> joinProject(@RequestBody Map<String, String> payload) {
+        String projectCode = payload.get("projectCode");
+        if (projectCode == null || projectCode.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Project code is required");
+        }
+
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userService.getCurrentUserProfile(username);
+            projectService.addUserToProject(projectCode, user);
+            return ResponseEntity.ok("Successfully joined project");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
