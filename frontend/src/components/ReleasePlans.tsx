@@ -35,7 +35,7 @@ export default function ReleasePlans({
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchReleasePlans = async () => {
-    if (!activeProjectId) {
+    if (!projectId) {
       setReleasePlans([]);
       setFilteredPlans([]);
       setIsLoading(false);
@@ -152,7 +152,7 @@ export default function ReleasePlans({
       </div>
 
       {/* Content */}
-      {!activeProjectId ? (
+      {!projectId ? (
         <div style={{ textAlign: "center", padding: "40px", color: "#718096" }}>
           Please select a project to view release plans
         </div>
