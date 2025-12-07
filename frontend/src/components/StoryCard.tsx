@@ -8,6 +8,7 @@ interface StoryCardProps {
 	points: number
 	labels: string[]
 	assignee: string
+	assigneeName?: string
 	tags?: string[]
 	acceptanceCriteria?: string
 	businessValue?: number
@@ -27,6 +28,7 @@ export default function StoryCard({
 	points,
 	labels,
 	assignee,
+	assigneeName,
 	tags = [],
 	onEdit,
 	onDragStart,
@@ -134,7 +136,7 @@ export default function StoryCard({
 						</span>
 					))}
 				</div>
-				<div className="assignee-avatar">{assignee}</div>
+				<span className="assignee-name">{assigneeName || 'Not Assigned'}</span>
 			</div>
 			<div className="story-card-footer secondary-footer">
 				<div className="release-link-section">

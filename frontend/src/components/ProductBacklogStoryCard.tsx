@@ -314,8 +314,7 @@ export default function ProductBacklogStoryCard({
 				<p className="story-description">{story.description}</p>
 				<div className="story-footer">
 					<div className="assignee-info">
-						<div className="assignee-avatar">{story.assignee}</div>
-						{story.assigneeName && <span className="assignee-name">{story.assigneeName}</span>}
+						<span className="assignee-name">{story.assigneeName || 'Not Assigned'}</span>
 						{story.labels.map((label, index) => (
 							<span key={index} className="label-tag">
 								{label}
