@@ -1,17 +1,23 @@
 # Agile Tool (SER515 Team 5)
-Spring Boot REST API backend with a React/TypeScript frontend for managing scrum projects, product backlogs, release plans, and user roles.
+Spring Boot REST API backend with a React/TypeScript frontend for managing scrum projects, product backlogs, release plans, and exprot user stories.
+
+## Team Members
+- Hima Varshitha Pagolu, hpagolu
+- Mateusz Grabowski, mgrabow3
+- Prathik Shetty, pjshett3
+- Ramchander Venugopal, rvenugo7
 
 ## What you can do
 - User authentication with role-based access (Product Owner, Scrum Master, Developer). System Admins must be created manually if needed.
-- Create and browse projects, manage membership/roles, and generate project keys automatically.
-- Build and groom the product backlog: create/edit/delete stories, estimate points, set priorities, mark sprint-ready/starred/MVP, and track status via the Kanban board.
-- Create and manage release plans; link/unlink user stories and filter by project/status.
-- Export user stories to Jira using stored credentials or request-time overrides.
+- Create and browse projects and manage membership/roles.
+- Build and groom the product backlog: create, edit, delete stories, estimate points, set priorities, mark sprint-ready, star user stories, MVP, and track status via the Kanban board.
+- Create and manage release plans, link user stories and filter by project or status.
+- Export user stories to Jira using JIRA API Token.
 
 ## Project layout
 - Backend: `src/main/java/com/asu/ser515/agiletool`, Spring config in `src/main/resources/application.properties`.
 - Frontend (Vite + React): `frontend/`.
-- Database: SQLite file at `agile_tool.db` in the project root (auto-created/updated by JPA).
+- Database: SQLite file at `agile_tool.db` in the project root.
 
 ## Prerequisites
 - Java 21
@@ -20,20 +26,20 @@ Spring Boot REST API backend with a React/TypeScript frontend for managing scrum
 
 ## Run the backend
 From the project root:
-```bash
+
 # macOS/Linux
 ./mvnw spring-boot:run
 # Windows
 mvnw.cmd spring-boot:run
-```
+
 Backend listens on `http://localhost:8080` and writes to `agile_tool.db`. Delete that file to reset local data. Adjust ports or database paths in `src/main/resources/application.properties`.
 
 ## Run the frontend
-```bash
+
 cd frontend
 npm install
 npm run dev
-```
+
 App runs on `http://localhost:3000` with a dev proxy to the backend on port 8080. Use the Login tab to sign in; Register supports Product Owner, Scrum Master, or Developer (System Admin cannot self-register).
 
 ## Jira integration
@@ -42,19 +48,17 @@ Set these environment variables (or override in `application.properties`) for Ji
 - `JIRA_USER_EMAIL`
 - `JIRA_API_TOKEN`
 - `JIRA_PROJECT_KEY`
+- Using these fields, we find out the following fields. 
 - `JIRA_ISSUE_TYPE_ID`
 - `JIRA_STORY_POINTS_FIELD_ID`
-Per-request overrides are also supported via the export API.
+=
 
-## Tests and checks
-```bash
 # Backend tests
 ./mvnw test
 # Frontend type checks and build
 cd frontend
 npm run typecheck
 npm run build
-```
 
 ## Using the app (quick guide)
 - Sign in: Open `http://localhost:3000`. Register as Product Owner, Scrum Master, or Developer (System Admin must be created manually), then log in.
