@@ -344,6 +344,40 @@ export default function MainScreen({
               </div>
             </div>
             <div className="header-actions">
+              {!isAccountView && currentProject && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    marginRight: "16px",
+                    paddingRight: "16px",
+                    borderRight: "1px solid #e2e8f0",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#718096",
+                      fontWeight: "600",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    Project Code
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "700",
+                      color: "#2d3748",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {currentProject.projectCode || "N/A"}
+                  </span>
+                </div>
+              )}
               {!isAccountView && activeTab !== "Product Backlog" && currentProject && (
                 <button
                   className="create-story-btn"
