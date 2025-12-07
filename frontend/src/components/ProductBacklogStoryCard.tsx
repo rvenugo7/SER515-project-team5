@@ -271,7 +271,7 @@ export default function ProductBacklogStoryCard({
 					<span className="detail-label">Status:</span>
 					<span
 						className={`status-tag ${getStatusColor(story.status)}`}
-						style={{ marginLeft: 4, display: 'inline', padding: '2px 8px', width: 'auto' }}
+						style={{ display: 'inline-block', width: 'fit-content' }}
 					>
 						{story.status.toLowerCase()}
 					</span>
@@ -344,21 +344,18 @@ export default function ProductBacklogStoryCard({
 					<button
 						className="action-btn"
 						onClick={() => setShowDetails(true)}
-						style={{ background: '#1a202c', color: 'white', border: 'none' }}
 					>
 						View
 					</button>
 					<button
 						className="action-btn"
 						onClick={() => onEdit?.(story)}
-						style={{ background: '#1a202c', color: 'white', border: 'none' }}
 					>
 						Edit
 					</button>
 					<button
 						className="action-btn"
 						onClick={() => setShowEstimateModal(true)}
-						style={{ background: '#1a202c', color: 'white', border: 'none' }}
 					>
 						Edit Points
 					</button>
