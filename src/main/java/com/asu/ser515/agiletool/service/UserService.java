@@ -4,6 +4,7 @@ import com.asu.ser515.agiletool.dto.UserProfileUpdateDTO;
 import com.asu.ser515.agiletool.models.User;
 import com.asu.ser515.agiletool.models.UserRole;
 import com.asu.ser515.agiletool.repository.UserRepository;
+import com.asu.ser515.agiletool.repository.ProjectRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -21,11 +22,18 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private ProjectRepository projectRepository; // Kept for consistency if used elsewhere, but not used here directly anymore for registration logic
+
+    @Autowired
+    private ProjectService projectService;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Transactional
     public User registerUser(User user) {
 
         if (userRepository.existsByUsername(user.getUsername())) {
@@ -50,7 +58,13 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if (user.getProjectCode() != null && !user.getProjectCode().trim().isEmpty()) {
+            projectService.addUserToProject(user.getProjectCode(), savedUser);
+        }
+
+        return savedUser;
     }
 
     public Optional<User> getUserByUsername(String username) {

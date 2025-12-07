@@ -20,6 +20,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [regPassword, setRegPassword] = useState("");
   const [regFullName, setRegFullName] = useState("");
   const [regRole, setRegRole] = useState("");
+  const [projectCode, setProjectCode] = useState("");
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,6 +81,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           password: regPassword,
           fullName: regFullName,
           roles: [regRole],
+          projectCode: projectCode.trim(),
         }),
         credentials: "include",
       });
@@ -92,6 +94,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         setRegPassword("");
         setRegFullName("");
         setRegRole("");
+        setProjectCode("");
       } else {
         const errorMessage = await response.text();
         setError(errorMessage || "Registration failed. Please try again.");
@@ -241,6 +244,21 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 placeholder="Full name"
                 disabled={isLoading}
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="project-code">Project Code (Optional)</label>
+              <input
+                type="text"
+                id="project-code"
+                value={projectCode}
+                onChange={(e) => setProjectCode(e.target.value)}
+                placeholder="Enter code to join a project"
+                disabled={isLoading}
+              />
+              <p className="help-text" style={{marginTop: '4px', fontSize: '0.8rem', color: '#666'}}>
+                If you have a code from your project owner, enter it here to join automatically.
+              </p>
             </div>
 
             <div className="form-group">

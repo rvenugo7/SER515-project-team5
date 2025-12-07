@@ -4,6 +4,7 @@ import KanbanColumn from "./KanbanColumn";
 import ProductBacklog from "./ProductBacklog";
 import ReleasePlans from "./ReleasePlans";
 import CreateUserStoryModal from "./CreateUserStoryModal";
+import CreateProjectModal from "./CreateProjectModal";
 import AccountManagement from "./AccountManagement";
 
 interface MainScreenProps {
@@ -59,6 +60,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All Priorities");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [stories, setStories] = useState<FrontendStory[]>([]);
@@ -272,6 +274,12 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
     )
   );
 
+  const canCreateProject = Boolean(
+    currentUser?.roles?.some(
+      (role) => role === "PRODUCT_OWNER" || role === "SYSTEM_ADMIN"
+    )
+  );
+
   return (
     <div className="scrum-container">
       {/* Header */}
@@ -286,6 +294,16 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
           </div>
         </div>
         <div className="header-actions">
+          {canCreateProject && (
+            <button
+              className="create-story-btn"
+              onClick={() => setIsCreateProjectOpen(true)}
+              style={{ backgroundColor: "#10b981", marginRight: '8px' }}
+            >
+              <span className="plus-icon">+</span>
+              Create Project
+            </button>
+          )}
           {activeTab !== "Product Backlog" && (
             <button
               className="create-story-btn"
@@ -470,6 +488,15 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       {activeTab === "Release Plans" && <ReleasePlans />}
 
       {activeTab === "Account" && <AccountManagement />}
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        isOpen={isCreateProjectOpen}
+        onClose={() => setIsCreateProjectOpen(false)}
+        onCreated={() => {
+           setIsCreateProjectOpen(false);
+        }}
+      />
     </div>
   );
 }

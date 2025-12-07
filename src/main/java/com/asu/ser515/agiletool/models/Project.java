@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
@@ -34,6 +35,9 @@ public class Project {
     @Column(unique = true, nullable = false, length = 50)
     private String projectKey;
 
+    @Column(unique = true, nullable = false, length = 50)
+    private String projectCode;
+
     @Column(nullable = false)
     private Boolean active = true;
 
@@ -45,6 +49,7 @@ public class Project {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @ToString.Exclude
     @ManyToMany
     @JoinTable(
         name = "project_members",
@@ -53,9 +58,11 @@ public class Project {
     )
     private Set<User> members = new HashSet<>();
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ReleasePlan> releasePlans = new HashSet<>();
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserStory> userStories = new HashSet<>();
 }

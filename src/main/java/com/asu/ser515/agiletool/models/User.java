@@ -7,7 +7,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
@@ -17,11 +19,13 @@ import java.util.Set;
 @Entity
 @Table(name = "users")
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @NotBlank(message = "Username is required")
@@ -59,6 +63,10 @@ public class User {
     private LocalDateTime updatedAt;
 
     @JsonIgnore
+    @ToString.Exclude
     @ManyToMany(mappedBy = "members")
     private Set<Project> projects = new HashSet<>();
+
+    @Transient
+    private String projectCode;
 }
