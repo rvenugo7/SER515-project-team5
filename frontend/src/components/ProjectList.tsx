@@ -68,7 +68,7 @@ export default function ProjectList({ onLogout }: ProjectListProps) {
       {/* Header */}
       <div className="scrum-header">
         <div className="header-left">
-          <div className="logo">✓</div>
+          <div className="logo">🚀</div>
           <div>
             <h1 className="scrum-title">All Projects</h1>
             <p className="scrum-subtitle">System Administrator View</p>

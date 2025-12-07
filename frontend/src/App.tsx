@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
 import MainScreen from "./components/MainScreen.tsx";
 import Login from "./components/Login.tsx";
-import ProjectList from "./components/ProjectList.tsx";
 
 // Wrapper to pass route params to MainScreen
 const MainScreenWrapper = ({ onLogout }: { onLogout: () => void }) => {
@@ -82,21 +81,10 @@ function AppContent() {
     );
   }
 
-  const isSystemAdmin = userRoles.includes("SYSTEM_ADMIN");
-
   return (
     <Routes>
       <Route path="/login" element={!loggedIn ? <Login onLoginSuccess={handleLoginSuccess} /> : <Navigate to="/" />} />
       
-      <Route
-        path="/projects"
-        element={
-          <ProtectedRoute loggedIn={loggedIn}>
-            {isSystemAdmin ? <ProjectList onLogout={handleLogout} /> : <Navigate to="/" />}
-          </ProtectedRoute>
-        }
-      />
-
       <Route
         path="/project/:projectId"
         element={
@@ -110,8 +98,7 @@ function AppContent() {
         path="/"
         element={
           <ProtectedRoute loggedIn={loggedIn}>
-             {/* If System Admin, go to projects list by default, otherwise MainScreen (assuming single project for now or defaulting to first) */}
-            {isSystemAdmin ? <Navigate to="/projects" /> : <MainScreenWrapper onLogout={handleLogout} />}
+            <MainScreenWrapper onLogout={handleLogout} />
           </ProtectedRoute>
         }
       />
