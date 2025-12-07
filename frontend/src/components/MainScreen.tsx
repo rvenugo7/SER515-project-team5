@@ -529,6 +529,7 @@ export default function MainScreen({
                   stories={stories}
                   onRefresh={fetchStories}
                   canEditSprintReady={canManageSprintReady}
+                  canToggleMvp={canManageMvp}
                 />
               )}
               {isCreateOpen && (
