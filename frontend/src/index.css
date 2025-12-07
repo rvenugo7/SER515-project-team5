@@ -2,9 +2,6 @@
   box-sizing: border-box;
 }
 
-/* ========================================
-   CSS Custom Properties (Design Tokens)
-   ======================================== */
 :root {
   /* Colors - Primary */
   --color-primary: #4a5568;
