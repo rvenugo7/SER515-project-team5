@@ -10,8 +10,6 @@ interface Story {
   points: number;
   status: string;
   labels: string[];
-  assignee: string;
-  assigneeName?: string;
   tags?: string[];
   isMvp?: boolean;
   isStarred?: boolean;
@@ -424,25 +422,41 @@ export default function ProductBacklog({
       {showJiraModal && (
         <div className="modal-overlay">
           <div className="modal-container confirm-modal">
-            <div className="modal-header">
-              <h3>Jira Connection</h3>
-              <button
-                className="modal-close"
-                onClick={() => {
-                  setShowJiraModal(false);
-                  setExportError(null);
-                  resetJiraForm();
-                }}
-                aria-label="Close Jira configuration"
-              >
-                ×
-              </button>
-            </div>
             <div className="modal-body">
-              <p>Provide your Jira connection details to finish exporting.</p>
+              <div className="jira-modal-header">
+                <div className="jira-logo">JIRA</div>
+                <div>
+                  <h3>Connect to Jira</h3>
+                  <p className="jira-subtitle">Export {sprintReadySelections.length} sprint-ready {sprintReadySelections.length === 1 ? 'story' : 'stories'}</p>
+                </div>
+                <button
+                  className="modal-close"
+                  onClick={() => {
+                    setShowJiraModal(false);
+                    setExportError(null);
+                    resetJiraForm();
+                  }}
+                  aria-label="Close Jira configuration"
+                  style={{ marginLeft: 'auto', color: 'white', fontSize: '28px' }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="jira-info-card">
+                <span className="info-icon">i</span>
+                <p>
+                  Enter your Atlassian credentials to export stories directly to your Jira project.
+                  You can generate an API token from your <strong>Atlassian Account Settings</strong>.
+                </p>
+              </div>
+
               <div className="jira-config">
-                <label className="confirm-field full-width">
-                  <span>Base URL *</span>
+                <div className="jira-field-group">
+                  <label>
+                    Jira Base URL
+                    <span className="required">*</span>
+                  </label>
                   <input
                     type="url"
                     placeholder="https://your-domain.atlassian.net"
@@ -451,9 +465,14 @@ export default function ProductBacklog({
                       handleJiraFieldChange("baseUrl", e.target.value)
                     }
                   />
-                </label>
-                <label className="confirm-field full-width">
-                  <span>User Email *</span>
+                  <span className="field-hint">Your Atlassian cloud instance URL</span>
+                </div>
+
+                <div className="jira-field-group">
+                  <label>
+                    Email Address
+                    <span className="required">*</span>
+                  </label>
                   <input
                     type="email"
                     placeholder="you@company.com"
@@ -462,41 +481,53 @@ export default function ProductBacklog({
                       handleJiraFieldChange("userEmail", e.target.value)
                     }
                   />
-                </label>
-                <label className="confirm-field full-width">
-                  <span>API Token *</span>
+                  <span className="field-hint">Email associated with your Atlassian account</span>
+                </div>
+
+                <div className="jira-field-group">
+                  <label>
+                    API Token
+                    <span className="required">*</span>
+                  </label>
                   <input
                     type="password"
-                    placeholder="Jira API token"
+                    placeholder="Enter your Jira API token"
                     value={jiraForm.apiToken}
                     onChange={(e) =>
                       handleJiraFieldChange("apiToken", e.target.value)
                     }
                   />
-                </label>
-                <label className="confirm-field full-width">
-                  <span>Project Key *</span>
+                  <span className="field-hint">Generate at id.atlassian.com/manage-profile/security/api-tokens</span>
+                </div>
+
+                <div className="jira-field-group">
+                  <label>
+                    Project Key
+                    <span className="required">*</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. ABC"
+                    placeholder="e.g. PROJ, SCRUM, DEV"
                     value={jiraForm.projectKey}
                     onChange={(e) =>
-                      handleJiraFieldChange("projectKey", e.target.value)
+                      handleJiraFieldChange("projectKey", e.target.value.toUpperCase())
                     }
                   />
-                </label>
+                  <span className="field-hint">The short identifier for your Jira project</span>
+                </div>
+
                 <p className="jira-hint">
-                  * Required fields. Your API token is only used to contact Jira
-                  for this export.
+                  Your credentials are only used for this export and are not stored.
                 </p>
               </div>
+
               {jiraFormError && (
-                <div className="warning" role="alert">
+                <div className="warning" role="alert" style={{ marginTop: '16px' }}>
                   {jiraFormError}
                 </div>
               )}
               {exportError && (
-                <div className="warning" role="alert">
+                <div className="warning" role="alert" style={{ marginTop: '16px' }}>
                   {exportError}
                 </div>
               )}
@@ -520,8 +551,9 @@ export default function ProductBacklog({
                   !isJiraFormComplete
                 }
                 onClick={handleConfirmExport}
+                style={{ background: '#0052cc' }}
               >
-                {isExporting ? "Exporting..." : "Submit & Export"}
+                {isExporting ? "Exporting..." : "Export to Jira"}
               </button>
             </div>
           </div>

@@ -71,14 +71,6 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    public User deactivateUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-
-        user.setActive(false);
-        return userRepository.save(user);
-    }
-
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)

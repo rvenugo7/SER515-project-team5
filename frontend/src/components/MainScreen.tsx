@@ -41,8 +41,6 @@ interface FrontendStory {
   points: number;
   status: string;
   labels: string[];
-  assignee: string;
-  assigneeName?: string;
   tags?: string[];
   isMvp?: boolean;
   isStarred?: boolean;
@@ -260,8 +258,6 @@ export default function MainScreen({
       points: s.storyPoints ?? s.businessValue ?? 0,
       status: mapBackendStatusToFrontend(s.status),
       labels: [],
-      assignee: s.assigneeInitials || "U",
-      assigneeName: s.assigneeName,
       tags: Array.from(tagSet),
       isMvp,
       isStarred: Boolean((s as any).isStarred),
