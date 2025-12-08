@@ -21,9 +21,14 @@ interface ReleasePlan {
 
 interface ReleasePlansProps {
   activeProjectId?: number | null;
+  projectId?: number;
+  canCreateReleasePlan?: boolean;
 }
 
-export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): React.JSX.Element {
+export default function ReleasePlans({ 
+  projectId,
+  canCreateReleasePlan = false,
+}: ReleasePlansProps): React.JSX.Element {
   const [releasePlans, setReleasePlans] = useState<ReleasePlan[]>([]);
   const [filteredPlans, setFilteredPlans] = useState<ReleasePlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +36,9 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
   const [editingPlan, setEditingPlan] = useState<ReleasePlan | null>(null);
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [searchQuery, setSearchQuery] = useState("");
+  const [planToDelete, setPlanToDelete] = useState<ReleasePlan | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchReleasePlans = async () => {
     if (!activeProjectId) {
@@ -87,25 +95,41 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
     setFilteredPlans(filtered);
   }, [searchQuery, statusFilter, releasePlans]);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this release plan?")) return;
+  const handleDeleteClick = (plan: ReleasePlan) => {
+    setPlanToDelete(plan);
+    setDeleteError(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!planToDelete) return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
 
     try {
-      const response = await fetch(`/api/release-plans/${id}`, {
+      const response = await fetch(`/api/release-plans/${planToDelete.id}`, {
         method: "DELETE",
         credentials: "include",
       });
 
       if (response.ok) {
         fetchReleasePlans();
+        setPlanToDelete(null);
       } else {
         const errorText = await response.text();
-        alert(`Failed to delete release plan: ${errorText}`);
+        setDeleteError(errorText || "Failed to delete release plan");
       }
     } catch (error) {
       console.error("Failed to delete release plan:", error);
-      alert("Failed to delete release plan");
+      setDeleteError("Failed to delete release plan");
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setPlanToDelete(null);
+    setDeleteError(null);
   };
 
   const handleEdit = (plan: ReleasePlan) => {
@@ -137,13 +161,15 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
           <option>Completed</option>
           <option>Cancelled</option>
         </select>
-        <button
-          className="create-release-btn"
-          onClick={() => setIsCreateOpen(true)}
-        >
-          <span className="plus-icon">+</span>
-          Create Release Plan
-        </button>
+        {canCreateReleasePlan && (
+          <button
+            className="create-release-btn"
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <span className="plus-icon">+</span>
+            Create Release Plan
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -168,7 +194,7 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
               key={plan.id}
               plan={plan}
               onEdit={handleEdit}
-              onDelete={handleDelete}
+              onDelete={() => handleDeleteClick(plan)}
             />
           ))}
         </div>
@@ -201,6 +227,53 @@ export default function ReleasePlans({ activeProjectId }: ReleasePlansProps): Re
             plan={editingPlan}
             projectId={activeProjectId}
           />
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {planToDelete && (
+        <div className="modal-overlay">
+          <div className="modal-container" style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h2>Delete Release Plan</h2>
+              <button className="modal-close-btn" onClick={handleDeleteCancel}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              {deleteError && (
+                <div className="auth-alert error" style={{ margin: "0 0 16px 0" }}>
+                  <span>{deleteError}</span>
+                </div>
+              )}
+              <p style={{ margin: 0, color: "#4a5568" }}>
+                Are you sure you want to delete the release plan{" "}
+                <strong>"{planToDelete.name}"</strong>?
+              </p>
+              <p style={{ margin: "12px 0 0 0", color: "#718096", fontSize: "14px" }}>
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="form-actions" style={{ padding: "16px 24px", borderTop: "1px solid #e2e8f0" }}>
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={handleDeleteCancel}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-submit"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                style={{ backgroundColor: "#e53e3e" }}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

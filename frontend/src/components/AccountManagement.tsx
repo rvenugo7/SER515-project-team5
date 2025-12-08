@@ -28,6 +28,8 @@ export default function AccountManagement(): JSX.Element {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const availableRoles = [
     { value: "PRODUCT_OWNER", label: "Product Owner" },
@@ -214,7 +216,11 @@ export default function AccountManagement(): JSX.Element {
   };
 
   const handleDeleteUser = async (userId: number, username: string) => {
-    if (!window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete user "${username}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
@@ -242,6 +248,44 @@ export default function AccountManagement(): JSX.Element {
     } finally {
       setIsDeletingUser(false);
     }
+  };
+
+  const handleDeactivateClick = (user: User) => {
+    setUserToDeactivate(user);
+  };
+
+  const handleDeactivateConfirm = async () => {
+    if (!userToDeactivate) return;
+
+    setError(null);
+    setSuccess(null);
+    setIsDeactivating(true);
+
+    try {
+      const response = await fetch(`/api/users/${userToDeactivate.id}/deactivate`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setSuccess(`User "${userToDeactivate.username}" deactivated successfully!`);
+        setTimeout(() => setSuccess(null), 3000);
+        setUserToDeactivate(null);
+        await fetchAllUsers();
+      } else {
+        const errorText = await response.text();
+        setError(errorText || "Failed to deactivate user");
+      }
+    } catch (err) {
+      console.error("Error deactivating user:", err);
+      setError("Failed to deactivate user. Please try again.");
+    } finally {
+      setIsDeactivating(false);
+    }
+  };
+
+  const handleDeactivateCancel = () => {
+    setUserToDeactivate(null);
   };
 
   const isSystemAdmin = currentUser?.roles.includes("SYSTEM_ADMIN");
@@ -446,7 +490,9 @@ export default function AccountManagement(): JSX.Element {
             borderTop: "1px solid #e2e8f0",
           }}
         >
-          <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600 }}>
+          <h3
+            style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600 }}
+          >
             Change Password
           </h3>
           <form onSubmit={handlePasswordUpdate}>
@@ -769,17 +815,52 @@ export default function AccountManagement(): JSX.Element {
                           >
                             Edit Roles
                           </button>
+                          {user.active && user.id !== currentUser?.id && (
+                            <button
+                              onClick={() => handleDeactivateClick(user)}
+                              style={{
+                                padding: "6px 12px",
+                                background: "#fef3c7",
+                                color: "#92400e",
+                                border: "1px solid #fcd34d",
+                                borderRadius: "6px",
+                                fontSize: "13px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Deactivate
+                            </button>
+                          )}
+                          {!user.active && (
+                            <span
+                              style={{
+                                padding: "6px 12px",
+                                background: "#f3f4f6",
+                                color: "#6b7280",
+                                borderRadius: "6px",
+                                fontSize: "13px",
+                              }}
+                            >
+                              Inactive
+                            </span>
+                          )}
                           <button
-                            onClick={() => handleDeleteUser(user.id, user.username)}
+                            onClick={() =>
+                              handleDeleteUser(user.id, user.username)
+                            }
                             disabled={isDeletingUser}
                             style={{
                               padding: "6px 12px",
-                              background: isDeletingUser ? "#fca5a5" : "#fee2e2",
+                              background: isDeletingUser
+                                ? "#fca5a5"
+                                : "#fee2e2",
                               color: "#991b1b",
                               border: "1px solid #fca5a5",
                               borderRadius: "6px",
                               fontSize: "13px",
-                              cursor: isDeletingUser ? "not-allowed" : "pointer",
+                              cursor: isDeletingUser
+                                ? "not-allowed"
+                                : "pointer",
                             }}
                           >
                             Delete
@@ -804,6 +885,48 @@ export default function AccountManagement(): JSX.Element {
                 No users found
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Deactivate Confirmation Modal */}
+      {userToDeactivate && (
+        <div className="modal-overlay">
+          <div className="modal-container" style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h2>Deactivate User</h2>
+              <button className="modal-close-btn" onClick={handleDeactivateCancel}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ margin: 0, color: "#4a5568" }}>
+                Are you sure you want to deactivate the user{" "}
+                <strong>"{userToDeactivate.username}"</strong>?
+              </p>
+              <p style={{ margin: "12px 0 0 0", color: "#718096", fontSize: "14px" }}>
+                This user will no longer be able to log in.
+              </p>
+            </div>
+            <div className="form-actions" style={{ padding: "16px 24px", borderTop: "1px solid #e2e8f0" }}>
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={handleDeactivateCancel}
+                disabled={isDeactivating}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-submit"
+                onClick={handleDeactivateConfirm}
+                disabled={isDeactivating}
+                style={{ backgroundColor: "#d97706" }}
+              >
+                {isDeactivating ? "Deactivating..." : "Deactivate"}
+              </button>
+            </div>
           </div>
         </div>
       )}

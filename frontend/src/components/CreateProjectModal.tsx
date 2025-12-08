@@ -100,7 +100,7 @@ export default function CreateProjectModal({
       }
     } catch (error) {
       console.error("Failed to create project:", error);
-      setError("Failed to create project. Please try again.");
+      setError(e.message);
     } finally {
       setIsSubmitting(false);
     }

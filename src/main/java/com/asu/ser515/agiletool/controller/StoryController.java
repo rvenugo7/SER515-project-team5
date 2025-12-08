@@ -1,6 +1,7 @@
 package com.asu.ser515.agiletool.controller;
 
 import com.asu.ser515.agiletool.dto.EstimateRequest;
+import com.asu.ser515.agiletool.dto.JiraExportRequest;
 import com.asu.ser515.agiletool.dto.JiraIssueResponse;
 import com.asu.ser515.agiletool.dto.ReleasePlanResponseDTO;
 
@@ -23,6 +24,7 @@ import java.util.List;
 public class StoryController {
     private final UserStoryService userStoryService;
     private final ReleasePlanService releasePlanService;
+
     public StoryController(UserStoryService userStoryService, ReleasePlanService releasePlanService) {
         this.userStoryService = userStoryService;
         this.releasePlanService = releasePlanService;
@@ -114,7 +116,8 @@ public class StoryController {
 
     @PostMapping("/{id}/export/jira")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> exportToJira(@PathVariable Long id) {
+    public ResponseEntity<?> exportToJira(@PathVariable Long id,
+            @RequestBody(required = false) JiraExportRequest request) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             JiraIssueResponse response = userStoryService.exportStoryToJira(id, username);
@@ -133,8 +136,7 @@ public class StoryController {
     @PreAuthorize("hasAnyRole('DEVELOPER', 'SCRUM_MASTER', 'PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateStatusReq req
-    ) {
+            @Valid @RequestBody UpdateStatusReq req) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             UserStory updated = userStoryService.updateStatus(id, req.getStatus(), username);
@@ -150,16 +152,14 @@ public class StoryController {
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> linkToReleasePlan(
             @PathVariable Long id,
-            @Valid @RequestBody LinkReleasePlanReq req
-    ) {
+            @Valid @RequestBody LinkReleasePlanReq req) {
         try {
             ReleasePlanResponseDTO response = releasePlanService.assignUserStoryByIdentifier(
                     req.getReleasePlanId(), id);
             return ResponseEntity.ok(new LinkReleasePlanRes(
                     "User story linked to release plan successfully",
                     id,
-                    response
-            ));
+                    response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -167,14 +167,12 @@ public class StoryController {
                     .body("Error linking user story to release plan: " + e.getMessage());
         }
     }
-    
 
     @PutMapping("/{id}/sprint-ready")
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateSprintReady(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateSprintReadyReq req
-    ) {
+            @Valid @RequestBody UpdateSprintReadyReq req) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             UserStory updated = userStoryService.updateSprintReady(id, req.isSprintReady(), username);
@@ -190,8 +188,7 @@ public class StoryController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateStar(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateStarReq req
-    ) {
+            @Valid @RequestBody UpdateStarReq req) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             UserStory updated = userStoryService.updateStarred(id, req.isStarred(), username);
@@ -202,13 +199,12 @@ public class StoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    
+
     @PutMapping("/{id}/mvp")
     @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateMvp(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateMvpReq req
-    ) {
+            @Valid @RequestBody UpdateMvpReq req) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             UserStory updated = userStoryService.updateMvp(id, req.isMvp(), username);
@@ -220,7 +216,6 @@ public class StoryController {
         }
     }
 
-
     public static class CreateStoryReq {
         @NotBlank(message = "Title is required")
         private String title;
@@ -231,21 +226,55 @@ public class StoryController {
         private String acceptanceCriteria;
         private Integer businessValue;
         private StoryPriority priority;
+        private Long projectId;
 
-        public String getTitle() { return title; }
-        public void setTitle(String v) { title = v; }
+        public String getTitle() {
+            return title;
+        }
 
-        public String getDescription() { return description; }
-        public void setDescription(String v) { description = v; }
+        public void setTitle(String v) {
+            title = v;
+        }
 
-        public String getAcceptanceCriteria() { return acceptanceCriteria; }
-        public void setAcceptanceCriteria(String v) { acceptanceCriteria = v; }
+        public String getDescription() {
+            return description;
+        }
 
-        public Integer getBusinessValue() { return businessValue; }
-        public void setBusinessValue(Integer v) { businessValue = v; }
+        public void setDescription(String v) {
+            description = v;
+        }
 
-        public StoryPriority getPriority() { return priority; }
-        public void setPriority(StoryPriority v) { priority = v; }
+        public String getAcceptanceCriteria() {
+            return acceptanceCriteria;
+        }
+
+        public void setAcceptanceCriteria(String v) {
+            acceptanceCriteria = v;
+        }
+
+        public Integer getBusinessValue() {
+            return businessValue;
+        }
+
+        public void setBusinessValue(Integer v) {
+            businessValue = v;
+        }
+
+        public StoryPriority getPriority() {
+            return priority;
+        }
+
+        public void setPriority(StoryPriority v) {
+            priority = v;
+        }
+
+        public Long getProjectId() {
+            return projectId;
+        }
+
+        public void setProjectId(Long v) {
+            projectId = v;
+        }
     }
 
     public static class UpdateStatusReq {
@@ -324,12 +353,14 @@ public class StoryController {
             this.releasePlanId = releasePlanId;
         }
     }
+
     public static class LinkReleasePlanRes {
         private String message;
         private Long storyId;
         private ReleasePlanResponseDTO releasePlan;
 
-        public LinkReleasePlanRes() {}
+        public LinkReleasePlanRes() {
+        }
 
         public LinkReleasePlanRes(String message, Long storyId, ReleasePlanResponseDTO releasePlan) {
             this.message = message;
@@ -361,10 +392,33 @@ public class StoryController {
             this.releasePlan = releasePlan;
         }
     }
+
     public static class CreateStoryRes {
-        private String message; private UserStory story;
-        public CreateStoryRes() {} public CreateStoryRes(String m, UserStory s){message=m;story=s;}
-        public String getMessage(){return message;} public void setMessage(String v){message=v;}
-        public UserStory getStory(){return story;} public void setStory(UserStory v){story=v;}
+        private String message;
+        private UserStory story;
+
+        public CreateStoryRes() {
+        }
+
+        public CreateStoryRes(String m, UserStory s) {
+            message = m;
+            story = s;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String v) {
+            message = v;
+        }
+
+        public UserStory getStory() {
+            return story;
+        }
+
+        public void setStory(UserStory v) {
+            story = v;
+        }
     }
 }

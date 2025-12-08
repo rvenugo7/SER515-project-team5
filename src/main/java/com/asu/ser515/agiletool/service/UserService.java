@@ -21,11 +21,15 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private ProjectService projectService;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Transactional
     public User registerUser(User user) {
 
         if (userRepository.existsByUsername(user.getUsername())) {
@@ -50,7 +54,13 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if (user.getProjectCode() != null && !user.getProjectCode().trim().isEmpty()) {
+            projectService.addUserToProject(user.getProjectCode(), savedUser);
+        }
+
+        return savedUser;
     }
 
     public Optional<User> getUserByUsername(String username) {

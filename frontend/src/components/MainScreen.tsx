@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import StoryCard from "./StoryCard";
 import KanbanColumn from "./KanbanColumn";
 import ProductBacklog from "./ProductBacklog";
 import ReleasePlans from "./ReleasePlans";
 import CreateUserStoryModal from "./CreateUserStoryModal";
+import CreateProjectModal from "./CreateProjectModal";
 import AccountManagement from "./AccountManagement";
 import { canManageStories, canUpdateStoryStatus } from "../utils/roleUtils";
+import ProjectSidebar from "./ProjectSidebar";
 
 interface MainScreenProps {
   onLogout?: () => void;
+  projectId?: number;
+  isAccountView?: boolean;
 }
 
 interface BackendStory {
@@ -22,9 +27,11 @@ interface BackendStory {
   businessValue?: number;
   sprintReady?: boolean;
   isStarred?: boolean;
-  releasePlanId?: number
-  releasePlanKey?: string
-  releasePlanName?: string
+  mvp?: boolean;
+  isMvp?: boolean;
+  releasePlanId?: number;
+  releasePlanKey?: string;
+  releasePlanName?: string;
 }
 
 interface FrontendStory {
@@ -38,13 +45,14 @@ interface FrontendStory {
   assignee: string;
   assigneeName?: string;
   tags?: string[];
+  isMvp?: boolean;
   isStarred?: boolean;
   isSprintReady?: boolean;
   acceptanceCriteria?: string;
   businessValue?: number;
-  releasePlanId?: number
-  releasePlanKey?: string
-  releasePlanName?: string
+  releasePlanId?: number;
+  releasePlanKey?: string;
+  releasePlanName?: string;
 }
 
 interface CurrentUser {
@@ -55,17 +63,24 @@ interface CurrentUser {
   roles: string[];
 }
 
-export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
+export default function MainScreen({
+  onLogout,
+  projectId,
+  isAccountView = false,
+}: MainScreenProps): JSX.Element {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Scrum Board");
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("All Priorities");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [stories, setStories] = useState<FrontendStory[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentProject, setCurrentProject] = useState<any>(null);
   const toastTimer = useRef<number | null>(null);
   
   // Derive user roles from currentUser
@@ -106,14 +121,37 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   };
 
   useEffect(() => {
-    fetchStories();
+    if (!isAccountView) {
+      if (projectId) {
+        fetchProjectDetails(projectId);
+      } else {
+        setCurrentProject(null);
+      }
+      fetchStories();
+    } else {
+      setCurrentProject(null);
+    }
     fetchCurrentUser();
     return () => {
       if (toastTimer.current) {
         window.clearTimeout(toastTimer.current);
       }
     };
-  }, []);
+  }, [projectId, isAccountView]);
+
+  const fetchProjectDetails = async (id: number) => {
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentProject(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch project", e);
+    }
+  };
 
   const totalStories = stories.length;
   const totalPoints = stories.reduce((sum, story) => sum + story.points, 0);
@@ -221,6 +259,11 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       | "medium"
       | "high"
       | "critical";
+    const sprintReadyVal = Boolean((s as any).sprintReady);
+    const isMvp = Boolean((s as any).mvp ?? (s as any).isMvp);
+    const tagSet = new Set<string>();
+    if (isMvp) tagSet.add("MVP");
+    if (sprintReadyVal) tagSet.add("Sprint Ready");
 
     return {
       id: s.id,
@@ -232,9 +275,10 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
       labels: [],
       assignee: s.assigneeInitials || "U",
       assigneeName: s.assigneeName,
-      tags: [],
+      tags: Array.from(tagSet),
+      isMvp,
       isStarred: Boolean((s as any).isStarred),
-      isSprintReady: Boolean((s as any).sprintReady),
+      isSprintReady: sprintReadyVal,
       acceptanceCriteria: (s as any).acceptanceCriteria,
       businessValue: (s as any).businessValue,
       releasePlanId: s.releasePlanId,
@@ -244,8 +288,16 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   };
 
   const fetchStories = async () => {
+    if (!projectId) {
+      setStories([]);
+      setIsLoading(false);
+      return;
+    }
     try {
-      const response = await fetch("/api/stories", {
+      const url = projectId
+        ? `/api/stories?projectId=${projectId}`
+        : "/api/stories";
+      const response = await fetch(url, {
         credentials: "include",
       });
       if (response.ok) {
@@ -355,30 +407,186 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <select
-              className="priority-filter"
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-            >
-              <option>All Priorities</option>
-              <option>Critical</option>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
           </div>
 
-          {/* Summary Statistics */}
-          <div className="summary-stats">
-            <span>Total Stories: {totalStories}</span>
-            <span>Total Points: {totalPoints}</span>
-          </div>
+          {isAccountView ? (
+            <AccountManagement />
+          ) : currentProject ? (
+            <>
+              {/* Navigation Tabs */}
+              <div className="nav-tabs">
+                <button
+                  className={`nav-tab ${
+                    activeTab === "Scrum Board" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("Scrum Board")}
+                >
+                  Scrum Board
+                </button>
+                <button
+                  className={`nav-tab ${
+                    activeTab === "Product Backlog" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("Product Backlog")}
+                >
+                  Product Backlog
+                </button>
+                <button
+                  className={`nav-tab ${
+                    activeTab === "Release Plans" ? "active" : ""
+                  }`}
+                  onClick={() => handleTabClick("Release Plans")}
+                >
+                  Release Plans
+                </button>
+              </div>
 
-          {/* Kanban Board */}
-          {isLoading ? (
-            <div style={{ textAlign: "center", padding: "40px" }}>
-              Loading stories...
-            </div>
+              {activeTab === "Scrum Board" && (
+                <>
+                  {toastMessage && (
+                    <div className="toast-message">{toastMessage}</div>
+                  )}
+                  {/* Search and Filters */}
+                  <div className="search-filters">
+                    <div className="search-bar">
+                      <span className="search-icon">⌕</span>
+                      <input
+                        type="text"
+                        placeholder="Search stories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <select
+                      className="priority-filter"
+                      value={priorityFilter}
+                      onChange={(e) => setPriorityFilter(e.target.value)}
+                    >
+                      <option>All Priorities</option>
+                      <option>Critical</option>
+                      <option>High</option>
+                      <option>Medium</option>
+                      <option>Low</option>
+                    </select>
+                  </div>
+
+                  {/* Summary Statistics */}
+                  <div className="summary-stats">
+                    <span>Total Stories: {totalStories}</span>
+                    <span>Total Points: {totalPoints}</span>
+                  </div>
+
+                  {/* Kanban Board */}
+                  {isLoading ? (
+                    <div style={{ textAlign: "center", padding: "40px" }}>
+                      Loading stories...
+                    </div>
+                  ) : (
+                    <div className="kanban-board">
+                      <KanbanColumn
+                        title="Backlog"
+                        stories={getStoriesByStatus("Backlog")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                      <KanbanColumn
+                        title="To Do"
+                        stories={getStoriesByStatus("To Do")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                      <KanbanColumn
+                        title="In Progress"
+                        stories={getStoriesByStatus("In Progress")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                      <KanbanColumn
+                        title="Done"
+                        stories={getStoriesByStatus("Done")}
+                        onEditStory={handleEditStory}
+                        onStoryDrop={handleStoryDrop}
+                        onStoryDragStart={handleStoryDragStart}
+                        onStoryLinked={fetchStories}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeTab === "Product Backlog" && (
+                <ProductBacklog
+                  stories={stories}
+                  onRefresh={fetchStories}
+                  canEditSprintReady={canManageSprintReady}
+                  canToggleMvp={canManageMvp}
+                />
+              )}
+              {isCreateOpen && (
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 9999,
+                  }}
+                >
+                  <CreateUserStoryModal
+                    isOpen={isCreateOpen}
+                    onClose={() => setIsCreateOpen(false)}
+                    onCreated={() => {
+                      fetchStories();
+                      setIsCreateOpen(false);
+                    }}
+                    projectId={projectId}
+                  />
+                </div>
+              )}
+              {isEditModalOpen && (
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 9999,
+                  }}
+                >
+                  <CreateUserStoryModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                      setIsEditModalOpen(false);
+                      setEditingStory(null);
+                    }}
+                    onCreated={() => {
+                      fetchStories();
+                      setIsEditModalOpen(false);
+                      setEditingStory(null);
+                    }}
+                    story={editingStory}
+                    projectId={projectId}
+                  />
+                </div>
+              )}
+
+              {activeTab === "Release Plans" && (
+                <ReleasePlans
+                  projectId={projectId}
+                  canCreateReleasePlan={canManageMvp}
+                />
+              )}
+            </>
           ) : (
             <div className="kanban-board">
               <KanbanColumn
@@ -450,38 +658,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
             }}
           />
         </div>
-      )}
-      {isEditModalOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <CreateUserStoryModal
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setEditingStory(null);
-            }}
-            onCreated={() => {
-              fetchStories();
-              setIsEditModalOpen(false);
-              setEditingStory(null);
-            }}
-            story={editingStory}
-          />
-        </div>
-      )}
-
-      {activeTab === "Release Plans" && <ReleasePlans />}
-
-      {activeTab === "Account" && <AccountManagement />}
+      </div>
     </div>
   );
 }

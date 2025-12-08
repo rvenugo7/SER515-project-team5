@@ -32,7 +32,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<?> deactivateUser(@PathVariable Long id) {
         try {
             User deactivatedUser = userService.deactivateUser(id);

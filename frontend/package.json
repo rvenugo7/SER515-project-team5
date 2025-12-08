@@ -9,15 +9,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "axios": "^1.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "axios": "^1.4.0"
+    "react-router-dom": "^7.10.1"
   },
   "devDependencies": {
-  "vite": "^5.4.21",
-  "@vitejs/plugin-react": "^4.0.0",
-    "typescript": "^5.2.2",
     "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7"
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.4.21"
   }
 }

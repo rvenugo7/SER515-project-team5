@@ -9,6 +9,7 @@ interface StoryCardProps {
 	points: number
 	labels: string[]
 	assignee: string
+	assigneeName?: string
 	tags?: string[]
 	acceptanceCriteria?: string
 	businessValue?: number
@@ -29,6 +30,7 @@ export default function StoryCard({
 	points,
 	labels,
 	assignee,
+	assigneeName,
 	tags = [],
 	onEdit,
 	onDragStart,
@@ -40,6 +42,7 @@ export default function StoryCard({
 	businessValue,
 	userRoles = []
 }: StoryCardProps): JSX.Element {
+	const isMvpStory = tags.includes('MVP')
 	const [linkedPlanKey, setLinkedPlanKey] = React.useState<string | undefined>(
 		releasePlanKey
 	)
@@ -93,7 +96,7 @@ export default function StoryCard({
 		>
 			<div className="story-card-header">
 				<div className="story-tags-left">
-					<span className="story-id-tag">#{id}</span>
+					<span className="story-id-tag">US-{id}</span>
 					<span className={`priority-tag ${getPriorityColor(priority)}`}>
 						{priority === 'critical' && <span className="critical-icon">!</span>}
 						{priority}
@@ -140,7 +143,7 @@ export default function StoryCard({
 						</span>
 					))}
 				</div>
-				<div className="assignee-avatar">{assignee}</div>
+				<span className="assignee-name">{assigneeName || 'Not Assigned'}</span>
 			</div>
 			<div className="story-card-footer secondary-footer">
 				<div className="release-link-section">

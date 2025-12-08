@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.service;
 
+import com.asu.ser515.agiletool.dto.JiraExportRequest;
 import com.asu.ser515.agiletool.dto.JiraIssueResponse;
 import com.asu.ser515.agiletool.models.*;
 import com.asu.ser515.agiletool.repository.ProjectRepository;
@@ -117,6 +118,11 @@ public class UserStoryService {
         return storyRepo.findByProjectIdOrderByIdAsc(projectId);
     }
 
+    @Transactional(readOnly = true)
+    public List<UserStory> listByProject(Long projectId) {
+        return storyRepo.findAllByProjectIdOrderByIdAsc(projectId);
+    }
+
     @Transactional
     public UserStory updateUserStory(Long id,
                                     String title,
@@ -137,7 +143,8 @@ public class UserStoryService {
         story.setAcceptanceCriteria(acceptanceCriteria);
         story.setBusinessValue(businessValue);
         // Note: Priority is only updated if explicitly provided (not null).
-        // This allows partial updates where priority remains unchanged if not specified.
+        // This allows partial updates where priority remains unchanged if not
+        // specified.
         if (priority != null) {
             story.setPriority(priority);
         }
@@ -149,7 +156,8 @@ public class UserStoryService {
     public void deleteUserStory(Long id, String username) {
         UserStory story = getStoryById(id, username);
 
-        // Delete the user story (associated tasks will be deleted automatically due to orphanRemoval = true)
+        // Delete the user story (associated tasks will be deleted automatically due to
+        // orphanRemoval = true)
         storyRepo.delete(story);
     }
 
@@ -207,8 +215,21 @@ public class UserStoryService {
     }
 
     @Transactional
-    public UserStory updateMvp(Long id, boolean mvp, String username) {
-        UserStory story = getStoryById(id, username);
+    public JiraIssueResponse exportStoryToJira(Long id, JiraExportRequest request) {
+        UserStory story = getStoryById(id);
+        JiraService.JiraConfig overrideConfig = new JiraService.JiraConfig(
+                request.getBaseUrl(),
+                request.getUserEmail(),
+                request.getApiToken(),
+                request.getProjectKey(),
+                request.getIssueTypeId(),
+                request.getStoryPointsFieldId());
+        return jiraService.createIssueFromStory(story, overrideConfig);
+    }
+
+    @Transactional
+    public UserStory updateMvp(Long id, boolean mvp) {
+        UserStory story = getStoryById(id);
         story.setIsMvp(mvp);
         return storyRepo.save(story);
     }
