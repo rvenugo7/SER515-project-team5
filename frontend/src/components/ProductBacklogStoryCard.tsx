@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from 'react'
+import { 
+	canManageStories, 
+	canEstimateStories, 
+	canMarkSprintReady 
+} from '../utils/roleUtils'
 
 interface Story {
 	id: number
@@ -21,14 +26,14 @@ interface ProductBacklogStoryCardProps {
 	story: Story
 	onEdit?: (story: Story) => void
 	onUpdate?: (updatedStory: Story) => void
-	canEditSprintReady?: boolean
+	userRoles?: string[]
 }
 
 export default function ProductBacklogStoryCard({
 	story,
 	onEdit,
 	onUpdate,
-	canEditSprintReady = false,
+	userRoles = [],
 }: ProductBacklogStoryCardProps): JSX.Element {
 	const [isChecked, setIsChecked] = useState(false)
 	const [isStarred, setIsStarred] = useState(story.isStarred || false)
@@ -42,6 +47,7 @@ export default function ProductBacklogStoryCard({
 	const [isTogglingSprint, setIsTogglingSprint] = useState(false)
 	const [showDetails, setShowDetails] = useState(false)
 
+	const canEditSprintReady = canMarkSprintReady(userRoles)
 	const sprintReadyTooltip = canEditSprintReady
 		? isSprintReady
 			? 'Mark as not sprint-ready'
@@ -254,23 +260,27 @@ export default function ProductBacklogStoryCard({
 					<span className="action-icon">👁</span>
 					View Details
 				</button>
-				<button 
-					className="action-btn edit-btn" 
-					title="Edit user story"
-					onClick={() => onEdit?.(story)}
-				>
-					<span className="action-icon">✏️</span>
-					Update
-				</button>
+				{canManageStories(userRoles) && (
+					<button 
+						className="action-btn edit-btn" 
+						title="Edit user story"
+						onClick={() => onEdit?.(story)}
+					>
+						<span className="action-icon">✏️</span>
+						Update
+					</button>
+				)}
 
-				<button 
-    				className="action-btn estimate-btn"
-    				title="Edit story points"
-    				onClick={() => setShowEstimateModal(true)}
-				>
-    				<span className="action-icon">📊</span>
-    				Edit Points
-				</button>
+				{canEstimateStories(userRoles) && (
+					<button 
+						className="action-btn estimate-btn"
+						title="Edit story points"
+						onClick={() => setShowEstimateModal(true)}
+					>
+						<span className="action-icon">📊</span>
+						Edit Points
+					</button>
+				)}
 			</div>
 		</div>
 

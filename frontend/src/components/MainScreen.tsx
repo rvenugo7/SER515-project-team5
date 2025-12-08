@@ -5,6 +5,7 @@ import ProductBacklog from "./ProductBacklog";
 import ReleasePlans from "./ReleasePlans";
 import CreateUserStoryModal from "./CreateUserStoryModal";
 import AccountManagement from "./AccountManagement";
+import { canManageStories, canUpdateStoryStatus } from "../utils/roleUtils";
 
 interface MainScreenProps {
   onLogout?: () => void;
@@ -66,6 +67,9 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
+  
+  // Derive user roles from currentUser
+  const userRoles = currentUser?.roles || [];
 
   // Map backend status to frontend status
   const mapBackendStatusToFrontend = (backendStatus: string): string => {
@@ -163,6 +167,15 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
     const story = stories.find((s) => s.id === storyId);
     const previousStatus = story?.status;
     if (!story) return;
+
+    // Check if user has permission to update story status
+    if (!canUpdateStoryStatus(userRoles)) {
+      const message = "You do not have permission to update story status.";
+      setToastMessage(message);
+      if (toastTimer.current) window.clearTimeout(toastTimer.current);
+      toastTimer.current = window.setTimeout(() => setToastMessage(null), 2500);
+      return;
+    }
 
     if (!story.isSprintReady && story.status !== newStatus) {
       const name = story.title || "Untitled";
@@ -266,11 +279,6 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
     }
   };
 
-  const canManageSprintReady = Boolean(
-    currentUser?.roles?.some(
-      (role) => role === "PRODUCT_OWNER" || role === "SCRUM_MASTER"
-    )
-  );
 
   return (
     <div className="scrum-container">
@@ -286,7 +294,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
           </div>
         </div>
         <div className="header-actions">
-          {activeTab !== "Product Backlog" && (
+          {activeTab !== "Product Backlog" && canManageStories(userRoles) && (
             <button
               className="create-story-btn"
               onClick={() => setIsCreateOpen(true)}
@@ -380,6 +388,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 								onStoryDrop={handleStoryDrop}
 								onStoryDragStart={handleStoryDragStart}
 								onStoryLinked={fetchStories}
+                userRoles={userRoles}
               />
               <KanbanColumn
                 title="To Do"
@@ -388,6 +397,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 								onStoryDrop={handleStoryDrop}
 								onStoryDragStart={handleStoryDragStart}
 								onStoryLinked={fetchStories}
+                userRoles={userRoles}
               />
               <KanbanColumn
                 title="In Progress"
@@ -396,6 +406,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 								onStoryDrop={handleStoryDrop}
 								onStoryDragStart={handleStoryDragStart}
 								onStoryLinked={fetchStories}
+                userRoles={userRoles}
               />
               <KanbanColumn
                 title="Done"
@@ -404,6 +415,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
 								onStoryDrop={handleStoryDrop}
 								onStoryDragStart={handleStoryDragStart}
 								onStoryLinked={fetchStories}
+                userRoles={userRoles}
               />
             </div>
           )}
@@ -414,7 +426,7 @@ export default function MainScreen({ onLogout }: MainScreenProps): JSX.Element {
         <ProductBacklog
           stories={stories}
           onRefresh={fetchStories}
-          canEditSprintReady={canManageSprintReady}
+          userRoles={userRoles}
         />
       )}
       {isCreateOpen && (

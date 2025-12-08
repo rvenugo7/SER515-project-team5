@@ -23,13 +23,13 @@ interface Story {
 interface ProductBacklogProps {
   stories: Story[];
   onRefresh?: () => void;
-  canEditSprintReady?: boolean;
+  userRoles?: string[];
 }
 
 export default function ProductBacklog({
   stories = [],
   onRefresh,
-  canEditSprintReady = false,
+  userRoles = [],
 }: ProductBacklogProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [releaseFilter, setReleaseFilter] = useState("All Releases");
@@ -95,7 +95,7 @@ export default function ProductBacklog({
             <ProductBacklogStoryCard
               key={story.id}
               story={story}
-              canEditSprintReady={canEditSprintReady}
+              userRoles={userRoles}
               onEdit={(story) => {
                 setEditingStory(story);
                 setIsEditModalOpen(true);

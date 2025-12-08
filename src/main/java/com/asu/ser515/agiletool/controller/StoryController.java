@@ -29,7 +29,7 @@ public class StoryController {
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> create(@Valid @RequestBody CreateStoryReq req, @RequestParam(required = false) Long projectId) {
         try {
             UserStory s = userStoryService.create(
@@ -62,7 +62,7 @@ public class StoryController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody CreateStoryReq req) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -80,7 +80,7 @@ public class StoryController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> deleteUserStory(@PathVariable Long id) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -94,7 +94,7 @@ public class StoryController {
     }
 
     @PutMapping("/{id}/estimate")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('DEVELOPER', 'SCRUM_MASTER', 'PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateStoryEstimation(
             @PathVariable long id,
             @RequestBody EstimateRequest estimateRequest) {
@@ -130,7 +130,7 @@ public class StoryController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('DEVELOPER', 'SCRUM_MASTER', 'PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateStatusReq req
@@ -170,7 +170,7 @@ public class StoryController {
     
 
     @PutMapping("/{id}/sprint-ready")
-    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER')")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateSprintReady(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSprintReadyReq req
