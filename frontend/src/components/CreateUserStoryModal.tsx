@@ -22,7 +22,7 @@ interface CreateUserStoryModalProps {
   onClose: () => void;
   onCreated?: () => void;
   story?: Story | null;
-  projectId?: number;
+  projectId?: number | null;
 }
 
 type PriorityOption = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -117,7 +117,13 @@ export default function CreateUserStoryModal({
         projectId: projectId,
       };
 
-      const response = await fetch(url, {
+      // Add projectId as query parameter for filtering
+      let finalUrl = url;
+      if (projectId && !isEditMode) {
+        finalUrl = `${url}?projectId=${projectId}`;
+      }
+
+      const response = await fetch(finalUrl, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",

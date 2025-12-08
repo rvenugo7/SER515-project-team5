@@ -20,11 +20,12 @@ interface ReleasePlan {
 }
 
 interface ReleasePlansProps {
+  activeProjectId?: number | null;
   projectId?: number;
   canCreateReleasePlan?: boolean;
 }
 
-export default function ReleasePlans({
+export default function ReleasePlans({ 
   projectId,
   canCreateReleasePlan = false,
 }: ReleasePlansProps): React.JSX.Element {
@@ -40,7 +41,7 @@ export default function ReleasePlans({
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchReleasePlans = async () => {
-    if (!projectId) {
+    if (!activeProjectId) {
       setReleasePlans([]);
       setFilteredPlans([]);
       setIsLoading(false);
@@ -48,10 +49,7 @@ export default function ReleasePlans({
     }
 
     try {
-      const url = projectId
-        ? `/api/release-plans/project/${projectId}`
-        : "/api/release-plans";
-      const response = await fetch(url, {
+      const response = await fetch(`/api/release-plans/project/${activeProjectId}`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -74,7 +72,7 @@ export default function ReleasePlans({
     setFilteredPlans([]);
     setIsLoading(true);
     fetchReleasePlans();
-  }, [projectId]); // Refetch when projectId changes
+  }, [activeProjectId]);
 
   useEffect(() => {
     let filtered = [...releasePlans];
@@ -175,7 +173,7 @@ export default function ReleasePlans({
       </div>
 
       {/* Content */}
-      {!projectId ? (
+      {!activeProjectId ? (
         <div style={{ textAlign: "center", padding: "40px", color: "#718096" }}>
           Please select a project to view release plans
         </div>
@@ -227,7 +225,7 @@ export default function ReleasePlans({
               setEditingPlan(null);
             }}
             plan={editingPlan}
-            projectId={projectId}
+            projectId={activeProjectId}
           />
         </div>
       )}

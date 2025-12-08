@@ -1,5 +1,6 @@
 import React from 'react'
 import StoryCard from './StoryCard'
+import { canManageStories } from '../utils/roleUtils'
 
 interface Story {
 	id: number
@@ -27,6 +28,7 @@ interface KanbanColumnProps {
 	onStoryDrop?: (storyId: number, newStatus: string) => void
 	onStoryDragStart?: (storyId: number, isAllowed: boolean) => void
 	onStoryLinked?: () => void
+	userRoles?: string[]
 }
 
 export default function KanbanColumn({
@@ -35,7 +37,8 @@ export default function KanbanColumn({
 	onEditStory,
 	onStoryDrop,
 	onStoryDragStart,
-	onStoryLinked
+	onStoryLinked,
+	userRoles = []
 }: KanbanColumnProps): JSX.Element {
 	const totalPoints = stories.reduce((sum, story) => sum + story.points, 0)
 	const isDoneColumn = title === 'Done'
@@ -86,10 +89,14 @@ export default function KanbanColumn({
 							releasePlanKey={story.releasePlanKey}
 							releasePlanName={story.releasePlanName}
 							onLinked={onStoryLinked}
+							userRoles={userRoles}
 						/>
 					))
 				)}
 			</div>
+			{canManageStories(userRoles) && (
+				<button className="add-story-link">+ Add Story</button>
+			)}
 		</div>
 	)
 }

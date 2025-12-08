@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,12 +31,13 @@ public class StoryController {
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> create(@Valid @RequestBody CreateStoryReq req) {
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
+    public ResponseEntity<?> create(@Valid @RequestBody CreateStoryReq req, @RequestParam(required = false) Long projectId) {
         try {
             UserStory s = userStoryService.create(
-                    req.getTitle(), req.getDescription(), req.getAcceptanceCriteria(),
-                    req.getBusinessValue(), req.getPriority(), req.getProjectId());
+                req.getTitle(), req.getDescription(), req.getAcceptanceCriteria(),
+                req.getBusinessValue(), req.getPriority(), projectId
+            );
             return ResponseEntity.status(201).body(new CreateStoryRes("User Story created successfully", s));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -46,53 +48,67 @@ public class StoryController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> list(@RequestParam(required = false) Long projectId) {
         try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
             List<UserStory> stories;
             if (projectId != null) {
-                stories = userStoryService.listByProject(projectId);
+                stories = userStoryService.listByProjectId(projectId, username);
             } else {
-                stories = userStoryService.listAll();
+                stories = userStoryService.listAll(username);
             }
             return ResponseEntity.ok(stories);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody CreateStoryReq req) {
         try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
             UserStory s = userStoryService.updateUserStory(
-                    id,
-                    req.getTitle(), req.getDescription(), req.getAcceptanceCriteria(),
-                    req.getBusinessValue(), req.getPriority());
+                id,
+                req.getTitle(), req.getDescription(), req.getAcceptanceCriteria(),
+                req.getBusinessValue(), req.getPriority(), username
+            );
             return ResponseEntity.ok(new CreateStoryRes("User Story updated successfully", s));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> deleteUserStory(@PathVariable Long id) {
         try {
-            userStoryService.deleteUserStory(id);
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            userStoryService.deleteUserStory(id, username);
             return ResponseEntity.ok("User Story deleted successfully");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PutMapping("/{id}/estimate")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('DEVELOPER', 'SCRUM_MASTER', 'PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateStoryEstimation(
             @PathVariable long id,
             @RequestBody EstimateRequest estimateRequest) {
         try {
-            UserStory updated = userStoryService.updateEstimation(id, estimateRequest.getStoryPoints());
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            UserStory updated =
+                    userStoryService.updateEstimation(id, estimateRequest.getStoryPoints(), username);
 
             return ResponseEntity.ok(updated);
 
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -103,13 +119,11 @@ public class StoryController {
     public ResponseEntity<?> exportToJira(@PathVariable Long id,
             @RequestBody(required = false) JiraExportRequest request) {
         try {
-            JiraIssueResponse response;
-            if (request != null && request.hasCredentials()) {
-                response = userStoryService.exportStoryToJira(id, request);
-            } else {
-                response = userStoryService.exportStoryToJira(id);
-            }
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            JiraIssueResponse response = userStoryService.exportStoryToJira(id, username);
             return ResponseEntity.ok(response);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
@@ -119,13 +133,16 @@ public class StoryController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('DEVELOPER', 'SCRUM_MASTER', 'PRODUCT_OWNER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateStatusReq req) {
         try {
-            UserStory updated = userStoryService.updateStatus(id, req.getStatus());
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            UserStory updated = userStoryService.updateStatus(id, req.getStatus(), username);
             return ResponseEntity.ok(updated);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -152,13 +169,16 @@ public class StoryController {
     }
 
     @PutMapping("/{id}/sprint-ready")
-    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER')")
+    @PreAuthorize("hasAnyRole('PRODUCT_OWNER', 'SCRUM_MASTER', 'SYSTEM_ADMIN')")
     public ResponseEntity<?> updateSprintReady(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSprintReadyReq req) {
         try {
-            UserStory updated = userStoryService.updateSprintReady(id, req.isSprintReady());
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            UserStory updated = userStoryService.updateSprintReady(id, req.isSprintReady(), username);
             return ResponseEntity.ok(updated);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -170,8 +190,11 @@ public class StoryController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateStarReq req) {
         try {
-            UserStory updated = userStoryService.updateStarred(id, req.isStarred());
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            UserStory updated = userStoryService.updateStarred(id, req.isStarred(), username);
             return ResponseEntity.ok(updated);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -183,8 +206,11 @@ public class StoryController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateMvpReq req) {
         try {
-            UserStory updated = userStoryService.updateMvp(id, req.isMvp());
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            UserStory updated = userStoryService.updateMvp(id, req.isMvp(), username);
             return ResponseEntity.ok(updated);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

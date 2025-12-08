@@ -1,5 +1,6 @@
 package com.asu.ser515.agiletool.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import com.asu.ser515.agiletool.models.UserRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

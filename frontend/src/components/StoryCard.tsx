@@ -1,4 +1,5 @@
 import React from 'react'
+import { canManageStories, canLinkToReleasePlan, canUpdateStoryStatus } from '../utils/roleUtils'
 
 interface StoryCardProps {
 	id: number
@@ -18,6 +19,7 @@ interface StoryCardProps {
 	releasePlanKey?: string
 	releasePlanName?: string
 	onLinked?: () => void
+	userRoles?: string[]
 }
 
 export default function StoryCard({
@@ -37,7 +39,8 @@ export default function StoryCard({
 	releasePlanName,
 	onLinked,
 	acceptanceCriteria,
-	businessValue
+	businessValue,
+	userRoles = []
 }: StoryCardProps): JSX.Element {
 	const isMvpStory = tags.includes('MVP')
 	const [linkedPlanKey, setLinkedPlanKey] = React.useState<string | undefined>(
@@ -67,11 +70,13 @@ export default function StoryCard({
 		}
 	}
 
-	const isDraggable = Boolean(isSprintReady)
-	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'} ${isDraggable ? '' : 'tooltipped'} ${
-		isMvpStory ? 'mvp-card' : ''
+	const isDraggable = Boolean(isSprintReady) && canUpdateStoryStatus(userRoles)
+	const cardClass = `story-card ${isDraggable ? 'draggable-card' : 'locked-card'} ${
+		isDraggable ? '' : 'tooltipped'
 	}`.trim()
-	const lockedTooltip = 'Mark Sprint Ready to move this story'
+	const lockedTooltip = isSprintReady 
+		? 'You do not have permission to update story status'
+		: 'Mark Sprint Ready to move this story'
 
 	return (
 		<div
@@ -103,28 +108,30 @@ export default function StoryCard({
 					)}
 				</div>
 				<div className="story-actions-inline">
-					<button
-						className="story-menu"
-						title="More options"
-						onClick={() => {
-							if (onEdit && id) {
-								onEdit({
-									id,
-									title,
-									description,
-									priority,
-									points,
-									labels,
-									assignee,
-									tags,
-									acceptanceCriteria,
-									businessValue
-								})
-							}
-						}}
-					>
-						☰
-					</button>
+					{canManageStories(userRoles) && (
+						<button
+							className="story-menu"
+							title="More options"
+							onClick={() => {
+								if (onEdit && id) {
+									onEdit({
+										id,
+										title,
+										description,
+										priority,
+										points,
+										labels,
+										assignee,
+										tags,
+										acceptanceCriteria,
+										businessValue
+									})
+								}
+							}}
+						>
+							☰
+						</button>
+					)}
 				</div>
 			</div>
 			<p className="story-description">{description}</p>
@@ -140,11 +147,11 @@ export default function StoryCard({
 			</div>
 			<div className="story-card-footer secondary-footer">
 				<div className="release-link-section">
-					<button
-						className={`link-release-btn ${linkedPlanKey ? 'linked' : ''}`}
-						title="Link to release plan"
-						onClick={async (e) => {
-							e.stopPropagation()
+					{canLinkToReleasePlan(userRoles) && (
+						<button
+							className={`link-release-btn enhanced ${linkedPlanKey ? 'linked' : ''}`}
+							title="Link to release plan"
+							onClick={async () => {
 							const input = prompt(
 								'Enter Release Plan ID or key (e.g., 12 or REL-012) to link this story'
 							)
@@ -180,9 +187,10 @@ export default function StoryCard({
 								alert(err?.message || 'Could not link story to release plan')
 							}
 						}}
-					>
-						{linkedPlanKey ? 'Linked to Release' : 'Link Release'}
-					</button>
+						>
+							{linkedPlanKey ? 'Linked to Release' : 'Link Release'}
+						</button>
+					)}
 					{linkedPlanKey && (
 						<div className="release-tag">
 							<span className="release-key">{linkedPlanKey}</span>

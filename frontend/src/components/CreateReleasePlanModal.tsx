@@ -17,7 +17,7 @@ interface CreateReleasePlanModalProps {
   onClose: () => void;
   onCreated?: () => void;
   plan?: ReleasePlan | null;
-  projectId?: number;
+  projectId?: number | null;
 }
 
 type StatusOption = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
@@ -42,9 +42,7 @@ export default function CreateReleasePlanModal({
 
   const isEditMode = plan !== null && plan.id !== undefined;
 
-  const [projectId, setProjectId] = useState<number | undefined>(
-    propProjectId || undefined
-  );
+  const [projectId, setProjectId] = useState<number | undefined>(propProjectId || undefined);
 
   useEffect(() => {
     if (plan && isOpen) {
@@ -54,6 +52,7 @@ export default function CreateReleasePlanModal({
       setStartDate(plan.startDate || "");
       setTargetDate(plan.targetDate || "");
       setStatus(plan.status || "PLANNED");
+      setProjectId(plan.projectId || propProjectId || undefined);
       // Store original values for change detection
       setOriginalPlan(plan);
     } else if (!plan && isOpen) {
@@ -63,6 +62,7 @@ export default function CreateReleasePlanModal({
       setStartDate("");
       setTargetDate("");
       setStatus("PLANNED");
+      setProjectId(propProjectId || undefined);
       setOriginalPlan(null);
     }
   }, [plan, isOpen, propProjectId]);
@@ -121,7 +121,7 @@ export default function CreateReleasePlanModal({
           startDate,
           targetDate,
           status,
-          projectId: propProjectId,
+          projectId: propProjectId || projectId,
         };
       }
 
@@ -165,11 +165,11 @@ export default function CreateReleasePlanModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="add-story-form">
-            {/* Name */}
-            <div className="form-group">
-              <label htmlFor="release-name">
-                Release Name <span className="required">*</span>
+          {/* Project Id - Hidden when propProjectId is provided */}
+          {!isEditMode && !propProjectId && (
+            <div style={{ marginBottom: 10 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500 }}>
+                Project ID *
               </label>
               <input
                 type="text"

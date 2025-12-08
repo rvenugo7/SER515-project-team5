@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { 
+	canManageStories, 
+	canEstimateStories, 
+	canMarkSprintReady 
+} from '../utils/roleUtils'
 
 interface Story {
 	id: number
@@ -22,6 +27,7 @@ interface ProductBacklogStoryCardProps {
 	story: Story
 	onEdit?: (story: Story) => void
 	onUpdate?: (updatedStory: Story) => void
+	userRoles?: string[]
 	canEditSprintReady?: boolean
 	canToggleMvp?: boolean
 	checked?: boolean
@@ -32,6 +38,7 @@ export default function ProductBacklogStoryCard({
 	story,
 	onEdit,
 	onUpdate,
+	userRoles = [],
 	canEditSprintReady = false,
 	canToggleMvp = false,
 	checked,
@@ -53,6 +60,7 @@ export default function ProductBacklogStoryCard({
 	const [isTogglingMvp, setIsTogglingMvp] = useState(false)
 	const [showDetails, setShowDetails] = useState(false)
 
+	const canEditSprintReady = canMarkSprintReady(userRoles)
 	const sprintReadyTooltip = canEditSprintReady
 		? isSprintReady
 			? 'Mark as not sprint-ready'
@@ -360,6 +368,38 @@ export default function ProductBacklogStoryCard({
 						Edit Points
 					</button>
 				</div>
+			</div>
+
+			<div className="story-actions">
+				<button
+					className="action-btn view-btn"
+					title="View story details"
+					onClick={() => setShowDetails(true)}
+				>
+					<span className="action-icon">👁</span>
+					View Details
+				</button>
+				{canManageStories(userRoles) && (
+					<button 
+						className="action-btn edit-btn" 
+						title="Edit user story"
+						onClick={() => onEdit?.(story)}
+					>
+						<span className="action-icon">✏️</span>
+						Update
+					</button>
+				)}
+
+				{canEstimateStories(userRoles) && (
+					<button 
+						className="action-btn estimate-btn"
+						title="Edit story points"
+						onClick={() => setShowEstimateModal(true)}
+					>
+						<span className="action-icon">📊</span>
+						Edit Points
+					</button>
+				)}
 			</div>
 		</div>
 

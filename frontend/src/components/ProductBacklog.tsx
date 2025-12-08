@@ -31,6 +31,7 @@ interface JiraFormState {
 interface ProductBacklogProps {
   stories: Story[];
   onRefresh?: () => void;
+  userRoles?: string[];
   activeProjectId?: number | null;
   canEditSprintReady?: boolean;
   canToggleMvp?: boolean;
@@ -39,6 +40,7 @@ interface ProductBacklogProps {
 export default function ProductBacklog({
   stories = [],
   onRefresh,
+  userRoles = [],
   activeProjectId,
   canEditSprintReady = false,
   canToggleMvp = false,
@@ -241,6 +243,7 @@ export default function ProductBacklog({
             <ProductBacklogStoryCard
               key={story.id}
               story={story}
+              userRoles={userRoles}
               canEditSprintReady={canEditSprintReady}
               canToggleMvp={canToggleMvp}
               checked={isStorySelected(story.id)}

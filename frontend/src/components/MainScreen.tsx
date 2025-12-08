@@ -7,6 +7,7 @@ import ReleasePlans from "./ReleasePlans";
 import CreateUserStoryModal from "./CreateUserStoryModal";
 import CreateProjectModal from "./CreateProjectModal";
 import AccountManagement from "./AccountManagement";
+import { canManageStories, canUpdateStoryStatus } from "../utils/roleUtils";
 import ProjectSidebar from "./ProjectSidebar";
 
 interface MainScreenProps {
@@ -81,6 +82,9 @@ export default function MainScreen({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [currentProject, setCurrentProject] = useState<any>(null);
   const toastTimer = useRef<number | null>(null);
+  
+  // Derive user roles from currentUser
+  const userRoles = currentUser?.roles || [];
 
   // Map backend status to frontend status
   const mapBackendStatusToFrontend = (backendStatus: string): string => {
@@ -202,6 +206,15 @@ export default function MainScreen({
     const previousStatus = story?.status;
     if (!story) return;
 
+    // Check if user has permission to update story status
+    if (!canUpdateStoryStatus(userRoles)) {
+      const message = "You do not have permission to update story status.";
+      setToastMessage(message);
+      if (toastTimer.current) window.clearTimeout(toastTimer.current);
+      toastTimer.current = window.setTimeout(() => setToastMessage(null), 2500);
+      return;
+    }
+
     if (!story.isSprintReady && story.status !== newStatus) {
       const name = story.title || "Untitled";
       const message = `#${story.id} ${name} has not been marked as Sprint Ready.`;
@@ -318,98 +331,81 @@ export default function MainScreen({
     }
   };
 
-  const canManageSprintReady = Boolean(
-    currentUser?.roles?.some(
-      (role) => role === "PRODUCT_OWNER" || role === "SCRUM_MASTER"
-    )
-  );
-  const canManageMvp = Boolean(
-    currentUser?.roles?.some(
-      (role) => role === "PRODUCT_OWNER" || role === "SYSTEM_ADMIN"
-    )
-  );
 
   return (
-    <div className="app-layout">
-      <ProjectSidebar
-        currentUser={currentUser}
-        currentProjectId={projectId}
-        onProjectSelect={(id) => navigate(`/project/${id}`)}
-      />
-      <div className="main-content">
-        <div className="scrum-container">
-          {/* Header */}
-          <div className="scrum-header">
-            <div className="header-left">
-              <div className="logo">📄</div>
-              <div>
-                <h1 className="scrum-title">
-                  {isAccountView
-                    ? "Account Settings"
-                    : currentProject
-                    ? currentProject.name
-                    : "Scrum Management System"}
-                </h1>
-                <p className="scrum-subtitle">
-                  {isAccountView
-                    ? "Manage your profile and preferences"
-                    : currentProject
-                    ? currentProject.description
-                    : "Select a project to start"}
-                </p>
-              </div>
-            </div>
-            <div className="header-actions">
-              {!isAccountView && currentProject && (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-end",
-                    marginRight: "16px",
-                    paddingRight: "16px",
-                    borderRight: "1px solid #e2e8f0",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      color: "#718096",
-                      fontWeight: "600",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Project Code
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: "700",
-                      color: "#2d3748",
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {currentProject.projectCode || "N/A"}
-                  </span>
-                </div>
-              )}
-              {!isAccountView &&
-                activeTab !== "Product Backlog" &&
-                currentProject && (
-                  <button
-                    className="create-story-btn"
-                    onClick={() => setIsCreateOpen(true)}
-                  >
-                    <span className="plus-icon">+</span>
-                    Create User Story
-                  </button>
-                )}
-              {onLogout && (
-                <button className="logout-btn" onClick={onLogout}>
-                  Log Out
-                </button>
-              )}
+    <div className="scrum-container">
+      {/* Header */}
+      <div className="scrum-header">
+        <div className="header-left">
+          <div className="logo">✓</div>
+          <div>
+            <h1 className="scrum-title">Scrum Management System</h1>
+            <p className="scrum-subtitle">
+              Manage releases, user stories, and sprints
+            </p>
+          </div>
+        </div>
+        <div className="header-actions">
+          {activeTab !== "Product Backlog" && canManageStories(userRoles) && (
+            <button
+              className="create-story-btn"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <span className="plus-icon">+</span>
+              Create User Story
+            </button>
+          )}
+          {onLogout && (
+            <button className="logout-btn" onClick={onLogout}>
+              Log Out
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="nav-tabs">
+        <button
+          className={`nav-tab ${activeTab === "Scrum Board" ? "active" : ""}`}
+          onClick={() => handleTabClick("Scrum Board")}
+        >
+          Scrum Board
+        </button>
+        <button
+          className={`nav-tab ${
+            activeTab === "Product Backlog" ? "active" : ""
+          }`}
+          onClick={() => handleTabClick("Product Backlog")}
+        >
+          Product Backlog
+        </button>
+        <button
+          className={`nav-tab ${activeTab === "Release Plans" ? "active" : ""}`}
+          onClick={() => handleTabClick("Release Plans")}
+        >
+          Release Plans
+        </button>
+        <button
+          className={`nav-tab ${activeTab === "Account" ? "active" : ""}`}
+          onClick={() => handleTabClick("Account")}
+        >
+          Account
+        </button>
+      </div>
+
+      {activeTab === "Scrum Board" && (
+        <>
+          {toastMessage && <div className="toast-message">{toastMessage}</div>}
+          {/* Search and Filters */}
+          <div className="search-filters">
+            <div className="search-bar">
+              <span className="search-icon">⌕</span>
+              <input
+                type="text"
+                placeholder="Search stories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
 
@@ -592,23 +588,75 @@ export default function MainScreen({
               )}
             </>
           ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "50vh",
-                color: "#718096",
-              }}
-            >
-              <h2 style={{ color: "#2d3748" }}>No Project Selected</h2>
-              <p>
-                Select a project from the sidebar or create a new one to get
-                started.
-              </p>
+            <div className="kanban-board">
+              <KanbanColumn
+                title="Backlog"
+                stories={getStoriesByStatus("Backlog")}
+                onEditStory={handleEditStory}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
+                userRoles={userRoles}
+              />
+              <KanbanColumn
+                title="To Do"
+                stories={getStoriesByStatus("To Do")}
+                onEditStory={handleEditStory}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
+                userRoles={userRoles}
+              />
+              <KanbanColumn
+                title="In Progress"
+                stories={getStoriesByStatus("In Progress")}
+                onEditStory={handleEditStory}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
+                userRoles={userRoles}
+              />
+              <KanbanColumn
+                title="Done"
+                stories={getStoriesByStatus("Done")}
+                onEditStory={handleEditStory}
+								onStoryDrop={handleStoryDrop}
+								onStoryDragStart={handleStoryDragStart}
+								onStoryLinked={fetchStories}
+                userRoles={userRoles}
+              />
             </div>
           )}
+        </>
+      )}
+
+      {activeTab === "Product Backlog" && (
+        <ProductBacklog
+          stories={stories}
+          onRefresh={fetchStories}
+          userRoles={userRoles}
+        />
+      )}
+      {isCreateOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <CreateUserStoryModal
+            isOpen={isCreateOpen}
+            onClose={() => setIsCreateOpen(false)}
+            onCreated={() => {
+              fetchStories();
+              setIsCreateOpen(false);
+            }}
+          />
         </div>
       </div>
     </div>
