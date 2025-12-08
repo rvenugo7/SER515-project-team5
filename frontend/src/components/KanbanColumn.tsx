@@ -9,8 +9,6 @@ interface Story {
 	points: number
 	status: string
 	labels: string[]
-	assignee: string
-	assigneeName?: string
 	tags?: string[]
 	isMvp?: boolean
 	isSprintReady?: boolean
@@ -75,8 +73,6 @@ export default function KanbanColumn({
 							priority={story.priority}
 							points={story.points}
 							labels={story.labels}
-							assignee={story.assignee}
-							assigneeName={story.assigneeName}
 							tags={story.tags || []}
 							acceptanceCriteria={story.acceptanceCriteria}
 							businessValue={story.businessValue}

@@ -31,17 +31,6 @@ public class UserController {
         }
     }
 
-    @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public ResponseEntity<?> deactivateUser(@PathVariable Long id) {
-        try {
-            User deactivatedUser = userService.deactivateUser(id);
-            return ResponseEntity.ok(deactivatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {

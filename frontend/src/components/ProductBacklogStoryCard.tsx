@@ -8,8 +8,6 @@ interface Story {
 	points: number
 	status: string
 	labels: string[]
-	assignee: string
-	assigneeName?: string
 	tags?: string[]
 	isMvp?: boolean
 	isStarred?: boolean
@@ -284,11 +282,7 @@ export default function ProductBacklogStoryCard({
 					<span className="detail-label">Business Value:</span>
 					<span className="detail-value">{story.businessValue ?? '—'}</span>
 				</div>
-				<div className="release-detail-item">
-					<span className="detail-label">Assignee:</span>
-					<span className="detail-value">{story.assigneeName || 'Not Assigned'}</span>
 				</div>
-			</div>
 
 			{/* Tags */}
 			{(tags.includes('MVP') || tags.includes('Sprint Ready') || story.labels.length > 0) && (
@@ -404,10 +398,6 @@ export default function ProductBacklogStoryCard({
 							<div className="detail-item">
 								<label style={{ fontWeight: 600, color: '#4a5568', fontSize: 13, display: 'block', marginBottom: 2 }}>Business Value</label>
 								<span style={{ color: '#2d3748' }}>{story.businessValue !== undefined ? story.businessValue : '—'}</span>
-							</div>
-							<div className="detail-item">
-								<label style={{ fontWeight: 600, color: '#4a5568', fontSize: 13, display: 'block', marginBottom: 2 }}>Assignee</label>
-								<span style={{ color: '#2d3748' }}>{story.assigneeName || 'Not Assigned'}</span>
 							</div>
 						</div>
 
