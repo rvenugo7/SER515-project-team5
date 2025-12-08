@@ -60,6 +60,12 @@ cd frontend
 npm run typecheck
 npm run build
 
+## First login / seed data
+- The backend seeds a system admin account on startup: username `admin`, password `admin`. Use it to get in the first time (you can register your own Product Owner/Scrum Master/Developer accounts afterward).
+- There are no sample projects by default. After logging in, open the Projects view and click **Create Project**; a project code is generated automatically, therefore you have no need to know an 8-character code ahead of time.
+- To reset local data, stop the backend and delete `agile_tool.db`, then restart `./mvnw spring-boot:run` to recreate the DB and the default admin.
+- The Sprint Ready button is enabled only for the Product Owner and Scrum Master, rest are not capable of interacting with it.
+
 ## Using the app (quick guide)
 - Sign in: Open `http://localhost:3000`. Register as Product Owner, Scrum Master, or Developer (System Admin must be created manually), then log in.
 - Create a project: As Product Owner or Scrum Master, create a project and assign members/roles; a project key is generated automatically.
