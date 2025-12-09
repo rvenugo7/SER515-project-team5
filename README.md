@@ -19,28 +19,32 @@ Spring Boot REST API backend with a React/TypeScript frontend for managing scrum
 - Frontend (Vite + React): `frontend/`.
 - Database: SQLite file at `agile_tool.db` in the project root.
 
-## Prerequisites
-- Java 21
-- Maven (wrapper included, no global install required)
-- Node.js 18+ and npm
+## How to Run
 
-## Run the backend
-From the project root:
+### Prerequisites
+- Java 21+
+- Node.js 18+
 
-# macOS/Linux
-./mvnw spring-boot:run
-# Windows
-mvnw.cmd spring-boot:run
+### Step 1: Start Backend
+```bash
+# From project root
+./mvnw spring-boot:run          # macOS/Linux
+mvnw.cmd spring-boot:run        # Windows
+```
+Backend runs on: `http://localhost:8080`
 
-Backend listens on `http://localhost:8080` and writes to `agile_tool.db`. Delete that file to reset local data. Adjust ports or database paths in `src/main/resources/application.properties`.
-
-## Run the frontend
-
-cd frontend
+### Step 2: Start Frontend
+```bash
+# Open new terminal (project root)
 npm install
 npm run dev
+```
+Frontend runs on: `http://localhost:3000`
 
-App runs on `http://localhost:3000` with a dev proxy to the backend on port 8080. Use the Login tab to sign in; Register supports Product Owner, Scrum Master, or Developer (System Admin cannot self-register).
+### Step 3: Access Application
+Open browser to `http://localhost:3000`
+
+Backend writes to `agile_tool.db`. Delete that file to reset local data. Adjust ports or database paths in `src/main/resources/application.properties`.
 
 ## Jira integration
 Set these environment variables (or override in `application.properties`) for Jira exports:
@@ -66,6 +70,27 @@ npm run build
 - To reset local data, stop the backend and delete `agile_tool.db`, then restart `./mvnw spring-boot:run` to recreate the DB and the default admin.
 - The Sprint Ready button is enabled only for the Product Owner and Scrum Master, rest are not capable of interacting with it.
 
+## User Roles & Permissions
+
+**Developer**
+- Can manage stories and use Kanban board
+- Cannot create projects or releases
+
+**Scrum Master**
+- Can create projects and releases
+- Can manage stories and use Kanban board
+
+**Product Owner**
+- Can create projects and releases
+- Can manage stories and use Kanban board
+- Cannot mark story as sprint ready
+
+**System Admin**
+- Full access to all features(Except marking story as sprint ready)
+- Can manage users and view all projects
+
+---
+
 ## Using the app (quick guide)
 - Sign in: Open `http://localhost:3000`. Register as Product Owner, Scrum Master, or Developer (System Admin must be created manually), then log in.
 - Create a project: As Product Owner or Scrum Master, create a project and assign members/roles; a project key is generated automatically.
@@ -74,6 +99,20 @@ npm run build
 - Estimation & readiness: Set story points, mark sprint-ready, star important items, and flag MVP candidates.
 - Release plans: Product Owner/System Admin can create release plans, link/unlink stories, and list by project or status.
 - Jira export: From a story, export to Jira using configured credentials or provide override credentials in the request.
+
+## Creating and Joining Projects
+
+### Create a Project (Product Owner/Admin)
+1. Click **+** in sidebar
+2. Enter project name and description
+3. Click **"Create"**
+4. Share the generated project code with team members
+
+### Join a Project (Developer/Scrum Master)
+1. Click **→** in sidebar
+2. Enter the project code from project owner
+3. Click **"Join"**
+4. Project now appears in your project list
 
 ## Tips
 - Ensure the backend is running before logging in or making API calls from the frontend.
