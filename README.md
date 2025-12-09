@@ -77,7 +77,7 @@ npm run build
 - Cannot create projects or releases
 
 **Scrum Master**
-- Can create projects and releases
+- Can create releases
 - Can manage stories and use Kanban board
 
 **Product Owner**
